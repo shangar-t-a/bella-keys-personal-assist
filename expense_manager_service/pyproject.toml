@@ -1,0 +1,30 @@
+[project]
+name = "expense-manager-service"
+dynamic = ["version"]
+description = "Expense Manager App Service"
+readme = "README.md"
+authors = [
+    { name = "Shangar Arivazhagan (Keys)", email = "shangar202000@gmail.com" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.14",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "uvicorn>=0.35.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aiosqlite>=0.20.0",
+]
+
+[dependency-groups]
+lint = ["ruff>=0.12.3"]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "app/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app/"]
