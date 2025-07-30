@@ -1,0 +1,21 @@
+{
+    "editor.rulers": [
+        120
+    ],
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "always",
+            "source.fixAll.ruff": "always"
+        }
+    },
+    "python-envs.pythonProjects": [
+        {
+            "path": "expense_manager_service",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
+}
