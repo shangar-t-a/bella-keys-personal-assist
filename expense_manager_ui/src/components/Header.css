@@ -1,0 +1,97 @@
+.header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 15px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.app-name-link {
+  color: white;
+  text-decoration: none;
+}
+
+.app-name-link h1 {
+  margin: 0;
+  font-size: 1.8em;
+  font-weight: 600;
+}
+
+.dark-mode-toggle {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 8px; /* Adjusted padding for icon */
+  border-radius: 50%; /* Make it circular */
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+  display: flex; /* To center the icon */
+  justify-content: center;
+  align-items: center;
+  width: 40px; /* Fixed width for circular button */
+  height: 40px; /* Fixed height for circular button */
+}
+
+.dark-mode-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  transform: scale(1.05); /* Slight scale on hover */
+}
+
+.dark-mode-toggle svg {
+  stroke: currentColor; /* Ensure icon color matches button text color */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .app-name-link h1 {
+    font-size: 1.5em;
+  }
+
+  .dark-mode-toggle {
+    padding: 6px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .dark-mode-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 15px;
+  }
+
+  .app-name-link h1 {
+    font-size: 1.3em;
+  }
+
+  .dark-mode-toggle {
+    padding: 5px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .dark-mode-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+}

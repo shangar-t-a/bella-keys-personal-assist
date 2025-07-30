@@ -1,0 +1,76 @@
+:root {
+  --primary-color: #336699; /* A vibrant blue for primary actions/highlights */
+  --primary-color-rgb: 51, 102, 153; /* RGB for primary color for shadows/transparency */
+  --secondary-color: #03dac6; /* A teal for secondary actions/accents */
+  --text-color: #333; /* Dark grey for main text */
+  --text-color-light: #666; /* Lighter grey for secondary text, labels */
+  --background-color: #f4f7f6; /* Light background for the overall page */
+  --card-background: #ffffff; /* White for cards and main content blocks */
+  --border-color: #e0e0e0; /* Light grey for borders */
+  --input-background: #f9f9f9; /* Slightly off-white for input fields */
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Subtle shadow for depth */
+  --box-shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15); /* Larger shadow for modals/prominent elements */
+
+  /* Button Colors */
+  --primary-button-background: var(--primary-color);
+  --primary-button-text: #ffffff;
+  --primary-button-hover: #2a537a; /* Darker blue on hover */
+
+  --secondary-button-background: #e0e0e0;
+  --secondary-button-text: var(--text-color);
+  --secondary-button-hover: #d0d0d0;
+
+  /* Table Colors */
+  --table-header-background: #f0f0f0;
+  --table-row-hover: #f5f5f5;
+
+  /* Specific status colors */
+  --success-color: #28a745; /* Green for positive values/trends */
+  --error-color: #dc3545; /* Red for negative values/errors */
+  --warning-color: #ffc107; /* Yellow for warnings */
+}
+
+/* Dark Mode */
+body.dark-mode {
+  --primary-color: #5c94d1; /* Adjusted for dark mode visibility */
+  --primary-color-rgb: 92, 148, 209;
+  --secondary-color: #03dac6;
+  --text-color: #e0e0e0;
+  --text-color-light: #a0a0a0;
+  --background-color: #121212;
+  --card-background: #1e1e1e;
+  --border-color: #333333;
+  --input-background: #2a2a2a;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --box-shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.4);
+
+  --primary-button-background: var(--primary-color);
+  --primary-button-text: #121212;
+  --primary-button-hover: #4a7bb0;
+
+  --secondary-button-background: #333333;
+  --secondary-button-text: #e0e0e0;
+  --secondary-button-hover: #444444;
+
+  --table-header-background: #2a2a2a;
+  --table-row-hover: #252525;
+
+  --success-color: #28a745; /* Still green */
+  --error-color: #dc3545; /* Still red */
+  --warning-color: #ffc107; /* Still yellow */
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
