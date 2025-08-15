@@ -1,12 +1,12 @@
 [project]
 name = "expense-manager-service"
 dynamic = ["version"]
-description = "Expense Manager App Service"
+description = "Expense Manager Service"
 readme = "README.md"
 authors = [
     { name = "Shangar Arivazhagan (Keys)", email = "shangar202000@gmail.com" },
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.14",
     "pydantic>=2.11.7",

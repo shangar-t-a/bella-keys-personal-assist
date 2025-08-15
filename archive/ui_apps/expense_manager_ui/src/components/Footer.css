@@ -1,0 +1,37 @@
+.footer {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 15px 20px;
+  text-align: center;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: auto; /* Pushes footer to the bottom */
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .footer {
+    padding: 10px 15px;
+  }
+  .footer p {
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding: 8px 10px;
+  }
+  .footer p {
+    font-size: 0.75em;
+  }
+}
