@@ -15,4 +15,4 @@ services:
     environment:
       - HOSTNAME=${KEYS_PERSONAL_ASSIST_HOST}
       - PORT=${KEYS_PERSONAL_ASSIST_PORT}
-      - API_BASE_URL=${API_BASE_URL}
+      - NEXT_PUBLIC_API_BASE_URL=${API_BASE_URL}
