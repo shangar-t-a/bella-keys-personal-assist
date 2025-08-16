@@ -74,6 +74,10 @@ const MONTHS = [
 
 const PAGE_SIZES = [10, 25, 50, 100]
 
+const getApiBaseUrl = () => {
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+}
+
 export default function SpendingAccountSummaryPage() {
   const [mounted, setMounted] = useState(false)
   const [entries, setEntries] = useState<SpendingAccountEntry[]>([])
@@ -115,7 +119,13 @@ export default function SpendingAccountSummaryPage() {
 
   const fetchAccounts = async () => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const apiBaseUrl = getApiBaseUrl()
+      console.log("[v0] API Base URL:", apiBaseUrl)
+      console.log(
+        "[v0] Runtime config:",
+        typeof window !== "undefined" ? (window as any).__RUNTIME_CONFIG__ : "server-side",
+      )
+
       const response = await fetch(`${apiBaseUrl}/v1/account/list`)
 
       if (response.ok) {
@@ -138,7 +148,9 @@ export default function SpendingAccountSummaryPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const apiBaseUrl = getApiBaseUrl()
+      console.log("[v0] Fetching data from:", `${apiBaseUrl}/v1/spending_account/list`)
+
       const response = await fetch(`${apiBaseUrl}/v1/spending_account/list`)
 
       if (response.ok) {
@@ -248,7 +260,8 @@ export default function SpendingAccountSummaryPage() {
 
   const handleSubmit = async (isEdit: boolean) => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const apiBaseUrl = getApiBaseUrl()
+
       const url = isEdit
         ? `${apiBaseUrl}/v1/spending_account/${selectedEntry?.id}`
         : `${apiBaseUrl}/v1/spending_account`
@@ -290,7 +303,7 @@ export default function SpendingAccountSummaryPage() {
     if (!selectedEntry) return
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const apiBaseUrl = getApiBaseUrl()
       const response = await fetch(`${apiBaseUrl}/v1/spending_account/${selectedEntry.id}`, {
         method: "DELETE",
       })

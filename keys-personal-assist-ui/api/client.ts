@@ -9,10 +9,10 @@ import {
   SpendingAccountEntryWithCalculatedFieldsResponse,
 } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
 // Log the API_BASE_URL to the console for debugging
-console.log('API_BASE_URL from .env:', API_BASE_URL);
+console.log("API_BASE_URL from .env:", API_BASE_URL)
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

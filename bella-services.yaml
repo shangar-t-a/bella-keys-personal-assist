@@ -1,0 +1,18 @@
+services:
+  expense-manager-service:
+    build: ./expense-manager-service
+    ports:
+      - "8000:8000"
+    environment:
+      - EXP_MANAGER_SERVICE_HOST=${EXP_MANAGER_SERVICE_HOST}
+      - EXP_MANAGER_SERVICE_PORT=${EXP_MANAGER_SERVICE_PORT}
+      - EXP_MANAGER_SERVICE_DEBUG=${EXP_MANAGER_SERVICE_DEBUG}
+
+  keys-personal-assist-ui:
+    build: ./keys-personal-assist-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - HOSTNAME=${KEYS_PERSONAL_ASSIST_HOST}
+      - PORT=${KEYS_PERSONAL_ASSIST_PORT}
+      - NEXT_PUBLIC_API_BASE_URL=${API_BASE_URL}
