@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
-        debug=settings.DEBUG,
+        debug=settings.EXP_MANAGER_SERVICE_DEBUG,
     )
 
     # Setup middlewares
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     settings = get_settings()
     uvicorn.run(
         "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG,
+        host=settings.EXP_MANAGER_SERVICE_HOST,
+        port=settings.EXP_MANAGER_SERVICE_PORT,
+        reload=settings.EXP_MANAGER_SERVICE_DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )

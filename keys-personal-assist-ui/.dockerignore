@@ -1,0 +1,11 @@
+# Node
+node_modules
+
+# Git
+.git
+.gitignore
+
+# App Specific
+.env
+.env.sample
+docs

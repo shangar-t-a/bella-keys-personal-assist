@@ -20,7 +20,6 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Bella - Keys' Personal Assistant",
   description: "Personal assistant for managing your day, asking questions and more",
-    generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -30,7 +29,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${dmSans.variable}`}>
-      <body className="min-h-screen bg-background font-sans antialiased">{children}</body>
+      <body className="min-h-screen bg-background font-sans antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.__RUNTIME_CONFIG__ = {
+                API_BASE_URL: "${process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"}"
+              };
+            `,
+          }}
+        />
+        {children}
+      </body>
     </html>
   )
 }
