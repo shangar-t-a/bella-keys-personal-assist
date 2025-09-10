@@ -29,8 +29,8 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
         async with await self._get_session() as session:
             # Create new entry
             new_entry = SpendingAccountEntryModel(
-                account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
+                account_id=entry.account.id,
+                date_detail_id=entry.date_detail.id,
                 starting_balance=entry.starting_balance,
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
@@ -38,11 +38,14 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             session.add(new_entry)
             await session.commit()
 
+            # Retrieve account and date details
+            await session.refresh(new_entry)
+
             # Convert to domain model with calculated fields
             return SpendingAccountEntryWithCalculatedFields(
                 id=new_entry.id,
-                account_id=new_entry.account_id,
-                date_detail_id=new_entry.date_detail_id,
+                account=entry.account,
+                date_detail=entry.date_detail,
                 starting_balance=new_entry.starting_balance,
                 current_balance=new_entry.current_balance,
                 current_credit=new_entry.current_credit,

@@ -138,3 +138,7 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 - **Testing:** All tests are in `tests/`.
 
 > This structure ensures maintainability, testability, and clear separation of concerns as the service evolves.
+
+## Shangar Notes
+
+- DTO is not required here as the job is done by Pydantic models in the schema layer.
