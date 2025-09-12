@@ -44,8 +44,8 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Convert to domain model with calculated fields
             return SpendingAccountEntryWithCalculatedFields(
                 id=new_entry.id,
-                account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
+                account_id=new_entry.account_id,
+                date_detail_id=new_entry.date_detail_id,
                 starting_balance=new_entry.starting_balance,
                 current_balance=new_entry.current_balance,
                 current_credit=new_entry.current_credit,
