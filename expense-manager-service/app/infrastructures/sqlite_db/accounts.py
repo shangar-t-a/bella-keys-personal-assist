@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.entities.errors.accounts import AccountNotFoundError, MonthYearNotFoundError
 from app.entities.models.accounts import AccountName, MonthYear
 from app.entities.repositories.accounts import AccountRepositoryInterface
-from app.infrastructures.sqlite_db.database import async_session
+from app.infrastructures.sqlite_db.database import get_async_session
 from app.infrastructures.sqlite_db.models.accounts import AccountModel, MonthYearModel
 
 
@@ -15,7 +15,7 @@ class SQLiteAccountRepository(AccountRepositoryInterface):
 
     def __init__(self):
         """Initialize the SQLite account repository."""
-        self.session_factory = async_session
+        self.session_factory = get_async_session()
 
     async def _get_session(self) -> AsyncSession:
         """Get a new database session."""

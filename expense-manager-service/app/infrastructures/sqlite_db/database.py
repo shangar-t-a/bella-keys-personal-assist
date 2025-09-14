@@ -1,20 +1,32 @@
 """Database configuration for SQLite."""
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from functools import lru_cache
+
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import DeclarativeBase
 
 from app.settings import get_settings
 
-settings = get_settings()
 
 # Create async engine
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.LOG_DB_QUERIES,
-)
+@lru_cache(maxsize=1)
+def get_engine():
+    """Get the database engine."""
+    return create_async_engine(
+        get_settings().DATABASE_URL,
+        echo=get_settings().LOG_DB_QUERIES,
+    )
+
 
 # Create async session factory
-async_session = async_sessionmaker(engine, expire_on_commit=False)
+@lru_cache(maxsize=1)
+def get_async_session():
+    """Get the async session factory."""
+    engine = get_engine()
+    return async_sessionmaker(engine, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
@@ -25,5 +37,13 @@ class Base(DeclarativeBase):
 
 async def init_db() -> None:
     """Initialize the database, creating all tables."""
+    engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+async def drop_db() -> None:
+    """Drop all tables in the database."""
+    engine = get_engine()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)

@@ -6,7 +6,7 @@ from app.settings.base import ExpenseManagerBaseSettings
 from app.settings.dev import ExpenseManagerDevSettings
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_settings() -> ExpenseManagerBaseSettings | ExpenseManagerDevSettings:
     """Get the appropriate settings based on the environment."""
     if ExpenseManagerBaseSettings().APP_ENV == "dev":
