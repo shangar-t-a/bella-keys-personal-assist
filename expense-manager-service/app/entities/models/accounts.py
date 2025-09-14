@@ -25,7 +25,7 @@ MonthLiteral = Literal[
 class AccountName(BaseEntity):
     """Entity representing an account name."""
 
-    account_name: str
+    account_name: str = Field(description="Name of the account")
 
     @model_validator(mode="before")
     @classmethod
@@ -38,5 +38,5 @@ class AccountName(BaseEntity):
 class MonthYear(BaseEntity):
     """Entity representing date details with month and year."""
 
-    month: MonthLiteral
-    year: int = Field(ge=2000, le=2100)
+    month: MonthLiteral = Field(description="Month of the year")
+    year: int = Field(ge=2000, le=2100, description="Year of the entry")

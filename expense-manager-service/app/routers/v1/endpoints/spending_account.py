@@ -2,6 +2,11 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.routers.v1.mappers.spending_account import (
+    CreateSpendingAccountMapper,
+    SpendingAccountMapper,
+    SpendingAccountWithCalculatedFieldsMapper,
+)
 from app.routers.v1.schemas.errors import HTTPErrorResponse
 from app.routers.v1.schemas.spending_account import (
     SpendingAccountEntryRequest,
@@ -39,7 +44,8 @@ async def add_entry(
 ) -> SpendingAccountEntryWithCalculatedFieldsResponse:
     """Add a new entry to the spending account."""
     try:
-        entry = await spending_account_service.add_entry(request)
+        entry_dto = CreateSpendingAccountMapper.to_use_case_model(request=request)
+        flattened_entry = await spending_account_service.add_entry(entry=entry_dto)
     except AccountWithNameNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -50,17 +56,7 @@ async def add_entry(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
         ) from error
-    return SpendingAccountEntryWithCalculatedFieldsResponse(
-        id=entry.id,
-        account_name=entry.account_name,
-        month=entry.month,
-        year=entry.year,
-        starting_balance=entry.starting_balance,
-        current_balance=entry.current_balance,
-        current_credit=entry.current_credit,
-        balance_after_credit=entry.balance_after_credit,
-        total_spent=entry.total_spent,
-    )
+    return SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=flattened_entry)
 
 
 @router.get("/list", response_model=list[SpendingAccountEntryWithCalculatedFieldsResponse])
@@ -68,21 +64,8 @@ async def get_all_entries(
     spending_account_service: SpendingAccountService = Depends(get_spending_account_service),
 ) -> list[SpendingAccountEntryWithCalculatedFieldsResponse]:
     """Retrieve all entries for all spending accounts."""
-    entries = await spending_account_service.get_all_entries()
-    return [
-        SpendingAccountEntryWithCalculatedFieldsResponse(
-            id=entry.id,
-            account_name=entry.account_name,
-            month=entry.month,
-            year=entry.year,
-            starting_balance=entry.starting_balance,
-            current_balance=entry.current_balance,
-            current_credit=entry.current_credit,
-            balance_after_credit=entry.balance_after_credit,
-            total_spent=entry.total_spent,
-        )
-        for entry in entries
-    ]
+    flattened_entries = await spending_account_service.get_all_entries()
+    return [SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=entry) for entry in flattened_entries]
 
 
 @router.get(
@@ -100,26 +83,13 @@ async def get_all_entries_for_account(
 ) -> list[SpendingAccountEntryWithCalculatedFieldsResponse]:
     """Retrieve all entries for a given spending account."""
     try:
-        entries = await spending_account_service.get_all_entries_for_account(account_id=account_id)
+        flattened_entries = await spending_account_service.get_all_entries_for_account(account_id=account_id)
     except AccountNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
         ) from error
-    return [
-        SpendingAccountEntryWithCalculatedFieldsResponse(
-            id=entry.id,
-            account_name=entry.account_name,
-            month=entry.month,
-            year=entry.year,
-            starting_balance=entry.starting_balance,
-            current_balance=entry.current_balance,
-            current_credit=entry.current_credit,
-            balance_after_credit=entry.balance_after_credit,
-            total_spent=entry.total_spent,
-        )
-        for entry in entries
-    ]
+    return [SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=entry) for entry in flattened_entries]
 
 
 @router.put(
@@ -143,7 +113,13 @@ async def edit_entry(
 ) -> SpendingAccountEntryWithCalculatedFieldsResponse:
     """Edit an existing spending account entry."""
     try:
-        entry = await spending_account_service.edit_entry(entry_id=entry_id, entry=request)
+        flattened_entry = await spending_account_service.edit_entry(
+            entry_id=entry_id,
+            entry=SpendingAccountMapper.to_use_case_model(
+                entry_id=entry_id,
+                request=request,
+            ),
+        )
     except SpendingAccountEntryNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -159,17 +135,7 @@ async def edit_entry(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
         ) from error
-    return SpendingAccountEntryWithCalculatedFieldsResponse(
-        id=entry.id,
-        account_name=entry.account_name,
-        month=entry.month,
-        year=entry.year,
-        starting_balance=entry.starting_balance,
-        current_balance=entry.current_balance,
-        current_credit=entry.current_credit,
-        balance_after_credit=entry.balance_after_credit,
-        total_spent=entry.total_spent,
-    )
+    return SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=flattened_entry)
 
 
 @router.delete(

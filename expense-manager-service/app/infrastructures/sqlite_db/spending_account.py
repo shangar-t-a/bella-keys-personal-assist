@@ -38,6 +38,9 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             session.add(new_entry)
             await session.commit()
 
+            # Retrieve account and date details
+            await session.refresh(new_entry)
+
             # Convert to domain model with calculated fields
             return SpendingAccountEntryWithCalculatedFields(
                 id=new_entry.id,

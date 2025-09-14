@@ -8,9 +8,9 @@
             "name": "Expense Manager Service",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/expense_manager_service/app/main.py",
+            "program": "${workspaceFolder}/expense-manager-service/app/main.py",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/expense_manager_service"
+            "cwd": "${workspaceFolder}/expense-manager-service"
         }
     ]
 }
