@@ -11,11 +11,7 @@
             "source.fixAll.ruff": "always"
         }
     },
-    "python-envs.pythonProjects": [
-        {
-            "path": "expense_manager_service",
-            "envManager": "ms-python.python:venv",
-            "packageManager": "ms-python.python:pip"
-        }
-    ]
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}\\expense-manager-service"
 }
