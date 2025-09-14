@@ -1,0 +1,9 @@
+[paths]
+source =
+    app/
+
+[report]
+include_namespace_packages = true
+
+[html]
+directory = coverage_html
