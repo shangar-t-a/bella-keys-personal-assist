@@ -24,11 +24,10 @@ class AccountWithNameNotFoundError(ExpenseManagerUseCaseError):
 class MonthYearNotFoundError(ExpenseManagerUseCaseError):
     """Error raised when a MonthYear is not found."""
 
-    def __init__(self, month: str, year: int):
-        """Initialize the error with the month and year."""
-        super().__init__(f"MonthYear with month '{month}' and year '{year}' not found.")
-        self.month = month
-        self.year = year
+    def __init__(self, month_year_id: str):
+        """Initialize the error with the month-year ID."""
+        super().__init__(f"MonthYear with ID '{month_year_id}' not found.")
+        self.month_year_id = month_year_id
 
 
 class MonthYearWithDetailsNotFoundError(ExpenseManagerUseCaseError):

@@ -76,7 +76,7 @@ class SpendingAccountService:
         """Add a new entry to the spending account.
 
         Raises:
-            AccountNotFoundError: If the account with the provided id does not exist.
+            AccountWithNameNotFoundError: If the account with the provided name does not exist.
             MonthYearAlreadyExistsForAccountError: If the month and year already exist for the account.
         """
         # Retrieve account and month year details
@@ -84,7 +84,7 @@ class SpendingAccountService:
 
         # Account must exist
         if not retrieved_account:
-            raise AccountNotFoundError(account_id=entry.account_id)
+            raise AccountWithNameNotFoundError(account_name=entry.account_name)
 
         # Retrieve MonthYear if it exists
         retrieved_date_detail = await self.account_repository.get_month_year_by_value(
@@ -202,12 +202,6 @@ class SpendingAccountService:
             MonthYearAlreadyExistsForAccountError: If the month and year already exist for the account.
             SpendingAccountEntryNotFoundError: If the spending account entry with the provided ID does not exist.
         """
-        # Check if entry exists
-        try:
-            await self.spending_account_repository.get_entry_by_id(entry_id=entry_id)
-        except EntitySpendingAccountEntryNotFoundError as error:
-            raise SpendingAccountEntryNotFoundError(entry_id=error.entry_id) from error
-
         # Account must exist. If exists, retrieve the account to get its ID
         account = await self.account_repository.get_account_by_name(account_name=entry.account_name)
         if not account:
@@ -231,9 +225,12 @@ class SpendingAccountService:
         spending_account_entry_entity = await self._convert_flattened_spending_account_entry_to_entity(entry=entry)
 
         # Edit entry in repository
-        updated_spending_account_entry_entity = await self.spending_account_repository.edit_entry(
-            entry_id=entry_id, entry=spending_account_entry_entity
-        )
+        try:
+            updated_spending_account_entry_entity = await self.spending_account_repository.edit_entry(
+                entry_id=entry_id, entry=spending_account_entry_entity
+            )
+        except EntitySpendingAccountEntryNotFoundError as error:
+            raise SpendingAccountEntryNotFoundError(entry_id=error.entry_id) from error
 
         # Retrieve foreign key details for the updated entry
         updated_spending_account_entry_entity_with_details = (

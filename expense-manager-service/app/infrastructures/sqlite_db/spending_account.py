@@ -9,7 +9,7 @@ from app.entities.models.spending_account import (
     SpendingAccountEntryWithCalculatedFields,
 )
 from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
-from app.infrastructures.sqlite_db.database import async_session
+from app.infrastructures.sqlite_db.database import get_async_session
 from app.infrastructures.sqlite_db.models.spending_account import SpendingAccountEntryModel
 
 
@@ -18,7 +18,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
     def __init__(self):
         """Initialize the SQLite spending account repository."""
-        self.session_factory = async_session
+        self.session_factory = get_async_session()
 
     async def _get_session(self) -> AsyncSession:
         """Get a new database session."""
