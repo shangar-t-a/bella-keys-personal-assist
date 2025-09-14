@@ -1,71 +1,60 @@
-
 # Expense Manager Service Architecture
 
 ## 1. Folder Structure (Backend)
 
 ```text
-expense_manager_service/
-├── app/
+expense-manager-service/
+├── .coveragerc                                              # Test coverage config
+├── .dockerignore                                            # Docker ignore file
+├── .env                                                     # Environment variables (for local development)
+├── .env.sample                                              # Sample env file for reference
+├── .gitignore                                               # Git ignore file
+├── Dockerfile                                               # Dockerfile for containerizing the app
+├── mypy.ini                                                 # Mypy config (static type checking)
+├── pyproject.toml                                           # Project metadata and dependencies
+├── pytest.ini                                               # Pytest configurations
+├── README.md                                                # Project documentation
+├── ruff.toml                                                # Ruff config (linting)
+├── tox.ini                                                  # Tox config (testing in isolated environments)
+├── uv.lock                                                  # UV lock file (dependency management)
+├── app/                                                     # Main application code
 │   ├── __init__.py
-│   ├── main.py
-│   ├── entities/
-│   │   ├── errors/
-│   │   │   ├── accounts.py
-│   │   │   ├── base.py
-│   │   │   └── spending_account.py
-│   │   ├── models/
-│   │   │   ├── accounts.py
-│   │   │   ├── base.py
-│   │   │   └── spending_account.py
-│   │   ├── repositories/
-│   │   │   ├── accounts.py
-│   │   │   └── spending_account.py
-│   ├── infrastructures/
-│   │   ├── inmemory_db/
-│   │   │   ├── accounts.py
-│   │   │   └── spending_account.py
-│   │   └── sqlite_db/
-│   │       ├── accounts.py
-│   │       ├── database.py
-│   │       └── spending_account.py
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── v1/
-│   │   │   ├── __init__.py
-│   │   │   ├── endpoints/
-│   │   │   │   ├── accounts.py
-│   │   │   │   └── spending_account.py
-│   │   │   ├── schemas/
-│   │   │   │   ├── accounts.py
-│   │   │   │   ├── base.py
-│   │   │   │   ├── errors.py
-│   │   │   │   └── spending_account.py
-│   │   │   └── services.py
-│   ├── settings/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── config.py
-│   │   └── dev.py
-│   ├── use_cases/
-│   │   ├── accounts.py
-│   │   ├── spending_account.py
-│   │   ├── dto/
-│   │   │   ├── accounts.py
-│   │   │   ├── base.py
-│   │   │   └── spending_account.py
-│   │   ├── errors/
-│   │   │   └── accounts.py
-│   │   ├── mappers/
-│   │   │   ├── accounts.py
-│   │   │   └── spending_account.py
-│   │   └── errors/
-│   │       └── base.py
-├── tests/
-├── pyproject.toml
-├── README.md
-├── ruff.toml
-├── uv.lock
-├── expense_manager.db
+│   ├── main.py                                              # FastAPI app entrypoint
+│   ├── entities/                                            # Domain layer
+│   │   ├── errors/                                          # Domain-specific errors
+│   │   ├── models/                                          # Domain models
+│   │   └── repositories/                                    # Repository interfaces
+│   ├── infrastructures/                                     # Infrastructure layer (external systems)
+│   │   ├── inmemory_db/                                     # In-memory DB implementations (for testing/dev)
+│   │   └── sqlite_db/                                       # SQLite DB implementations (for production)
+│   │       └── models/                                      # SQLAlchemy models
+│   ├── routers/                                             # Presentation/API layer
+│   │   ├── v1/                                              # API version 1
+│   │   │   ├── endpoints/                                   # FastAPI routers
+│   │   │   ├── mappers/                                     # Mappers between schemas and entities
+│   │   │   ├── schemas/                                     # Pydantic schemas
+│   │   │   ├── services.py                                  # Dependency injection
+│   │   │   └── __init__.py
+│   │   └── __init__.py
+│   ├── settings/                                            # Configuration layer
+│   │   ├── base.py                                          # Base settings
+│   │   ├── config.py                                        # Config loader
+│   │   ├── dev.py                                           # Development settings
+│   │   └── __init__.py
+│   └── use_cases/                                           # Use Cases layer (Business logic)
+│       ├── errors/                                          # Use-case-specific errors
+│       └── models/                                          # Use-case-specific models
+├── docs/                                                    # Documentation
+├── tests/                                                   # Test cases
+│   ├── conftest.py                                          # Pytest configurations at root
+│   ├── integration/                                         # Integration tests
+|   |   ├── conftest.py                                      # Pytest configurations at integration test level
+│   │   └── routers/
+│   │       └── v1/
+│   └── unit/                                                # Unit tests
+│       ├── conftest.py                                      # Pytest configurations at unit test level
+│       ├── settings.py
+│       └── use_cases/
 ```
 
 ## 2. Layered Architecture & File-Level Details
@@ -76,18 +65,17 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 - **Purpose:** Core business logic, domain models, and error definitions.
 - **Key Files:**
-  - `models/accounts.py`, `models/spending_account.py`: Define immutable business entities (e.g., `AccountName`, `SpendingAccountEntry`).
+  - `models/*`: Define immutable business entities (e.g., `AccountName`).
   - `models/base.py`: Base entity with common fields (e.g., `id`).
   - `errors/`: Custom exceptions for domain errors (e.g., `AccountNotFoundError`).
   - `repositories/`: Abstract repository interfaces (e.g., `AccountRepositoryInterface`).
 
 ### Use Cases Layer (`app/use_cases/`)
 
-- **Purpose:** Application-specific business logic, orchestration, and DTOs.
+- **Purpose:** Application-specific business logic and orchestration.
 - **Key Files:**
-  - `accounts.py`, `spending_account.py`: Service classes encapsulating business use cases (e.g., `AccountService`).
-  - `dto/`: Data Transfer Objects for use case input/output (e.g., `AccountNameDTO`).
-  - `mappers/`: Convert between entities and DTOs.
+  - Service classes encapsulating business use cases (e.g., `AccountService`).
+  - `models/`: Use-case-specific models if needed.
   - `errors/`: Use-case-specific errors, distinct from domain errors.
 
 ### Infrastructure Layer (`app/infrastructures/`)
@@ -102,6 +90,7 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 - **Purpose:** API endpoints, request/response schemas, and routing.
 - **Key Files:**
   - `v1/endpoints/`: FastAPI routers for each resource (e.g., `accounts.py`).
+  - `v1/mappers/`: Convert between schemas and entities. DTO not needed here as Schemas serve that purpose.
   - `v1/schemas/`: Pydantic schemas for API requests/responses.
   - `v1/services.py`: Dependency injection for repositories/services.
 
@@ -121,11 +110,15 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 ## 4. Technology Stack & Rationale
 
-- **Python 3.12+**: Modern language features and type safety.
+- **Python 3.13+**: Backend technology.
 - **FastAPI**: High-performance, async web framework for building APIs.
-- **Pydantic v2**: Data validation and settings management.
+- **Pydantic**: Data validation and settings management.
 - **SQLAlchemy (async)**: Async ORM for database access (SQLite).
 - **Uvicorn**: ASGI server for running FastAPI apps.
+- **UV**: Dependency management.
+- **Mypy**: Static type checking.
+- **Pytest**: Testing framework.
+- **Tox**: Testing in isolated environments.
 - **Ruff**: Linting and code quality.
 - **Clean Architecture**: Promotes separation of concerns, testability, and maintainability.
 - **In-memory & SQLite Repositories**: Support for both development/testing and production persistence.
@@ -138,7 +131,3 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 - **Testing:** All tests are in `tests/`.
 
 > This structure ensures maintainability, testability, and clear separation of concerns as the service evolves.
-
-## Shangar Notes
-
-- DTO is not required here as the job is done by Pydantic models in the schema layer.

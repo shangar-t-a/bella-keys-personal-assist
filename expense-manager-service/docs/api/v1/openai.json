@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "Expense Manager Service",
-        "version": "0.0.1"
+        "version": "1.0.0"
     },
     "paths": {
         "/v1/account/get_or_create": {
@@ -103,6 +103,16 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Account not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -154,6 +164,16 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Account not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -190,6 +210,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {}
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Account not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
                             }
                         }
                     },
@@ -304,6 +334,16 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "MonthYear not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -355,6 +395,16 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "MonthYear not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -391,6 +441,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {}
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "MonthYear not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
                             }
                         }
                     },
@@ -432,6 +492,26 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Spending account entry not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Account with name not found or month/year already exists for account",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
                                 }
                             }
                         }
@@ -509,6 +589,16 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Spending account not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -562,6 +652,26 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Spending account entry not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Account with name not found or month/year already exists for account",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -598,6 +708,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {}
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Spending account entry not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPErrorResponse"
+                                }
                             }
                         }
                     },
@@ -640,7 +760,7 @@
         "/health": {
             "get": {
                 "summary": "Health Check",
-                "description": "Health check endpoint.\n\nReturns:\n    Dict containing service health information including:\n    - status: Current service status\n    - version: Application version\n    - start_time: Service start time in ISO format\n    - uptime: Service uptime in seconds",
+                "description": "Health check endpoint.\n\nReturns:\n    Dict containing service health information including:\n    - status: Current service status\n    - version: Application version\n    - start_time: Service start time in ISO format\n    - uptime: Service uptime in hh:mm:ss format",
                 "operationId": "health_check_health_get",
                 "responses": {
                     "200": {
@@ -724,6 +844,20 @@
                 "title": "AccountUpdateRequest",
                 "description": "Schema for account update requests."
             },
+            "HTTPErrorResponse": {
+                "properties": {
+                    "detail": {
+                        "type": "string",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "detail"
+                ],
+                "title": "HTTPErrorResponse",
+                "description": "Base schema for HTTP error responses."
+            },
             "HTTPValidationError": {
                 "properties": {
                     "detail": {
@@ -760,8 +894,8 @@
                     },
                     "year": {
                         "type": "integer",
-                        "maximum": 2100.0,
-                        "minimum": 2000.0,
+                        "maximum": 2100,
+                        "minimum": 2000,
                         "title": "Year",
                         "description": "Year between 2000 and 2100",
                         "examples": [
@@ -843,8 +977,8 @@
                     },
                     "year": {
                         "type": "integer",
-                        "maximum": 2100.0,
-                        "minimum": 2000.0,
+                        "maximum": 2100,
+                        "minimum": 2000,
                         "title": "Year",
                         "description": "Year between 2000 and 2100",
                         "examples": [
@@ -854,29 +988,26 @@
                     },
                     "startingBalance": {
                         "type": "number",
-                        "exclusiveMinimum": 0.0,
                         "title": "Startingbalance",
                         "description": "Starting balance of the account",
                         "examples": [
-                            10000.0
+                            10000
                         ]
                     },
                     "currentBalance": {
                         "type": "number",
-                        "exclusiveMinimum": 0.0,
                         "title": "Currentbalance",
                         "description": "Current balance of the account",
                         "examples": [
-                            8000.0
+                            8000
                         ]
                     },
                     "currentCredit": {
                         "type": "number",
-                        "exclusiveMinimum": 0.0,
                         "title": "Currentcredit",
                         "description": "Current credit of the account",
                         "examples": [
-                            2000.0
+                            2000
                         ]
                     }
                 },
@@ -915,8 +1046,8 @@
                     },
                     "year": {
                         "type": "integer",
-                        "maximum": 2100.0,
-                        "minimum": 2000.0,
+                        "maximum": 2100,
+                        "minimum": 2000,
                         "title": "Year",
                         "description": "Year between 2000 and 2100",
                         "examples": [
@@ -926,29 +1057,26 @@
                     },
                     "startingBalance": {
                         "type": "number",
-                        "exclusiveMinimum": 0.0,
                         "title": "Startingbalance",
                         "description": "Starting balance of the account",
                         "examples": [
-                            10000.0
+                            10000
                         ]
                     },
                     "currentBalance": {
                         "type": "number",
-                        "exclusiveMinimum": 0.0,
                         "title": "Currentbalance",
                         "description": "Current balance of the account",
                         "examples": [
-                            8000.0
+                            8000
                         ]
                     },
                     "currentCredit": {
                         "type": "number",
-                        "exclusiveMinimum": 0.0,
                         "title": "Currentcredit",
                         "description": "Current credit of the account",
                         "examples": [
-                            2000.0
+                            2000
                         ]
                     },
                     "id": {
@@ -961,7 +1089,7 @@
                         "title": "Balanceaftercredit",
                         "description": "Balance after deducting credit",
                         "examples": [
-                            6000.0
+                            6000
                         ]
                     },
                     "totalSpent": {
@@ -969,7 +1097,7 @@
                         "title": "Totalspent",
                         "description": "Total amount spent from the account",
                         "examples": [
-                            4000.0
+                            4000
                         ]
                     }
                 },

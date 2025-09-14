@@ -894,8 +894,8 @@
                     },
                     "year": {
                         "type": "integer",
-                        "maximum": 2100.0,
-                        "minimum": 2000.0,
+                        "maximum": 2100,
+                        "minimum": 2000,
                         "title": "Year",
                         "description": "Year between 2000 and 2100",
                         "examples": [
@@ -977,8 +977,8 @@
                     },
                     "year": {
                         "type": "integer",
-                        "maximum": 2100.0,
-                        "minimum": 2000.0,
+                        "maximum": 2100,
+                        "minimum": 2000,
                         "title": "Year",
                         "description": "Year between 2000 and 2100",
                         "examples": [
@@ -991,7 +991,7 @@
                         "title": "Startingbalance",
                         "description": "Starting balance of the account",
                         "examples": [
-                            10000.0
+                            10000
                         ]
                     },
                     "currentBalance": {
@@ -999,7 +999,7 @@
                         "title": "Currentbalance",
                         "description": "Current balance of the account",
                         "examples": [
-                            8000.0
+                            8000
                         ]
                     },
                     "currentCredit": {
@@ -1007,7 +1007,7 @@
                         "title": "Currentcredit",
                         "description": "Current credit of the account",
                         "examples": [
-                            2000.0
+                            2000
                         ]
                     }
                 },
@@ -1046,8 +1046,8 @@
                     },
                     "year": {
                         "type": "integer",
-                        "maximum": 2100.0,
-                        "minimum": 2000.0,
+                        "maximum": 2100,
+                        "minimum": 2000,
                         "title": "Year",
                         "description": "Year between 2000 and 2100",
                         "examples": [
@@ -1060,7 +1060,7 @@
                         "title": "Startingbalance",
                         "description": "Starting balance of the account",
                         "examples": [
-                            10000.0
+                            10000
                         ]
                     },
                     "currentBalance": {
@@ -1068,7 +1068,7 @@
                         "title": "Currentbalance",
                         "description": "Current balance of the account",
                         "examples": [
-                            8000.0
+                            8000
                         ]
                     },
                     "currentCredit": {
@@ -1076,7 +1076,7 @@
                         "title": "Currentcredit",
                         "description": "Current credit of the account",
                         "examples": [
-                            2000.0
+                            2000
                         ]
                     },
                     "id": {
@@ -1089,7 +1089,7 @@
                         "title": "Balanceaftercredit",
                         "description": "Balance after deducting credit",
                         "examples": [
-                            6000.0
+                            6000
                         ]
                     },
                     "totalSpent": {
@@ -1097,7 +1097,7 @@
                         "title": "Totalspent",
                         "description": "Total amount spent from the account",
                         "examples": [
-                            4000.0
+                            4000
                         ]
                     }
                 },
