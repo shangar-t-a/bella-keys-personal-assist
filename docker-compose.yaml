@@ -14,7 +14,7 @@ services:
       retries: 5
 
   expense-manager-service:
-    build: ./expense-manager-service
+    build: ./services/expense-manager-service
     ports:
       - "8000:8000"
     environment:
