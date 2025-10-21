@@ -1,0 +1,36 @@
+[project]
+name = "etl-pipelines"
+dynamic = ["version"]
+description = "ETL pipelines for Bella Chat Application"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bella-chat-service",
+    "httpx>=0.28.1",
+    "langchain>=0.3.27",
+    "pydantic-settings>=2.11.0",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+lint = ["ruff>=0.13.3"]
+test = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "tox>=4.30.3",
+]
+type = ["mypy>=1.18.2"]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "etl_pipelines/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["etl_pipelines/"]
+
+[tool.uv.sources]
+bella-chat-service = { path = "../bella-chat-service", editable = true }
