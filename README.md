@@ -3,6 +3,7 @@
 Bella - Keys' (Shangar's) Personal Management.
 
 - [Bella Keys Personal Assistant](#bella-keys-personal-assistant)
+  - [1. Project Overview](#1-project-overview)
   - [2. App Screens](#2-app-screens)
     - [2.1. Home Screen](#21-home-screen)
     - [2.2. Dashboards](#22-dashboards)
@@ -18,9 +19,13 @@ Bella - Keys' (Shangar's) Personal Management.
     - [4.1. Technologies Used](#41-technologies-used)
     - [4.2. Features Overview](#42-features-overview)
 
+## 1. Project Overview
+
 The project handles the following responsibilities at the moment:
 
 1. Expense Management Application
+2. Bella Chatbot - A knowledge base chatbot using LLMs
+   1. ETL Pipelines to extract, transform, and load knowledge base from GitHub repository
 
 ## 2. App Screens
 
