@@ -1,0 +1,19 @@
+# Python
+
+.venv
+__pycache__
+*.pyc
+dist
+build
+
+# Git
+
+.git
+.gitignore
+
+# App Specific
+
+docs
+.env
+.env.sample
+*.log

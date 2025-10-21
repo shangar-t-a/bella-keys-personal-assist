@@ -1,0 +1,67 @@
+[project]
+name = "bella-chat-service"
+dynamic = ["version"]
+description = "Bella: Keys' Personal Assistant Chat Application"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.118.0",
+    "langchain>=0.3.27",
+    "langchain-google-genai>=2.1.12",
+    "langchain-huggingface>=0.3.1",
+    "langchain-ollama>=0.3.10",
+    "langchain-qdrant>=0.2.1",
+    "pydantic>=2.11.10",
+    "pydantic-settings>=2.11.0",
+    "sentence-transformers>=5.1.1",
+    "utilities",
+    "uvicorn>=0.37.0",
+]
+
+[dependency-groups]
+lint = ["ruff>=0.13.3"]
+test = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "tox>=4.30.3",
+]
+type = ["mypy>=1.18.2"]
+
+[project.optional-dependencies]
+cpu = ["torch", "torchvision"]
+gpu = ["torch", "torchvision"]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu129", extra = "gpu" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu129", extra = "gpu" },
+]
+utilities = { path = "py_dependencies/utilities-0.1.0-py3-none-any.whl" }
+
+[[tool.uv.index]]
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "app/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app/"]

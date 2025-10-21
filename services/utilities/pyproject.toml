@@ -1,0 +1,29 @@
+[project]
+name = "utilities"
+dynamic = ["version"]
+description = "Utilities for common tasks"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "python-dotenv>=1.1.1",
+]
+
+[dependency-groups]
+lint = ["ruff>=0.13.3"]
+test = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "tox>=4.30.3",
+]
+type = ["mypy>=1.18.2"]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "utilities/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["utilities/"]
