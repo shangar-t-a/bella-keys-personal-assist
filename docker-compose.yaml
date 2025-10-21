@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=${EMS_PG_DB_USER}
+      - POSTGRES_PASSWORD=${EMS_PG_DB_PASSWORD}
+      - POSTGRES_DB=${EMS_PG_DB_NAME}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  expense-manager-service:
+    build: ./expense-manager-service
+    ports:
+      - "8000:8000"
+    environment:
+      # App configurations
+      - HOST=${EMS_HOST}
+      - PORT=${EMS_PORT}
+      - DEBUG=${EMS_DEBUG}
+      # Database configurations
+      - STORAGE_TYPE=${EMS_STORAGE_TYPE}
+      - PG_DB_HOST=${EMS_PG_DB_HOST}
+      - PG_DB_PORT=${EMS_PG_DB_PORT}
+      - PG_DB_USER=${EMS_PG_DB_USER}
+      - PG_DB_PASSWORD=${EMS_PG_DB_PASSWORD}
+      - PG_DB_NAME=${EMS_PG_DB_NAME}
+    depends_on:
+      - postgres
+
+  keys-personal-assist-ui:
+    build: ./keys-personal-assist-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - HOSTNAME=${PERSONAL_ASSIST_UI_HOST}
+      - PORT=${PERSONAL_ASSIST_UI_PORT}
+      - NEXT_PUBLIC_EMS_API_URL=${NEXT_PUBLIC_EMS_API_URL}
+      - NEXT_PUBLIC_BELLA_CHAT_API_URL=${NEXT_PUBLIC_BELLA_CHAT_API_URL}
