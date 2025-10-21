@@ -5,12 +5,42 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Expense Manager Service",
+            "name": "Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/expense-manager-service/app/main.py",
+            "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/expense-manager-service"
+            "justMyCode": false
+        },
+        {
+            "name": "[Service]: Bella Chat",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/services/bella-chat-service",
+            "program": "${workspaceFolder}/services/bella-chat-service/app/main.py",
+            "python": "${workspaceFolder}/services/bella-chat-service/.venv/Scripts/python.exe",
+            "justMyCode": false
+        },
+        {
+            "name": "[Service]: Expense Manager",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/services/expense-manager-service",
+            "program": "${workspaceFolder}/services/expense-manager-service/app/main.py",
+            "python": "${workspaceFolder}/services/expense-manager-service/.venv/Scripts/python.exe",
+            "justMyCode": false
+        },
+        {
+            "name": "[ETL - GitHub]: Keys Wiki",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/services/etl-pipelines",
+            "program": "${workspaceFolder}/services/etl-pipelines/etl_pipelines/github/etls/load_keys_personal_wiki.py",
+            "python": "${workspaceFolder}/services/etl-pipelines/.venv/Scripts/python.exe",
+            "justMyCode": false
         }
     ]
 }
