@@ -75,7 +75,7 @@ const MONTHS = [
 const PAGE_SIZES = [10, 25, 50, 100]
 
 const getApiBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+  return process.env.NEXT_PUBLIC_EMS_API_URL || "http://localhost:8000"
 }
 
 export default function SpendingAccountSummaryPage() {

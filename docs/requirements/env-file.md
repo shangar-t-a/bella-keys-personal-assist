@@ -19,7 +19,7 @@ Note:
    - Port number for the frontend application.
    - Default: `3000`
 
-3. `NEXT_PUBLIC_API_BASE_URL`
+3. `NEXT_PUBLIC_EMS_API_URL`
    - Base URL for the API endpoints.
    - Default: `https://localhost:8000`
 
@@ -28,5 +28,5 @@ Sample `.env` file:
 ```plaintext
 HOST=localhost
 PORT=3000
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_EMS_API_URL=http://localhost:8000
 ```

@@ -29,7 +29,7 @@ The Keys' Personal Assist defines core requirements that apply across all compon
 
 ### 3. Backend Integration
 
-1. All pages must integrate with the backend as specified in `openai.json`
+1. All pages must integrate with the backend as specified in `ems.openai.json`
 2. Base URL for API calls must be configured to point to the backend server. The URL should be set in a configuration file or environment variable. Default to `http://localhost:8000` for local development if not specified
 3. Error handling must be implemented for API calls
    1. Display user-friendly error messages in case of API failures
