@@ -9,6 +9,8 @@ from app.infrastructures.inmemory_db.accounts import AccountRepository as InMemo
 from app.infrastructures.inmemory_db.spending_account import (
     SpendingAccountRepository as InMemorySpendingAccountRepository,
 )
+from app.infrastructures.postgres_db.accounts import PostgresAccountRepository
+from app.infrastructures.postgres_db.spending_account import PostgresSpendingAccountRepository
 from app.infrastructures.sqlite_db.accounts import SQLiteAccountRepository
 from app.infrastructures.sqlite_db.spending_account import SQLiteSpendingAccountRepository
 from app.settings import get_settings
@@ -21,6 +23,7 @@ class StorageType(str, Enum):
 
     INMEMORY = "inmemory"
     SQLITE = "sqlite"
+    POSTGRES = "postgresql"
 
 
 def get_account_repository() -> AccountRepositoryInterface:
@@ -30,6 +33,8 @@ def get_account_repository() -> AccountRepositoryInterface:
 
     if storage_type == StorageType.SQLITE:
         return SQLiteAccountRepository()
+    elif storage_type == StorageType.POSTGRES:
+        return PostgresAccountRepository()
     return InMemoryAccountRepository()
 
 
@@ -40,6 +45,8 @@ def get_spending_account_repository() -> SpendingAccountRepositoryInterface:
 
     if storage_type == StorageType.SQLITE:
         return SQLiteSpendingAccountRepository()
+    elif storage_type == StorageType.POSTGRES:
+        return PostgresSpendingAccountRepository()
     return InMemorySpendingAccountRepository()
 
 
