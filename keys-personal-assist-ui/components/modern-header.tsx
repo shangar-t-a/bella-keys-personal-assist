@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Sun, Moon, Menu, X, Home, BarChart3, MessageCircle, Sparkles } from "lucide-react"
 
 export default function ModernHeader() {
@@ -37,7 +36,7 @@ export default function ModernHeader() {
   const navigation = [
     { name: "Home", href: "/", icon: Home },
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-    { name: "Chat", href: "/chat", icon: MessageCircle, badge: "Soon" },
+    { name: "Chat", href: "/chat", icon: MessageCircle },
   ]
 
   return (
@@ -46,12 +45,10 @@ export default function ModernHeader() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl font-space-grotesk bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Bella (Keys' Assist)
-            </span>
+            <span className="font-bold text-xl text-emerald-600">Bella (Keys' Assist)</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -72,11 +69,6 @@ export default function ModernHeader() {
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {item.badge}
-                    </Badge>
-                  )}
                 </Link>
               )
             })}
@@ -128,11 +120,6 @@ export default function ModernHeader() {
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
                   </Link>
                 )
               })}

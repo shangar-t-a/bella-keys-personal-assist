@@ -8,7 +8,7 @@ The Spending Account Summary page provides users with a comprehensive view of th
 
 ### 1. Page Layout and Navigation
 
-1. Retrieve API endpoint details from `openai.json`. Use these endpoints to fetch data for the page and ensure proper integration with the backend. Make sure to handle API errors gracefully and display user-friendly messages.
+1. Retrieve API endpoint details from `ems.openai.json`. Use these endpoints to fetch data for the page and ensure proper integration with the backend. Make sure to handle API errors gracefully and display user-friendly messages.
 2. Implement responsive design for desktop and mobile views
 3. Show loading states while data is being fetched
 

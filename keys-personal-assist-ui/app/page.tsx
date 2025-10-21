@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, Calendar, MessageCircle, BarChart3 } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import ModernHeader from "@/components/modern-header"
 
 export default function HomePage() {
@@ -46,36 +45,6 @@ export default function HomePage() {
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
-        </div>
-
-        {/* Simple Features Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mt-20 animate-fade-in">
-          <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="text-center pb-4">
-              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
-                <BarChart3 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <CardTitle>Dashboard</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="text-center pb-4">
-              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
-                <Calendar className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <CardTitle>Organization</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="text-center pb-4">
-              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
-                <MessageCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <CardTitle>Questions</CardTitle>
-            </CardHeader>
-          </Card>
         </div>
       </main>
     </div>

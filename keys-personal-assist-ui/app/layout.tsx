@@ -20,6 +20,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Bella - Keys' Personal Assistant",
   description: "Personal assistant for managing your day, asking questions and more",
+  generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -34,7 +35,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               window.__RUNTIME_CONFIG__ = {
-                API_BASE_URL: "${process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"}"
+                EMS_API_URL: "${process.env.NEXT_PUBLIC_EMS_API_URL || "http://localhost:8000"}",
+                BELLA_CHAT_API_URL: "${process.env.NEXT_PUBLIC_BELLA_CHAT_API_URL || "http://localhost:8000/v1/chat/"}"
               };
             `,
           }}
