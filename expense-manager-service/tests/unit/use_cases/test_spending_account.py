@@ -72,7 +72,6 @@ async def add_entry(spending_account_service, entry_data):
 
 
 class TestAddSpendingAccountEntry:
-    @pytest.mark.asyncio
     async def test__add_entry__success(
         self,
         spending_account_service,
@@ -92,7 +91,6 @@ class TestAddSpendingAccountEntry:
         assert result.current_balance == entry_data["current_balance"]
         assert result.current_credit == entry_data["current_credit"]
 
-    @pytest.mark.asyncio
     async def test__add_entry__account_not_found(
         self,
         spending_account_service,
@@ -105,7 +103,6 @@ class TestAddSpendingAccountEntry:
         with pytest.raises(AccountWithNameNotFoundError):
             await spending_account_service.add_entry(entry=entry)
 
-    @pytest.mark.asyncio
     async def test__add_entry__duplicate_month_year_for_account(
         self,
         spending_account_service,
@@ -123,7 +120,6 @@ class TestAddSpendingAccountEntry:
         with pytest.raises(MonthYearAlreadyExistsForAccountError):
             await spending_account_service.add_entry(entry=entry)
 
-    @pytest.mark.asyncio
     async def test__add_entry__check_response_data(
         self,
         spending_account_service,
@@ -151,7 +147,6 @@ class TestAddSpendingAccountEntry:
 
 
 class TestGetAllSpendingAccountEntries:
-    @pytest.mark.asyncio
     async def test__get_all_entries__success(
         self,
         spending_account_service,
@@ -170,7 +165,6 @@ class TestGetAllSpendingAccountEntries:
         assert results is not None
         assert len(results) == num_entries
 
-    @pytest.mark.asyncio
     async def test__get_all_entries__empty(
         self,
         spending_account_service,
@@ -182,7 +176,6 @@ class TestGetAllSpendingAccountEntries:
 
         assert results == []
 
-    @pytest.mark.asyncio
     async def test__get_all_entries__check_response_data(
         self,
         spending_account_service,
@@ -213,7 +206,6 @@ class TestGetAllSpendingAccountEntries:
 
 
 class TestGetAllEntriesForAccount:
-    @pytest.mark.asyncio
     async def test__get_all_entries_for_account__success(
         self,
         spending_account_service,
@@ -241,7 +233,6 @@ class TestGetAllEntriesForAccount:
             assert result.account_name == account1.account_name.upper()
             assert result.id is not None
 
-    @pytest.mark.asyncio
     async def test__get_all_entries_for_account__empty(
         self,
         spending_account_service,
@@ -254,7 +245,6 @@ class TestGetAllEntriesForAccount:
 
         assert results == []
 
-    @pytest.mark.asyncio
     async def test__get_all_entries_for_account__account_not_found(
         self,
         spending_account_service,
@@ -267,7 +257,6 @@ class TestGetAllEntriesForAccount:
 
 
 class TestEditSpendingAccountEntry:
-    @pytest.mark.asyncio
     async def test__edit_entry__success(
         self,
         spending_account_service,
@@ -298,7 +287,6 @@ class TestEditSpendingAccountEntry:
         assert result.current_balance == edit_data["current_balance"]
         assert result.current_credit == edit_data["current_credit"]
 
-    @pytest.mark.asyncio
     async def test__edit_entry__check_response_data(
         self,
         spending_account_service,
@@ -327,7 +315,6 @@ class TestEditSpendingAccountEntry:
             == (edit_data["starting_balance"] - edit_data["current_balance"]) + edit_data["current_credit"]
         )
 
-    @pytest.mark.asyncio
     async def test__edit_entry__account_not_found(
         self,
         spending_account_service,
@@ -344,7 +331,6 @@ class TestEditSpendingAccountEntry:
         with pytest.raises(AccountWithNameNotFoundError):
             await spending_account_service.edit_entry(entry_id=created_entry.id, entry=edit_entry)
 
-    @pytest.mark.asyncio
     async def test__edit_entry__duplicate_month_year_for_account(
         self,
         spending_account_service,
@@ -371,7 +357,6 @@ class TestEditSpendingAccountEntry:
         with pytest.raises(MonthYearAlreadyExistsForAccountError):
             await spending_account_service.edit_entry(entry_id=entry2.id, entry=edit_entry)
 
-    @pytest.mark.asyncio
     async def test__edit_entry__entry_not_found(
         self,
         spending_account_service,
@@ -388,7 +373,6 @@ class TestEditSpendingAccountEntry:
 
 
 class TestDeleteSpendingAccountEntry:
-    @pytest.mark.asyncio
     async def test__delete_entry__success(
         self,
         spending_account_service,
@@ -405,7 +389,6 @@ class TestDeleteSpendingAccountEntry:
         with pytest.raises(EntitySpendingAccountEntryNotFoundError):
             await spending_account_service.spending_account_repository.get_entry_by_id(created_entry.id)
 
-    @pytest.mark.asyncio
     async def test__delete_entry__entry_not_found(
         self,
         spending_account_service,

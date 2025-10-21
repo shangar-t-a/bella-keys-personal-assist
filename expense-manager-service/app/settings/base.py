@@ -2,11 +2,14 @@
 
 from typing import Literal
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict,
+)
 
-MODEL_PROVIDERS = Literal["openai", "anthropic", "azure", "google"]
 ENV_TYPES = Literal["dev", "prod", "test"]
-STORAGE_TYPES = Literal["inmemory", "sqlite"]
+STORAGE_TYPES = Literal["inmemory", "sqlite", "postgresql"]
 
 
 class ExpenseManagerBaseSettings(BaseSettings):
@@ -18,10 +21,15 @@ class ExpenseManagerBaseSettings(BaseSettings):
     APP_ENV: ENV_TYPES = "prod"
 
     # Storage settings
-    STORAGE_TYPE: STORAGE_TYPES = "sqlite"
+    STORAGE_TYPE: STORAGE_TYPES = "postgresql"
 
     # Database settings
-    DATABASE_URL: str = "sqlite+aiosqlite:///./expense_manager.db"
+    SQLITE_DB_PATH: str = "./expense_manager.db"
+    PG_DB_HOST: str = "localhost"
+    PG_DB_PORT: int = 5432
+    PG_DB_USER: str = ""
+    PG_DB_PASSWORD: SecretStr = ""
+    PG_DB_NAME: str = "expense_manager"
     LOG_DB_QUERIES: bool = False
 
     # Logging settings
@@ -30,9 +38,9 @@ class ExpenseManagerBaseSettings(BaseSettings):
     # App Settings
     APP_NAME: str = "Expense Manager Service"
     APP_VERSION: str = "1.0.0"
-    EXP_MANAGER_SERVICE_HOST: str = "0.0.0.0"
-    EXP_MANAGER_SERVICE_PORT: int = 8000
-    EXP_MANAGER_SERVICE_DEBUG: bool = False
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    DEBUG: bool = False
     ALLOWED_HOSTS: list[str] = ["*"]
     ALLOWED_METHODS: list[str] = ["GET", "POST", "PATCH", "PUT", "DELETE"]
     ALLOWED_HEADERS: list[str] = ["*"]
@@ -41,10 +49,3 @@ class ExpenseManagerBaseSettings(BaseSettings):
     CORS_ORIGINS: list[str] = ["*"]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_EXPOSE_HEADERS: list[str] = ["*"]
-
-    # AI model settings
-    LLM_PROVIDER: MODEL_PROVIDERS = "openai"
-    LLM_MODEL: str = "gpt-4o"
-    LLM_BASE_URL: str = "https://api.openai.com/v1"
-    LLM_API_VERSION: str = "2024-03-15"
-    LLM_API_KEY: str = ""

@@ -1,4 +1,4 @@
-"""Database configuration for SQLite."""
+"""Database configuration for PostgreSQL."""
 
 from functools import lru_cache
 
@@ -15,11 +15,14 @@ from app.settings import get_settings
 @lru_cache(maxsize=1)
 def get_engine():
     """Get the database engine."""
-    base_database_url = "sqlite+aiosqlite:///"
-    database_path = get_settings().SQLITE_DB_PATH
-
+    db_user = get_settings().PG_DB_USER
+    db_password = get_settings().PG_DB_PASSWORD.get_secret_value()
+    db_host = get_settings().PG_DB_HOST
+    db_port = get_settings().PG_DB_PORT
+    db_name = get_settings().PG_DB_NAME
+    postgres_url = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     return create_async_engine(
-        f"{base_database_url}{database_path}",
+        postgres_url,
         echo=get_settings().LOG_DB_QUERIES,
     )
 

@@ -42,7 +42,6 @@ async def delete_all_month_years(account_service):
 
 
 class TestGetOrCreateAccount:
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "input_account_name,account_name_stored",
         [
@@ -61,7 +60,6 @@ class TestGetOrCreateAccount:
 
         assert account.account_name == account_name_stored
 
-    @pytest.mark.asyncio
     async def test__get_or_create_account__retrieve_existing_account(
         self,
         account_service,
@@ -76,7 +74,6 @@ class TestGetOrCreateAccount:
 
 
 class TestGetAccountByName:
-    @pytest.mark.asyncio
     async def test__get_account_by_name__existing_account__retrieve_account(
         self,
         account_service,
@@ -90,7 +87,6 @@ class TestGetAccountByName:
         assert account.id == test_account.id
         assert account.account_name == test_account.account_name
 
-    @pytest.mark.asyncio
     async def test__get_account_by_name__nonexistent_account__raise_error(
         self,
         account_service,
@@ -101,7 +97,6 @@ class TestGetAccountByName:
 
 
 class TestGetAccountById:
-    @pytest.mark.asyncio
     async def test__get_account_by_id__existing_account__retrieve_account(
         self,
         account_service,
@@ -114,7 +109,6 @@ class TestGetAccountById:
         assert account is not None
         assert account.id == test_account.id
 
-    @pytest.mark.asyncio
     async def test__get_account_by_id__nonexistent_account__raise_error(
         self,
         account_service,
@@ -125,7 +119,6 @@ class TestGetAccountById:
 
 
 class TestDeleteAccount:
-    @pytest.mark.asyncio
     async def test__delete_account__delete_existing_account(
         self,
         account_service,
@@ -140,7 +133,6 @@ class TestDeleteAccount:
         with pytest.raises(AccountWithNameNotFoundError):
             await account_service.get_account_by_name(account_name=test_account.account_name)
 
-    @pytest.mark.asyncio
     async def test__delete_account__nonexistent_account__raise_error(
         self,
         account_service,
@@ -151,7 +143,6 @@ class TestDeleteAccount:
 
 
 class TestGetAllAccounts:
-    @pytest.mark.asyncio
     async def test__get_all_accounts__with_existing_accounts__retrieve_accounts(
         self,
         account_service,
@@ -167,7 +158,6 @@ class TestGetAllAccounts:
         assert accounts is not None
         assert len(accounts) == num_accounts
 
-    @pytest.mark.asyncio
     async def test__get_all_accounts__with_no_accounts__retrieve_empty_list(
         self,
         account_service,
@@ -181,7 +171,6 @@ class TestGetAllAccounts:
 
 
 class TestUpdateAccountName:
-    @pytest.mark.asyncio
     async def test__update_account_name__existing_account__update_account(
         self,
         account_service,
@@ -199,7 +188,6 @@ class TestUpdateAccountName:
         assert updated_account.id == test_account.id
         assert updated_account.account_name == "UPDATED ACCOUNT NAME"
 
-    @pytest.mark.asyncio
     async def test__update_account_name__nonexistent_account__raise_error(
         self,
         account_service,
@@ -213,7 +201,6 @@ class TestUpdateAccountName:
 
 
 class TestGetOrCreateMonthYear:
-    @pytest.mark.asyncio
     async def test__get_or_create_month_year__create_month_year(
         self,
         account_service,
@@ -227,7 +214,6 @@ class TestGetOrCreateMonthYear:
         assert month_year.month == month
         assert month_year.year == year
 
-    @pytest.mark.asyncio
     async def test__get_or_create_month_year__retrieve_existing_month_year(
         self,
         account_service,
@@ -245,7 +231,6 @@ class TestGetOrCreateMonthYear:
 
 
 class TestGetMonthYearByValue:
-    @pytest.mark.asyncio
     async def test__get_month_year_by_value__existing_month_year__retrieve_month_year(
         self,
         account_service,
@@ -262,7 +247,6 @@ class TestGetMonthYearByValue:
         assert month_year.month == test_month_year.month
         assert month_year.year == test_month_year.year
 
-    @pytest.mark.asyncio
     async def test__get_month_year_by_value__nonexistent_month_year__raise_error(
         self,
         account_service,
@@ -273,7 +257,6 @@ class TestGetMonthYearByValue:
 
 
 class TestGetMonthYearById:
-    @pytest.mark.asyncio
     async def test__get_month_year_by_id__existing_month_year__retrieve_month_year(
         self,
         account_service,
@@ -288,7 +271,6 @@ class TestGetMonthYearById:
         assert month_year.month == test_month_year.month
         assert month_year.year == test_month_year.year
 
-    @pytest.mark.asyncio
     async def test__get_month_year_by_id__nonexistent_month_year__raise_error(
         self,
         account_service,
@@ -299,7 +281,6 @@ class TestGetMonthYearById:
 
 
 class TestDeleteMonthYear:
-    @pytest.mark.asyncio
     async def test__delete_month_year__delete_existing_month_year(
         self,
         account_service,
@@ -318,7 +299,6 @@ class TestDeleteMonthYear:
         with pytest.raises(MonthYearNotFoundError):
             await account_service.get_month_year_by_id(month_year_id=test_month_year.id)
 
-    @pytest.mark.asyncio
     async def test__delete_month_year__nonexistent_month_year__raise_error(
         self,
         account_service,
@@ -329,7 +309,6 @@ class TestDeleteMonthYear:
 
 
 class TestGetAllMonthYears:
-    @pytest.mark.asyncio
     async def test__get_all_month_years__with_existing_month_years__retrieve_month_years(
         self,
         account_service,
@@ -345,7 +324,6 @@ class TestGetAllMonthYears:
         assert month_years is not None
         assert len(month_years) == num_month_years
 
-    @pytest.mark.asyncio
     async def test__get_all_month_years__with_no_month_years__retrieve_empty_list(
         self,
         account_service,
@@ -359,7 +337,6 @@ class TestGetAllMonthYears:
 
 
 class TestUpdateMonthYear:
-    @pytest.mark.asyncio
     async def test__update_month_year__existing_month_year__update_month_year(
         self,
         account_service,
@@ -384,7 +361,6 @@ class TestUpdateMonthYear:
         assert updated_month_year.month == update_month
         assert updated_month_year.year == update_year
 
-    @pytest.mark.asyncio
     async def test__update_month_year__nonexistent_month_year__raise_error(
         self,
         account_service,
