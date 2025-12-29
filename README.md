@@ -61,7 +61,7 @@ The project handles the following responsibilities at the moment:
 
 1. Backend
    1. Built using **FastAPI**.
-   2. Uses **SQLite** for data persistence.
+   2. Uses **PostgreSQL** for data persistence.
    3. Follows **Clean Architecture** principles.
    4. Containerized with **Docker**.
 2. Frontend
@@ -71,7 +71,7 @@ The project handles the following responsibilities at the moment:
 ### 3.2. Features Overview
 
 - **Spending Account Expense Tracking**: Add, view, and manage expenses. Track monthly spending and credits. Gain preliminary insights into spending patterns.
-- **Fully loaded FastAPI and Clean Architecture Codebase**: A robust starting point for building scalable and maintainable backend services using FastAPI and Clean Architecture principles. For more details, refer to the [Architecture Documentation](expense-manager-service/README.md).
+- **Fully loaded FastAPI and Clean Architecture Codebase**: A robust starting point for building scalable and maintainable backend services using FastAPI and Clean Architecture principles. For more details, refer to the [Architecture Documentation](services/expense-manager-service/README.md).
 
 ## 4. Bella Chatbot
 
