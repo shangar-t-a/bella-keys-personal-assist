@@ -31,10 +31,15 @@ def pytest_collection_modifyitems(items):
 @pytest_asyncio.fixture(autouse=True, scope="session")
 async def patch_settings():
     """Patch settings for unit tests."""
+    unit_test_settings = UnitTestSettings(
+        APP_ENV="test",
+        STORAGE_TYPE="postgresql",
+        DATABASE_URL="postgresql+asyncpg://ems_test_user:test123@localhost:5432/expense_manager_test",
+    )
     settings.get_settings = MagicMock()
-    settings.get_settings.return_value = UnitTestSettings()
+    settings.get_settings.return_value = unit_test_settings
     database.get_settings = MagicMock()
-    database.get_settings.return_value = UnitTestSettings()
+    database.get_settings.return_value = unit_test_settings
     yield
 
 

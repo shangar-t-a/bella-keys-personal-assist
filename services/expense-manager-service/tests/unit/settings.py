@@ -19,8 +19,4 @@ class UnitTestSettings(ExpenseManagerBaseSettings):
     STORAGE_TYPE: STORAGE_TYPES = "postgresql"
 
     # Database settings
-    PG_DB_HOST: str = "localhost"
-    PG_DB_PORT: int = 5432
-    PG_DB_USER: str = "ems_test_user"
-    PG_DB_PASSWORD: SecretStr = "test123"
-    PG_DB_NAME: str = "expense_manager_test"
+    DATABASE_URL: SecretStr = "postgresql+asyncpg://ems_test_user:test123@localhost:5432/expense_manager_test"

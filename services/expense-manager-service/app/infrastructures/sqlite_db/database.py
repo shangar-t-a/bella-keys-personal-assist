@@ -16,7 +16,7 @@ from app.settings import get_settings
 def get_engine():
     """Get the database engine."""
     base_database_url = "sqlite+aiosqlite:///"
-    database_path = get_settings().SQLITE_DB_PATH
+    database_path = get_settings().DATABASE_URL
 
     return create_async_engine(
         f"{base_database_url}{database_path}",
