@@ -24,12 +24,7 @@ class ExpenseManagerBaseSettings(BaseSettings):
     STORAGE_TYPE: STORAGE_TYPES = "postgresql"
 
     # Database settings
-    SQLITE_DB_PATH: str = "./expense_manager.db"
-    PG_DB_HOST: str = "localhost"
-    PG_DB_PORT: int = 5432
-    PG_DB_USER: str = ""
-    PG_DB_PASSWORD: SecretStr = ""
-    PG_DB_NAME: str = "expense_manager"
+    DATABASE_URL: SecretStr = ""
     LOG_DB_QUERIES: bool = False
 
     # Logging settings

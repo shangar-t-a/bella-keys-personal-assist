@@ -15,12 +15,7 @@ from app.settings import get_settings
 @lru_cache(maxsize=1)
 def get_engine():
     """Get the database engine."""
-    db_user = get_settings().PG_DB_USER
-    db_password = get_settings().PG_DB_PASSWORD.get_secret_value()
-    db_host = get_settings().PG_DB_HOST
-    db_port = get_settings().PG_DB_PORT
-    db_name = get_settings().PG_DB_NAME
-    postgres_url = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    postgres_url = get_settings().DATABASE_URL.get_secret_value()
     return create_async_engine(
         postgres_url,
         echo=get_settings().LOG_DB_QUERIES,

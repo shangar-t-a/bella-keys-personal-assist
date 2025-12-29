@@ -21,10 +21,6 @@ services:
       - HOST=${HOST}
       - PORT=${PORT}
       - DEBUG=${DEBUG}
-      - PG_DB_HOST=host.docker.internal
-      - PG_DB_PORT=${PG_DB_PORT}
-      - PG_DB_USER=${PG_DB_USER}
-      - PG_DB_PASSWORD=${PG_DB_PASSWORD}
-      - PG_DB_NAME=${PG_DB_NAME}
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - postgres
