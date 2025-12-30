@@ -85,5 +85,5 @@ Local Model Orchestrator: Ollama (0.12.6)
    ollama serve
    ```
 
-   > [!NOTE]
-   > The set environment variables are only valid for the current terminal session.
+> [!NOTE]
+> The set environment variables are only valid for the current terminal session.
