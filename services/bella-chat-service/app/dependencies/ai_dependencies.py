@@ -28,6 +28,7 @@ def get_app_synthesis_llm_client() -> "GeminiClient | OllamaClient":
     synthesis_llm_client = get_llm_client(
         provider=settings.SYNTHESIS_MODEL_PROVIDER,
         model_name=settings.SYNTHESIS_MODEL_NAME,
+        ollama_base_url=settings.OLLAMA_URL,
         temperature=0.1,
     )
     return synthesis_llm_client
@@ -40,6 +41,7 @@ def get_app_embedding_client() -> "HuggingfaceEmbeddingsClient":
     embedding_client = get_embedding_client(
         provider=settings.EMBEDDING_MODEL_PROVIDER,
         model_name=settings.EMBEDDING_MODEL_NAME,
+        ollama_base_url=settings.OLLAMA_URL,
     )
     return embedding_client
 

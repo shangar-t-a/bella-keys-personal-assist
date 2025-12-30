@@ -34,7 +34,7 @@ class GitHubKeysPersonalWikiETL:
         embedding = get_embedding_client(
             provider="ollama",
             model_name="qwen3-embedding:0.6b",
-            enable_gpu=False,
+            ollama_base_url="http://localhost:11434",
         )
 
         # Step 3: Create collection if it does not exist

@@ -1,27 +1,34 @@
+name: bella-chat-service
+
 services:
-  # Bella Chat Service is not ready for production use.
-  # bella:
-  #   build: .
-  #   ports:
-  #     - "5000:5000"
-  #   environment:
-  #     # Bella Service Settings
-  #     - HOST=${HOST}
-  #     - PORT=${PORT}
-  #     - DEBUG=${DEBUG}
-  #     # AI Settings
-  #     - SYNTHESIS_MODEL_PROVIDER=${SYNTHESIS_MODEL_PROVIDER}
-  #     - SYNTHESIS_MODEL_NAME=${SYNTHESIS_MODEL_NAME}
-  #     - EMBEDDING_MODEL_PROVIDER=${EMBEDDING_MODEL_PROVIDER}
-  #     - EMBEDDING_MODEL_NAME=${EMBEDDING_MODEL_NAME}
-  #     - EMBEDDING_MODEL_DIMENSION=${EMBEDDING_MODEL_DIMENSION}
-  #     - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-  #     # QDRANT Settings
-  #     - QDRANT_URL=${QDRANT_URL}
-  #     # Keys Personal Wiki Agent Settings
-  #     - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
-  #   depends_on:
-  #     - qdrant
+  bella-chat-service:
+    build: .
+    container_name: bella-chat-service
+    ports:
+      - "5000:5000"
+    environment:
+      # Bella Service Settings
+      - HOST=${HOST}
+      - PORT=${PORT}
+      - DEBUG=${DEBUG}
+      # AI Settings
+      - SYNTHESIS_MODEL_PROVIDER=${SYNTHESIS_MODEL_PROVIDER}
+      - SYNTHESIS_MODEL_NAME=${SYNTHESIS_MODEL_NAME}
+      - EMBEDDING_MODEL_PROVIDER=${EMBEDDING_MODEL_PROVIDER}
+      - EMBEDDING_MODEL_NAME=${EMBEDDING_MODEL_NAME}
+      - EMBEDDING_MODEL_DIMENSION=${EMBEDDING_MODEL_DIMENSION}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Ollama Settings
+      - OLLAMA_URL=${OLLAMA_URL}
+      # QDRANT Settings
+      - QDRANT_URL=${QDRANT_URL}
+      # Keys Personal Wiki Agent Settings
+      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
+    depends_on:
+      - qdrant
+    networks:
+      - bella-chat-network
+
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
@@ -30,3 +37,9 @@ services:
       - "6334:6334" # gRPC API
     volumes:
       - ../.db/qdrant/storage:/qdrant/storage
+    networks:
+      - bella-chat-network
+
+networks:
+  bella-chat-network:
+    driver: bridge

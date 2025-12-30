@@ -53,6 +53,9 @@ class BellaChatBaseSettings(BaseSettings):
     EMBEDDING_MODEL_DIMENSION: int = 1024
     GOOGLE_API_KEY: SecretStr = ""
 
+    # Ollama Settings
+    OLLAMA_URL: str = "http://localhost:11434"
+
     # QDRANT Settings
     QDRANT_URL: str = "http://localhost:6333"
 

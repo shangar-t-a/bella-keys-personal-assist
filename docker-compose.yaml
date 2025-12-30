@@ -36,6 +36,45 @@ services:
     networks:
       - bella-keys-network
 
+  bella-chat-service:
+    build: ./services/bella-chat-service
+    container_name: bella-chat-service
+    ports:
+      - "5000:5000"
+    environment:
+      # Bella Service Settings
+      - HOST=${BCS_HOST}
+      - PORT=${BCS_PORT}
+      - DEBUG=${BCS_DEBUG}
+      # AI Settings
+      - SYNTHESIS_MODEL_PROVIDER=${SYNTHESIS_MODEL_PROVIDER}
+      - SYNTHESIS_MODEL_NAME=${SYNTHESIS_MODEL_NAME}
+      - EMBEDDING_MODEL_PROVIDER=${EMBEDDING_MODEL_PROVIDER}
+      - EMBEDDING_MODEL_NAME=${EMBEDDING_MODEL_NAME}
+      - EMBEDDING_MODEL_DIMENSION=${EMBEDDING_MODEL_DIMENSION}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Ollama Settings
+      - OLLAMA_URL=${OLLAMA_URL}
+      # QDRANT Settings
+      - QDRANT_URL=${QDRANT_URL}
+      # Keys Personal Wiki Agent Settings
+      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
+    depends_on:
+      - qdrant
+    networks:
+      - bella-keys-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333" # REST API
+      - "6334:6334" # gRPC API
+    volumes:
+      - ./services/.db/qdrant/storage:/qdrant/storage
+    networks:
+      - bella-keys-network
+
   keys-personal-assist-ui:
     build: ./keys-personal-assist-ui
     container_name: keys-personal-assist-ui
@@ -46,6 +85,9 @@ services:
       - PORT=${PERSONAL_ASSIST_UI_PORT}
       - NEXT_PUBLIC_EMS_API_URL=${NEXT_PUBLIC_EMS_API_URL}
       - NEXT_PUBLIC_BELLA_CHAT_API_URL=${NEXT_PUBLIC_BELLA_CHAT_API_URL}
+    depends_on:
+      - expense-manager-service
+      - bella-chat-service
     networks:
       - bella-keys-network
 

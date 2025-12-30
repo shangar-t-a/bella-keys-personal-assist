@@ -12,12 +12,13 @@ from utilities.time_profile import log_exec_time
 class OllamaClient(ChatOllama, LLMClientInterface):
     """Ollama LLM client implementation."""
 
-    def __init__(self, model: str, temperature: float = 0.1, **kwargs):
+    def __init__(self, model: str, temperature: float = 0.1, base_url: str = "http://localhost:11434", **kwargs):
         """Initialize the Ollama client with model and temperature.
 
         Args:
             model (str): The Ollama model to use.
             temperature (float): The temperature for response generation. Defaults to 0.1.
+            base_url (str): The base URL for the Ollama server. Defaults to "http://localhost:11434".
             **kwargs: Additional keyword arguments for the ChatOllama.
 
         Examples:
@@ -48,7 +49,7 @@ class OllamaClient(ChatOllama, LLMClientInterface):
             ...     print(chunk.content, end="", flush=True)
             Hello, how are you?
         """
-        super().__init__(model=model, temperature=temperature, **kwargs)
+        super().__init__(model=model, temperature=temperature, base_url=base_url, **kwargs)
         self._logger = GetAppLogger().get_logger()
 
     @log_exec_time
