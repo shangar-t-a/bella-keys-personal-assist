@@ -1,6 +1,9 @@
+name: bella-keys-personal-assist
+
 services:
   postgres:
     image: postgres:latest
+    container_name: postgres-database
     environment:
       - POSTGRES_USER=${EMS_PG_DB_USER}
       - POSTGRES_PASSWORD=${EMS_PG_DB_PASSWORD}
@@ -12,9 +15,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bella-keys-network
 
   expense-manager-service:
     build: ./services/expense-manager-service
+    container_name: expense-manager-service
     ports:
       - "8000:8000"
     environment:
@@ -27,9 +33,12 @@ services:
       - DATABASE_URL=${EMS_DATABASE_URL}
     depends_on:
       - postgres
+    networks:
+      - bella-keys-network
 
   keys-personal-assist-ui:
     build: ./keys-personal-assist-ui
+    container_name: keys-personal-assist-ui
     ports:
       - "3000:3000"
     environment:
@@ -37,3 +46,9 @@ services:
       - PORT=${PERSONAL_ASSIST_UI_PORT}
       - NEXT_PUBLIC_EMS_API_URL=${NEXT_PUBLIC_EMS_API_URL}
       - NEXT_PUBLIC_BELLA_CHAT_API_URL=${NEXT_PUBLIC_BELLA_CHAT_API_URL}
+    networks:
+      - bella-keys-network
+
+networks:
+  bella-keys-network:
+    driver: bridge
