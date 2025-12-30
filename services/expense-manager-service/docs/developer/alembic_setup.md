@@ -28,7 +28,7 @@ cd services/expense-manager-service/app/infrastructures/postgres_db
 uv run alembic init -t async alembic
 ```
 
-> [!INFO]
+> [!NOTE]
 > The `-t async` flag initializes Alembic with support for asynchronous database operations, which is suitable for
 > async SQLAlchemy or asyncpg setups.
 

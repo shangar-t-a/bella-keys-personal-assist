@@ -14,6 +14,8 @@ dependencies = [
     "pydantic>=2.11.10",
     "pydantic-settings>=2.11.0",
     "sentence-transformers>=5.1.1",
+    "torch>=2.9.1",
+    "torchvision>=0.24.1",
     "utilities",
     "uvicorn>=0.37.0",
 ]
@@ -28,33 +30,8 @@ test = [
 ]
 type = ["mypy>=1.18.2"]
 
-[project.optional-dependencies]
-cpu = ["torch", "torchvision"]
-gpu = ["torch", "torchvision"]
-
-[tool.uv]
-conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
-
 [tool.uv.sources]
-torch = [
-    { index = "pytorch-cpu", extra = "cpu" },
-    { index = "pytorch-cu129", extra = "gpu" },
-]
-torchvision = [
-    { index = "pytorch-cpu", extra = "cpu" },
-    { index = "pytorch-cu129", extra = "gpu" },
-]
 utilities = { path = "py_dependencies/utilities-0.1.0-py3-none-any.whl" }
-
-[[tool.uv.index]]
-name = "pytorch-cu129"
-url = "https://download.pytorch.org/whl/cu129"
-explicit = true
-
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
 
 [build-system]
 requires = ["hatchling >= 1.26"]

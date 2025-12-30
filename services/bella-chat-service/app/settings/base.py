@@ -52,7 +52,6 @@ class BellaChatBaseSettings(BaseSettings):
     EMBEDDING_MODEL_NAME: str = "qwen3-embedding:0.6b"
     EMBEDDING_MODEL_DIMENSION: int = 1024
     GOOGLE_API_KEY: SecretStr = ""
-    GPU_ENABLED: bool = False
 
     # QDRANT Settings
     QDRANT_URL: str = "http://localhost:6333"

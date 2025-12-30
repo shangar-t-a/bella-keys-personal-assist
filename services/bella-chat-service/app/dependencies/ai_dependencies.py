@@ -40,7 +40,6 @@ def get_app_embedding_client() -> "HuggingfaceEmbeddingsClient":
     embedding_client = get_embedding_client(
         provider=settings.EMBEDDING_MODEL_PROVIDER,
         model_name=settings.EMBEDDING_MODEL_NAME,
-        enable_gpu=settings.GPU_ENABLED,
     )
     return embedding_client
 

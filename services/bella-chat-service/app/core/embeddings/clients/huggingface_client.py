@@ -10,12 +10,11 @@ from utilities.time_profile import log_exec_time
 class HuggingfaceEmbeddingsClient(HuggingFaceEmbeddings, EmbeddingsClientInterface):
     """Huggingface embeddings client implementation."""
 
-    def __init__(self, model_name: str, enable_gpu: bool = False, **kwargs):
+    def __init__(self, model_name: str, **kwargs):
         """Initialize the Huggingface client with model name.
 
         Args:
             model_name (str): The Huggingface model to use.
-            enable_gpu (bool): Whether to enable GPU acceleration. Defaults to False.
             **kwargs: Additional keyword arguments for the HuggingFaceEmbeddings.
 
         Examples:
@@ -23,7 +22,7 @@ class HuggingfaceEmbeddingsClient(HuggingFaceEmbeddings, EmbeddingsClientInterfa
             >>> from app.core.embeddings import HuggingfaceEmbeddingsClient
 
             ### Initialize the Huggingface client
-            >>> client = HuggingfaceEmbeddingsClient(model_name="Qwen/Qwen3-Embedding-0.6B", enable_gpu=False)
+            >>> client = HuggingfaceEmbeddingsClient(model_name="Qwen/Qwen3-Embedding-0.6B")
 
             ### Get embeddings for a list of texts
             >>> texts = ["Hello world", "How are you?"]
@@ -37,9 +36,6 @@ class HuggingfaceEmbeddingsClient(HuggingFaceEmbeddings, EmbeddingsClientInterfa
         """
         super().__init__(
             model_name=model_name,
-            model_kwargs={
-                "device": "cuda" if enable_gpu else "cpu",
-            },
             **kwargs,
         )
         self._logger = GetAppLogger().get_logger()
