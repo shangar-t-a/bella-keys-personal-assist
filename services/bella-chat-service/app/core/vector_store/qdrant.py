@@ -185,7 +185,6 @@ if __name__ == "__main__":
     embedding_client = get_embedding_client(
         provider="huggingface",
         model_name="Qwen/Qwen3-Embedding-0.6B",
-        enable_gpu=False,
     )
 
     # Initialize Qdrant Client

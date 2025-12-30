@@ -59,7 +59,7 @@ class HuggingfaceEmbeddingsClient(HuggingFaceEmbeddings, EmbeddingsClientInterfa
 
 if __name__ == "__main__":
     # Example usage
-    client = HuggingfaceEmbeddingsClient(model_name="Qwen/Qwen3-Embedding-0.6B", enable_gpu=False)
+    client = HuggingfaceEmbeddingsClient(model_name="Qwen/Qwen3-Embedding-0.6B")
     texts = ["Hello world", "How are you?"]
     embeddings = client.embed_documents(texts)
     print("Document Embeddings:", [emb[:5] for emb in embeddings])

@@ -79,6 +79,7 @@ Local Model Orchestrator: Ollama (0.12.6)
 4. Launch PowerShell terminal and run the following commands to serve Ollama in GPU mode:
 
    ```powershell
+   $env:OLLAMA_HOST = "0.0.0.0:11434"
    $env:CUDA_VISIBLE_DEVICES="0"
    $env:OLLAMA_NUM_GPU="1"
    $env:OLLAMA_GPU_LAYERS="100"
