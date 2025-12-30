@@ -1,6 +1,9 @@
+name: expense-manager-service
+
 services:
   postgres:
     image: postgres:latest
+    container_name: postgres-database
     environment:
       - POSTGRES_USER=${PG_DB_USER}
       - POSTGRES_PASSWORD=${PG_DB_PASSWORD}
@@ -12,9 +15,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - expense-manager-network
 
   expense-manager-service:
     build: .
+    container_name: expense-manager-service
     ports:
       - "8000:8000"
     environment:
@@ -24,3 +30,9 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - postgres
+    networks:
+      - expense-manager-network
+
+networks:
+  expense-manager-network:
+    driver: bridge
