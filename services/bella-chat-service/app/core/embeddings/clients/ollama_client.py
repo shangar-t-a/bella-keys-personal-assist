@@ -10,14 +10,11 @@ from utilities.time_profile import log_exec_time
 class OllamaEmbeddingsClient(OllamaEmbeddings, EmbeddingsClientInterface):
     """Ollama embeddings client implementation."""
 
-    def __init__(self, model_name: str, enable_gpu: bool = False, **kwargs):
+    def __init__(self, model_name: str, **kwargs):
         """Initialize the Ollama client with model name.
 
         Args:
             model_name (str): The Ollama model to use.
-            enable_gpu (bool): Whether to enable GPU acceleration. Defaults to False.
-
-                **Warning: GPU support is currently disabled due to known issues.**
             **kwargs: Additional keyword arguments for the OllamaEmbeddings.
 
         Examples:
@@ -37,11 +34,7 @@ class OllamaEmbeddingsClient(OllamaEmbeddings, EmbeddingsClientInterface):
             >>> embedding = client.embed_query(text)
             >>> print(embedding)
         """
-        super().__init__(
-            model=model_name,
-            # num_gpu=1 if enable_gpu else 0,  # Disabled as faced some issues (Debugging needed)
-            **kwargs,
-        )
+        super().__init__(model=model_name, **kwargs)
         self._logger = GetAppLogger().get_logger()
 
     @log_exec_time

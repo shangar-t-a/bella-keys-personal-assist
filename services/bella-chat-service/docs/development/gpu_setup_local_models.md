@@ -5,6 +5,14 @@ This setup is essential for leveraging the computational power of GPUs while usi
 
 UV provides a guide for setting up GPU support for local models, which can be found in [uv-pytorch-setup](https://docs.astral.sh/uv/guides/integration/pytorch/).
 
+## Table of Contents
+
+- [GPU Setup for Local Models using UV](#gpu-setup-for-local-models-using-uv)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Last Tested Approach (December 30, 2025)](#last-tested-approach-december-30-2025)
+
 ## Prerequisites
 
 - Ensure you have a compatible GPU installed on your machine.
@@ -55,3 +63,27 @@ UV provides a guide for setting up GPU support for local models, which can be fo
 
    The output pytorch version should have a suffix like `+cu129` indicating CUDA 12.9 support, and
    `torch.cuda.is_available()` should return `True`.
+
+## Last Tested Approach (December 30, 2025)
+
+Operating System: Windows 11
+CUDA Version: 12.8
+Local Model Orchestrator: Ollama (0.12.6)
+
+1. This approach assumes NIVIDIA drivers and CUDA toolkit are already installed and available.
+2. This setup assumes you are using UV as the dependency manager. If not applicable please skip any details referring
+   to UV.
+3. UV Specific Steps:
+   - Does not require adding gpu extra in the dependencies section.
+   - Remove any existing cpu/gpu extra sources for torch and torchvision.
+4. Launch PowerShell terminal and run the following commands to serve Ollama in GPU mode:
+
+   ```powershell
+   $env:CUDA_VISIBLE_DEVICES="0"
+   $env:OLLAMA_NUM_GPU="1"
+   $env:OLLAMA_GPU_LAYERS="100"
+   ollama serve
+   ```
+
+   > [!NOTE]
+   > The set environment variables are only valid for the current terminal session.
