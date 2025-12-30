@@ -4,6 +4,11 @@ line-length = 120
 # Includes
 include = ["app/**/*.py"]
 
+# Excludes
+exclude = [
+    "**/alembic/versions/**",
+]
+
 # Other Configs
 show-fixes = true
 
