@@ -7,6 +7,8 @@ from datetime import datetime
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from openinference.instrumentation.langchain import LangChainInstrumentor
+from phoenix.otel import register
 
 from app.dependencies.ai_dependencies import (
     get_app_embedding_client,
@@ -28,6 +30,19 @@ def setup_middlewares(app: FastAPI, settings) -> None:
         allow_headers=settings.ALLOWED_HEADERS,
         expose_headers=settings.CORS_EXPOSE_HEADERS,
     )
+
+
+def setup_arize_tracing() -> None:
+    """Setup Arize tracing if enabled."""
+    settings = get_settings()
+    if settings.ARIZE_ENABLED:
+        trace_provider = register(
+            endpoint=settings.ARIZE_TRACES_URL,
+            project_name=settings.ARIZE_PROJECT_NAME,
+            auto_instrument=True,
+        )
+
+        LangChainInstrumentor().instrument(tracer_provider=trace_provider)
 
 
 @asynccontextmanager
@@ -68,12 +83,16 @@ def create_app() -> FastAPI:
     # Initialize AI clients
     create_ai_dependencies(settings)
 
+    # Create FastAPI app
     app = FastAPI(
         lifespan=lifespan,
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
         debug=settings.DEBUG,
     )
+
+    # Setup Arize tracing if enabled
+    setup_arize_tracing()
 
     # Setup middlewares
     setup_middlewares(app, settings)

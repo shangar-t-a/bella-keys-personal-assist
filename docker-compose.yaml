@@ -59,6 +59,10 @@ services:
       - QDRANT_URL=${QDRANT_URL}
       # Keys Personal Wiki Agent Settings
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
+      # Arize Settings
+      - ARIZE_ENABLED=${ARIZE_ENABLED}
+      - ARIZE_TRACES_URL=${ARIZE_TRACES_URL}
+      - ARIZE_PROJECT_NAME=${ARIZE_PROJECT_NAME}
     depends_on:
       - qdrant
     networks:

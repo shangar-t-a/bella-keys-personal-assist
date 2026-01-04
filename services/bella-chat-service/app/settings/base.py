@@ -59,5 +59,10 @@ class BellaChatBaseSettings(BaseSettings):
     # QDRANT Settings
     QDRANT_URL: str = "http://localhost:6333"
 
+    # Arize Settings
+    ARIZE_ENABLED: bool = True
+    ARIZE_TRACES_URL: str = "http://localhost:6006/v1/traces"
+    ARIZE_PROJECT_NAME: str = "bella-chat-service"
+
     # Keys Personal Wiki Agent Settings
     QDRANT_COLLECTION_NAME: str = "keys-personal-wiki"
