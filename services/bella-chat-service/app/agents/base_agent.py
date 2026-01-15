@@ -18,44 +18,26 @@ if TYPE_CHECKING:
 class BaseAgent:
     """Base class for chat agents."""
 
-    def __init__(self, model: "BaseChatModel", tools: list | None = None):
+    def __init__(self, model: "BaseChatModel"):
         """Initialize the simple chat agent.
 
         Args:
             model (BaseChatModel): The chat model to be used by the agent.
-            tools (list, optional): List of tools to be added to the agent. Defaults to None.
         """
         self.model: BaseChatModel = model
         self.graph: StateGraph = None
         self.chain: CompiledStateGraph = None
-        self.tools = tools or []
         self._memory = MemorySaver()
         self._build_agent()
 
     def _build_agent(self):
         """Build the agent."""
-        if self.tools:
-            self._add_tools(self.tools)
-            self._build_graph_with_tools()
-        else:
-            self._build_graph_without_tools()
+        self._build_graph()
         self._compile()
 
-    def _build_graph_with_tools(self):
-        """Build the state graph for the agent with tools."""
+    def _build_graph(self):
+        """Build the state graph for the agent."""
         raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def _build_graph_without_tools(self):
-        """Build the state graph for the agent without tools."""
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def _add_tools(self, tools: list):
-        """Add tools to the agent.
-
-        Args:
-            tools (list): List of tools to add. Python functions to be added as tools.
-        """
-        self.model = self.model.bind_tools(tools)
 
     def _compile(self):
         """Compile the agent's model.
