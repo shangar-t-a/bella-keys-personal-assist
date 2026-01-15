@@ -9,10 +9,6 @@ from langgraph.graph import (
     START,
     StateGraph,
 )
-from langgraph.prebuilt import (
-    ToolNode,
-    tools_condition,
-)
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts import ABOUT_BELLA_SYSTEM_PROMPT
@@ -32,14 +28,13 @@ class SimpleChatAgent(BaseAgent):
         chain: The chain associated with the agent. Compiled graph.
     """
 
-    def __init__(self, model: "BaseChatModel", tools: list | None = None):
+    def __init__(self, model: "BaseChatModel"):
         """Initialize the simple chat agent.
 
         Args:
             model (BaseChatModel): The chat model to be used by the agent.
-            tools (list, optional): List of tools to be added to the agent. Defaults to None.
         """
-        super().__init__(model=model, tools=tools)
+        super().__init__(model=model)
 
     async def _generate_response(self, state: State) -> dict:
         """Generate a response based on user input.
@@ -63,27 +58,8 @@ class SimpleChatAgent(BaseAgent):
 
         return {"messages": [await self.model.ainvoke(messages)]}
 
-    def _build_graph_with_tools(self):
-        """Build the state graph for the agent with tools."""
-        # Create the state graph
-        self.graph = StateGraph(State)
-
-        # Add the nodes
-        self.graph.add_node("generate_response", self._generate_response)
-        self.graph.add_node("tools", ToolNode(self.tools))
-
-        # Add edges
-        self.graph.add_edge(START, "generate_response")
-        self.graph.add_conditional_edges(
-            "generate_response",
-            # When the LLM response is tool calling, this condition will be true
-            tools_condition,
-        )
-        # Loop back to tools node for multiple tool calls
-        self.graph.add_edge("tools", "generate_response")
-
-    def _build_graph_without_tools(self):
-        """Build the state graph for the agent without tools."""
+    def _build_graph(self):
+        """Build the state graph for the agent."""
         # Create the state graph
         self.graph = StateGraph(State)
 
