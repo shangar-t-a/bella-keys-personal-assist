@@ -79,6 +79,20 @@ services:
     networks:
       - bella-keys-network
 
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: phoenix
+    depends_on:
+      - postgres
+    ports:
+      - 6006:6006 # PHOENIX_PORT
+      - 4317:4317 # PHOENIX_GRPC_PORT
+      - 9090:9090 # [Optional] PROMETHEUS PORT IF ENABLED
+    environment:
+      - PHOENIX_SQL_DATABASE_URL=postgresql://${ARIZE_PG_DB_USER}:${ARIZE_PG_DB_PASSWORD}@${ARIZE_PG_DB_HOST}:5432/${ARIZE_PG_DB_NAME}
+    networks:
+      - bella-keys-network
+
   keys-personal-assist-ui:
     build: ./keys-personal-assist-ui
     container_name: keys-personal-assist-ui

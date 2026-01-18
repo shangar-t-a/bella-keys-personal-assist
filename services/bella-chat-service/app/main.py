@@ -40,6 +40,7 @@ def setup_arize_tracing() -> None:
             endpoint=settings.ARIZE_TRACES_URL,
             project_name=settings.ARIZE_PROJECT_NAME,
             auto_instrument=True,
+            batch=True,
         )
 
         LangChainInstrumentor().instrument(tracer_provider=trace_provider)

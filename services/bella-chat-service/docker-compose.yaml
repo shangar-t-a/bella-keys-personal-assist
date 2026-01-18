@@ -44,6 +44,37 @@ services:
     networks:
       - bella-chat-network
 
+  postgres:
+    image: postgres:latest
+    container_name: postgres-database
+    environment:
+      - POSTGRES_USER=${ARIZE_PG_DB_USER}
+      - POSTGRES_PASSWORD=${ARIZE_PG_DB_PASSWORD}
+      - POSTGRES_DB=${ARIZE_PG_DB_NAME}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bella-chat-network
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: phoenix
+    depends_on:
+      - postgres
+    ports:
+      - 6006:6006 # PHOENIX_PORT
+      - 4317:4317 # PHOENIX_GRPC_PORT
+      - 9090:9090 # [Optional] PROMETHEUS PORT IF ENABLED
+    environment:
+      - PHOENIX_SQL_DATABASE_URL=postgresql://${ARIZE_PG_DB_USER}:${ARIZE_PG_DB_PASSWORD}@${ARIZE_PG_DB_HOST}:5432/${ARIZE_PG_DB_NAME}
+    networks:
+      - bella-chat-network
+
 networks:
   bella-chat-network:
     driver: bridge
