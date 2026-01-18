@@ -46,7 +46,7 @@ Documented Date: January 03, 2026
    )
    ```
 
-> [!INFO]
+> [!NOTE]
 > Tested with LangGraph.<br></br>
 > Used Arize Phoenix version 12.27.0.
 
