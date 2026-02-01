@@ -1,23 +1,33 @@
-# Production-ready Dockerfile for Next.js app using pnpm
-FROM node:18
+# Multi-stage build for Personal Assist UI React application
 
-# Set working directory
+# Stage 1: Build
+FROM node:25.5.0-alpine AS builder
+
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package.json pnpm-lock.yaml ./
+# Copy package files
+COPY package.json package-lock.json ./
 
-# Install pnpm and dependencies
-RUN npm install -g pnpm && pnpm install
+# Install dependencies with legacy peer deps (for MUI version mismatch)
+RUN npm ci --legacy-peer-deps
 
-# Copy remaining files
+# Copy source code
 COPY . .
 
-# Build the application
-RUN pnpm run build
+# Build production bundle
+RUN npm run build
 
-# Expose the application port
-EXPOSE 3000
+# Stage 2: Production with nginx
+FROM nginx:1.29-alpine
 
-# Start the application
-CMD ["pnpm", "start"]
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

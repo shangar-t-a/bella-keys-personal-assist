@@ -97,12 +97,7 @@ services:
     build: ./keys-personal-assist-ui
     container_name: keys-personal-assist-ui
     ports:
-      - "3000:3000"
-    environment:
-      - HOSTNAME=${PERSONAL_ASSIST_UI_HOST}
-      - PORT=${PERSONAL_ASSIST_UI_PORT}
-      - NEXT_PUBLIC_EMS_API_URL=${NEXT_PUBLIC_EMS_API_URL}
-      - NEXT_PUBLIC_BELLA_CHAT_API_URL=${NEXT_PUBLIC_BELLA_CHAT_API_URL}
+      - "3000:80" # nginx listens on port 80 internally
     depends_on:
       - expense-manager-service
       - bella-chat-service
