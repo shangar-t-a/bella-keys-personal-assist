@@ -1,300 +1,206 @@
-# Personal Assistant UI
+# Keys Personal Assist UI
 
-A modern, production-ready chat interface for interacting with multiple AI services (EMS and Bella Chat). Built with Next.js, React, and TypeScript.
+A modern React application for personal assistance, expense management, and AI chat features.
 
-## Project Structure
+## Technology Stack
 
-\`\`\`
-personalassistui/
-├── app/
-│   ├── api/
-│   │   └── chat/
-│   │       └── route.ts              # Chat API endpoint for streaming responses
-│   ├── chat/
-│   │   └── page.tsx                  # Main chat interface page
-│   ├── globals.css                   # Global styles and animations
-│   ├── layout.tsx                    # Root layout with providers
-│   └── page.tsx                      # Home page
-│
-├── api/
-│   └── clients/                      # Unified API client architecture
-│       ├── base-client.ts            # Base class for all API clients
-│       ├── ems-client.ts             # EMS (Expense Management System) client
-│       ├── bella-chat-client.ts      # Bella Chat AI client
-│       └── index.ts                  # Clean exports
-│
-├── components/
-│   ├── chat-message.tsx              # Individual message component with markdown rendering
-│   ├── chat-input.tsx                # User input component with terminal line stripping
-│   ├── loading-status.tsx            # Status message during API calls (scalable for intermediate steps)
-│   ├── markdown-renderer.tsx          # Markdown to React component renderer
-│   ├── modern-header.tsx             # App header
-│   ├── theme-provider.tsx            # Theme context provider
-│   ├── header.tsx                    # Legacy header component
-│   ├── Footer.css                    # Footer styles
-│   ├── Header.css                    # Header styles
-│   ├── Modal.css                     # Modal styles
-│   └── ui/                           # shadcn/ui components
-│       ├── button.tsx
-│       ├── card.tsx
-│       ├── input.tsx
-│       └── ... (other UI components)
-│
-├── hooks/
-│   ├── use-mobile.ts                 # Mobile detection hook
-│   └── use-toast.ts                  # Toast notification hook
-│
-├── lib/
-│   └── utils.ts                      # Utility functions (cn for class merging)
-│
-├── types/
-│   └── api.ts                        # TypeScript types for API responses
-│
-├── public/
-│   └── ... (static assets)
-│
-├── package.json                      # Dependencies and scripts
-├── tsconfig.json                     # TypeScript configuration
-├── next.config.mjs                   # Next.js configuration
-└── README.md                         # This file
-\`\`\`
+- **React 19** - Latest React with hooks and modern features
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and dev server
+- **Material UI v6** - Complete UI component library with modern design
+- **React Router v7** - Client-side routing with lazy loading
+- **Axios** - HTTP client (not directly used, using fetch API)
+- **React Hook Form + Zod** - Form management and validation
+- **React Markdown** - Markdown rendering with syntax highlighting
+- **Sonner** - Toast notifications
+- **Date-fns** - Date utilities
 
-## Architecture
+## Features
 
-### API Client Architecture
+### 1. Home Page
 
-The application uses a **unified, scalable API client architecture**:
+- Modern landing page with hero section
+- Gradient design with emerald/cyan color scheme
+- Responsive navigation
 
-\`\`\`
-BaseApiClient (Abstract)
-    ├── EMSClient (Expense Management System)
-    │   ├── Account Management
-    │   ├── Month/Year Management
-    │   └── Spending Account Entries
-    │
-    └── BellaChatClient (AI Chat Service)
-        └── Message Streaming
-\`\`\`
+### 2. Chat Interface
 
-**Key Features:**
-- **Single Responsibility**: Each client handles one service
-- **Inheritance**: All clients extend `BaseApiClient` for common HTTP functionality
-- **Singleton Pattern**: Instances exported as singletons to prevent multiple instantiations
-- **Type Safety**: Full TypeScript support with proper interfaces
-- **Scalability**: Easy to add new clients by extending `BaseApiClient`
+- Real-time AI chat with Bella
+- Streaming response support
+- Markdown rendering with code syntax highlighting
+- Auto-scroll and message history
+- Clean, modern chat UI
 
-### Chat Flow
+### 3. Dashboard
 
-1. **User Input** → Terminal lines stripped automatically
-2. **API Request** → Message sent to Bella Chat API
-3. **Streaming Response** → Response streamed and rendered in real-time
-4. **Markdown Rendering** → Response formatted with markdown support
-5. **Status Updates** → Loading status shows intuitive messages (scalable for intermediate steps)
+- Access to various management tools
+- Card-based navigation
 
-## Key Features
+### 4. Spending Account Summary
 
-### 1. Markdown Rendering
-- Beautiful formatting of API responses
-- Support for headers, bold, italic, code blocks, lists, and links
-- Automatic syntax highlighting for code blocks
+- Complete CRUD operations for spending accounts
+- Filtering by account, month, and year
+- Pagination with configurable page sizes
+- Real-time metrics calculation
+- Currency formatting (INR)
+- Responsive table design
 
-### 2. Terminal Line Stripping
-- Automatically removes terminal prompts (`$`, `>`, `#`, `%`)
-- Cleans user input before sending to API
-- Prevents accidental command syntax in queries
+## Development
 
-### 3. Loading Status Component
-- Intuitive status messages during API calls
-- Example: "Bella is thinking..."
-- **Scalable for future enhancements**: Can display intermediate steps from API
-  - Example future states: "Loading data...", "Generating response...", "Formatting answer..."
-  - Simply update the `loadingStatus` state in `app/chat/page.tsx`
+### Prerequisites
 
-### 4. Streaming Response Animation
-- **Rolling Gradient Glow**: Cool colors (green → cyan → blue) animate during streaming
-- **Automatic Settlement**: Glow disappears after response completes
-- **Smooth UX**: Visual feedback that response is being generated
-
-### 5. Responsive Design
-- Mobile-first approach
-- Optimized for all screen sizes
-- Touch-friendly interface
-
-## Environment Variables
-
-\`\`\`env
-NEXT_PUBLIC_EMS_API_URL=http://localhost:8000
-NEXT_PUBLIC_BELLA_CHAT_API_URL=http://localhost:5000
-\`\`\`
-
-## Getting Started
+- Node.js 25+ and npm
 
 ### Installation
 
-\`\`\`bash
-# Using shadcn CLI (recommended)
-npx shadcn-cli@latest init
+```bash
+npm install --legacy-peer-deps
+```
 
-# Or clone and install
-npm install
-\`\`\`
+### Environment Variables
 
-### Development
+Copy `.env.example` to `.env` and configure:
 
-\`\`\`bash
+```env
+VITE_HOST=localhost
+VITE_PORT=3000
+```
+
+**Note:** API endpoints are configured through Vite proxy (development) and nginx (production). No environment variables needed for API URLs - the app uses relative paths like `/api/ems` and `/api/bella-chat`.
+
+### Running the Development Server
+
+```bash
 npm run dev
-\`\`\`
+```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+The app will be available at `http://localhost:3000` (or your configured VITE_HOST:VITE_PORT)
 
-### Production Build
+### Building for Production
 
-\`\`\`bash
+```bash
 npm run build
-npm start
-\`\`\`
+```
 
-## Usage Examples
+Build output will be in `dist/` directory.
 
-### Using the EMS Client
+### Preview Production Build
 
-\`\`\`typescript
-import { emsClient } from "@/api/clients"
+```bash
+npm run preview
+```
 
-// Get all accounts
-const accounts = await emsClient.getAllAccounts()
+## API Integration
 
-// Create or get account
-const account = await emsClient.getOrCreateAccount({ name: "My Account" })
+The application uses **relative paths** for API calls that are proxied:
 
-// Update account
-await emsClient.updateAccountName(accountId, { name: "Updated Name" })
-\`\`\`
+### Development Mode
 
-### Using the Bella Chat Client
+Vite dev server proxies API requests:
 
-\`\`\`typescript
-import { bellaChatClient } from "@/api/clients"
+- `/api/bella-chat/*` → `http://localhost:5000/*`
+- `/api/ems/*` → `http://localhost:8000/*`
 
-// Send message and get streaming response
-const response = await bellaChatClient.sendMessage("Hello, Bella!")
-const reader = response.body?.getReader()
+### Production Mode
 
-// Read streaming chunks
-const decoder = new TextDecoder()
-while (true) {
-  const { done, value } = await reader.read()
-  if (done) break
-  const chunk = decoder.decode(value)
-  console.log(chunk)
-}
-\`\`\`
+nginx proxies API requests:
 
-### Adding a New API Client
+- `/api/bella-chat/*` → `http://bella-chat-service:5000/*`
+- `/api/ems/*` → `http://expense-manager-service:8000/*`
 
-1. Create a new file in `api/clients/` (e.g., `my-service-client.ts`)
-2. Extend `BaseApiClient`:
+### Backend Services
 
-\`\`\`typescript
-import { BaseApiClient } from "./base-client"
+#### 1. Bella Chat Service
 
-class MyServiceClient extends BaseApiClient {
-  constructor() {
-    super({ baseURL: process.env.NEXT_PUBLIC_MY_SERVICE_URL })
-  }
+- Container: `bella-chat-service:5000`
+- Endpoint: `/v1/chat/`
+- Provides AI chat functionality with streaming responses
 
-  async myMethod(): Promise<any> {
-    const response = await this.getClient().get("/endpoint")
-    return response.data
-  }
-}
+#### 2. EMS (Expense Management System)
 
-export const myServiceClient = new MyServiceClient()
-\`\`\`
+- Container: `expense-manager-service:8000`
+- Account management endpoints: `/v1/account/*`
+- Month/Year management endpoints: `/v1/month_year/*`
+- Spending account CRUD operations: `/v1/spending_account/*`
 
-3. Export from `api/clients/index.ts`:
+## Docker Deployment
 
-\`\`\`typescript
-export { myServiceClient } from "./my-service-client"
-\`\`\`
+### Multi-Stage Build
 
-## Customization
+The Dockerfile uses a 2-stage build process:
 
-### Updating Loading Status Messages
+**Stage 1 - Builder (node:25-alpine):**
 
-Edit `app/chat/page.tsx` to customize status messages:
+- Installs dependencies
+- Builds production bundle
+- Size: ~300 MB (discarded)
 
-\`\`\`typescript
-// For simple messages
-setLoadingStatus("Bella is thinking...")
+**Stage 2 - Production (nginx:1.27-alpine):**
 
-// For intermediate steps (future API enhancement)
-setLoadingStatus("Loading data from database...")
-setLoadingStatus("Generating response...")
-setLoadingStatus("Formatting answer...")
-\`\`\`
+- Serves static files via nginx
+- Proxies API requests to backend services
+- Final image size: ~22 MB
 
-### Modifying Gradient Glow Animation
+### Building the Docker Image
 
-Edit `app/globals.css` to adjust the `gradient-glow` animation:
+```bash
+docker build -t keys-personal-assist-ui .
+```
 
-\`\`\`css
-@keyframes gradient-glow {
-  0% {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); /* Green */
-  }
-  /* ... adjust colors and timing ... */
-}
-\`\`\`
+### Running with Docker Compose
 
-### Changing Color Scheme
+```bash
+# From project root
+docker-compose up -d
 
-Update CSS variables in `app/globals.css`:
+# Rebuild UI only
+docker-compose up -d --build keys-personal-assist-ui
+```
 
-\`\`\`css
-:root {
-  --primary: oklch(0.205 0 0); /* Change primary color */
-  --accent: oklch(0.97 0 0);   /* Change accent color */
-}
-\`\`\`
+The UI will be available at `http://localhost:3000`
 
-## Technologies
+### nginx Configuration
 
-- **Next.js 15** - React framework with App Router
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS v4** - Utility-first styling
-- **Axios** - HTTP client
-- **Lucide React** - Icon library
-- **shadcn/ui** - Component library
+Production nginx config includes:
 
-## Performance Optimizations
+- Gzip compression
+- Static asset caching (1 year)
+- React Router support (SPA fallback to index.html)
+- API proxying to backend services
+- Security headers
 
-- Server-side rendering for initial page load
-- Streaming responses for real-time feedback
-- Optimized re-renders with React hooks
-- CSS animations for smooth UX
-- Lazy loading of components
+## Build Optimizations
 
-## Future Enhancements
+### Code Splitting
 
-- [ ] Intermediate step indicators in loading status
-- [ ] Message history persistence
-- [ ] User authentication
-- [ ] Multiple conversation threads
-- [ ] Message search and filtering
-- [ ] Custom themes
-- [ ] Voice input/output
-- [ ] Message reactions and feedback
+- **Route-based lazy loading** - All pages load on-demand
+- **Vendor chunking** - Libraries split into separate chunks:
+  - vendor-react: React core
+  - vendor-mui: Material-UI components
+  - vendor-markdown: Markdown rendering (lazy-loaded)
+  - vendor-router: React Router
+  - vendor-forms: Form libraries
+  - vendor-utils: Utilities
+
+### Performance Metrics
+
+- Initial load (homepage): ~470 KB gzipped
+- Chat page (on-demand): +270 KB gzipped (markdown libs)
+- Final Docker image: 21.8 MB
+
+## Theme and Styling
+
+The application uses Material UI with a custom theme featuring:
+
+- **Primary**: Emerald green - for trust and growth
+- **Secondary**: Cyan - for accents
+- **Dark Mode**: Toggle in header, persisted in localStorage
+- **Fonts**: Space Grotesk (headings), DM Sans (body)
+
+## Network Architecture
+
+For detailed information about networking, Docker setup, and proxy configuration, see [docs/network-setup.md](docs/network-setup.md)
 
 ## License
 
-MIT
-
-## Support
-
-For issues or questions, please open an issue in the repository.
-\`\`\`
-
-```typescriptreact file="api/client.ts" isDeleted="true"
-...deleted...
+Private - All rights reserved
