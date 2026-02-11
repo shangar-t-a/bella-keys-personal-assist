@@ -874,23 +874,16 @@
             "MonthYearRequest": {
                 "properties": {
                     "month": {
-                        "type": "string",
-                        "enum": [
-                            "January",
-                            "February",
-                            "March",
-                            "April",
-                            "May",
-                            "June",
-                            "July",
-                            "August",
-                            "September",
-                            "October",
-                            "November",
-                            "December"
-                        ],
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
-                        "description": "Name of the month"
+                        "description": "Month as an integer between 1 and 12",
+                        "examples": [
+                            1,
+                            2,
+                            3
+                        ]
                     },
                     "year": {
                         "type": "integer",
@@ -921,23 +914,16 @@
                         "description": "Unique identifier for the month-year combination"
                     },
                     "month": {
-                        "type": "string",
-                        "enum": [
-                            "January",
-                            "February",
-                            "March",
-                            "April",
-                            "May",
-                            "June",
-                            "July",
-                            "August",
-                            "September",
-                            "October",
-                            "November",
-                            "December"
-                        ],
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
-                        "description": "Name of the month"
+                        "description": "Month as an integer between 1 and 12",
+                        "examples": [
+                            1,
+                            2,
+                            3
+                        ]
                     },
                     "year": {
                         "type": "integer",
@@ -967,12 +953,14 @@
                         ]
                     },
                     "month": {
-                        "type": "string",
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
                         "description": "Month of the entry",
                         "examples": [
-                            "January",
-                            "February"
+                            1,
+                            2
                         ]
                     },
                     "year": {
@@ -1036,12 +1024,14 @@
                         ]
                     },
                     "month": {
-                        "type": "string",
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
                         "description": "Month of the entry",
                         "examples": [
-                            "January",
-                            "February"
+                            1,
+                            2
                         ]
                     },
                     "year": {

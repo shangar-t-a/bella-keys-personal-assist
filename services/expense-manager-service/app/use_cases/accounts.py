@@ -6,7 +6,10 @@ from app.entities.errors.accounts import (
 from app.entities.errors.accounts import (
     MonthYearNotFoundError as EntityMonthYearNotFoundError,
 )
-from app.entities.models.accounts import AccountName, MonthLiteral, MonthYear
+from app.entities.models.accounts import (
+    AccountName,
+    MonthYear,
+)
 from app.entities.repositories.accounts import AccountRepositoryInterface
 from app.use_cases.errors.accounts import (
     AccountNotFoundError,
@@ -90,13 +93,13 @@ class AccountService:
         except EntityAccountNotFoundError as error:
             raise AccountNotFoundError(account_id=error.account_id) from error
 
-    async def get_or_create_month_year(self, month: MonthLiteral, year: int) -> MonthYear:
+    async def get_or_create_month_year(self, month: int, year: int) -> MonthYear:
         """Retrieve an existing MonthYear or create a new one with the provided month and year."""
         month_year_entity = await self.account_repository.get_or_create_month_year(month=month, year=year)
 
         return month_year_entity
 
-    async def get_month_year_by_value(self, month: MonthLiteral, year: int) -> MonthYear | None:
+    async def get_month_year_by_value(self, month: int, year: int) -> MonthYear | None:
         """Retrieve a MonthYear by its month and year.
 
         Raises:
@@ -131,7 +134,7 @@ class AccountService:
 
         return month_year_entities
 
-    async def update_month_year(self, month_year_id: str, month: MonthLiteral, year: int) -> MonthYear:
+    async def update_month_year(self, month_year_id: str, month: int, year: int) -> MonthYear:
         """Update an existing MonthYear with the provided data.
 
         Raises:

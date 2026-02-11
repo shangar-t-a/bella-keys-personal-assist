@@ -7,6 +7,7 @@ from datetime import (
 )
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     Integer,
     String,
@@ -36,11 +37,14 @@ class MonthYearModel(Base):
     __tablename__ = "month_years"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid.uuid4().hex)
-    month: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    month: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.now(UTC), onupdate=datetime.now(UTC)
     )
 
-    __table_args__ = (UniqueConstraint("month", "year", name="uq_month_year"),)
+    __table_args__ = (
+        UniqueConstraint("month", "year", name="uq_month_year"),
+        CheckConstraint("month >= 1 AND month <= 12", name="chk_month_range"),
+    )

@@ -9,7 +9,7 @@ class SpendingAccountEntryBase(BaseSchema):
     """Base schema for spending account entries."""
 
     account_name: str = Field(..., description="Name of the spending account", examples=["ICICI", "SBI"])
-    month: str = Field(..., description="Month of the entry", examples=["January", "February"])
+    month: int = Field(..., ge=1, le=12, description="Month of the entry", examples=[1, 2])
     year: int = Field(..., ge=2000, le=2100, description="Year between 2000 and 2100", examples=[2024, 2025])
     starting_balance: float = Field(..., description="Starting balance of the account", examples=[10000.0])
     current_balance: float = Field(..., description="Current balance of the account", examples=[8000.0])

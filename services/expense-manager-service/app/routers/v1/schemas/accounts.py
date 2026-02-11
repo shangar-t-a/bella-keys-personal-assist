@@ -1,26 +1,8 @@
 """Schemas for accounts endpoints."""
 
-from typing import Literal
-
 from pydantic import Field
 
 from app.routers.v1.schemas.base import BaseSchema
-
-# Type for month literals
-MonthLiteral = Literal[
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
 
 
 class AccountNameRequest(BaseSchema):
@@ -39,7 +21,7 @@ class AccountNameResponse(BaseSchema):
 class MonthYearRequest(BaseSchema):
     """Schema for month-year creation requests."""
 
-    month: MonthLiteral = Field(..., description="Name of the month")
+    month: int = Field(..., ge=1, le=12, description="Month as an integer between 1 and 12", examples=[1, 2, 3])
     year: int = Field(..., ge=2000, le=2100, description="Year between 2000 and 2100", examples=[2024, 2025])
 
 
@@ -47,7 +29,7 @@ class MonthYearResponse(BaseSchema):
     """Schema for month-year responses."""
 
     id: str = Field(..., description="Unique identifier for the month-year combination")
-    month: MonthLiteral = Field(..., description="Name of the month")
+    month: int = Field(..., ge=1, le=12, description="Month as an integer between 1 and 12", examples=[1, 2, 3])
     year: int = Field(..., description="Year value")
 
 

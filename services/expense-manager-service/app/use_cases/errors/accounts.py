@@ -33,7 +33,7 @@ class MonthYearNotFoundError(ExpenseManagerUseCaseError):
 class MonthYearWithDetailsNotFoundError(ExpenseManagerUseCaseError):
     """Error raised when a MonthYear with specific details is not found."""
 
-    def __init__(self, month: str, year: int):
+    def __init__(self, month: int, year: int):
         """Initialize the error with the month and year."""
         super().__init__(f"MonthYear with month '{month}' and year '{year}' not found.")
         self.month = month
@@ -43,7 +43,7 @@ class MonthYearWithDetailsNotFoundError(ExpenseManagerUseCaseError):
 class MonthYearAlreadyExistsForAccountError(ExpenseManagerUseCaseError):
     """Error raised when a MonthYear already exists for a specific account."""
 
-    def __init__(self, account_name: str, month: str, year: int):
+    def __init__(self, account_name: str, month: int, year: int):
         """Initialize the error with the account name, month, and year."""
         super().__init__(f"MonthYear '{month}-{year}' already exists for account '{account_name}'.")
         self.account_name = account_name

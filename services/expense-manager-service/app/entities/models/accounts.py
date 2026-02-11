@@ -1,25 +1,8 @@
 """Account related entities for the Expense Manager Service."""
 
-from typing import Literal
-
 from pydantic import Field, model_validator
 
 from app.entities.models.base import BaseEntity
-
-MonthLiteral = Literal[
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
 
 
 class AccountName(BaseEntity):
@@ -38,5 +21,5 @@ class AccountName(BaseEntity):
 class MonthYear(BaseEntity):
     """Entity representing date details with month and year."""
 
-    month: MonthLiteral = Field(description="Month of the year")
+    month: int = Field(ge=1, le=12, description="Month of the year")
     year: int = Field(ge=2000, le=2100, description="Year of the entry")

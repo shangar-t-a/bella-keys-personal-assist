@@ -2,7 +2,6 @@
 
 from pydantic import Field
 
-from app.entities.models.accounts import MonthLiteral
 from app.use_cases.models.base import BaseEntity
 
 
@@ -10,7 +9,7 @@ class FlattenedSpendingAccountEntryCreate(BaseEntity):
     """Model for creating a spending account entry with flattened details."""
 
     account_name: str = Field(description="Name of the account")
-    month: MonthLiteral = Field(description="Month of the entry")
+    month: int = Field(description="Month of the entry")
     year: int = Field(description="Year of the entry")
     starting_balance: float = Field(description="Starting balance of the account")
     current_balance: float = Field(description="Current balance of the account")

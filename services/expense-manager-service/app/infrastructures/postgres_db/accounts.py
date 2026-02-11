@@ -93,7 +93,7 @@ class PostgresAccountRepository(AccountRepositoryInterface):
             await session.delete(account)
             await session.commit()
 
-    async def get_or_create_month_year(self, month: str, year: int) -> MonthYear:
+    async def get_or_create_month_year(self, month: int, year: int) -> MonthYear:
         """Retrieve an existing MonthYear or create a new one with the provided month and year."""
         async with await self._get_session() as session:
             # Check if month-year exists
@@ -109,7 +109,7 @@ class PostgresAccountRepository(AccountRepositoryInterface):
 
             return MonthYear(id=month_year.id, month=month_year.month, year=month_year.year)
 
-    async def get_month_year_by_value(self, month, year) -> MonthYear | None:
+    async def get_month_year_by_value(self, month: int, year: int) -> MonthYear | None:
         """Retrieve a MonthYear by its month and year."""
         async with await self._get_session() as session:
             stmt = select(MonthYearModel).where(MonthYearModel.month == month, MonthYearModel.year == year)
@@ -133,7 +133,7 @@ class PostgresAccountRepository(AccountRepositoryInterface):
             month_years = result.scalars().all()
             return [MonthYear(id=my.id, month=my.month, year=my.year) for my in month_years]
 
-    async def update_month_year(self, month_year_id: str, month: str, year: int) -> MonthYear:
+    async def update_month_year(self, month_year_id: str, month: int, year: int) -> MonthYear:
         """Update an existing MonthYear with the provided month and year."""
         async with await self._get_session() as session:
             # Get month-year

@@ -106,14 +106,14 @@ networks:
 
 ## Port Mapping
 
-| Service | Internal Port | External Port | Access |
-|---------|--------------|---------------|---------|
-| UI (nginx) | 80 | 3000 | <http://localhost:3000> |
-| EMS | 8000 | 8000 | <http://localhost:8000> |
-| Bella Chat | 5000 | 5000 | <http://localhost:5000> |
-| Postgres | 5432 | 5432 | localhost:5432 |
-| Qdrant | 6333/6334 | 6333/6334 | <http://localhost:6333> |
-| Phoenix | 6006 | 6006 | <http://localhost:6006> |
+| Service    | Internal Port | External Port | Access                  |
+|------------|---------------|---------------|-------------------------|
+| UI (nginx) | 80            | 3000          | <http://localhost:3000> |
+| EMS        | 8000          | 8000          | <http://localhost:8000> |
+| Bella Chat | 5000          | 5000          | <http://localhost:5000> |
+| Postgres   | 5432          | 5432          | localhost:5432          |
+| Qdrant     | 6333/6334     | 6333/6334     | <http://localhost:6333> |
+| Phoenix    | 6006          | 6006          | <http://localhost:6006> |
 
 ## Container Communication Flow
 
