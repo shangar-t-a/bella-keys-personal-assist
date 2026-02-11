@@ -69,7 +69,7 @@ async def get_all_entries(
 
 
 @router.get(
-    "/{account_id}",
+    "/{account_id}/list",
     response_model=list[SpendingAccountEntryWithCalculatedFieldsResponse],
     responses={
         status.HTTP_404_NOT_FOUND: {

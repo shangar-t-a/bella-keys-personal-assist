@@ -555,14 +555,14 @@
                 }
             }
         },
-        "/v1/spending_account/{account_id}": {
+        "/v1/spending_account/{account_id}/list": {
             "get": {
                 "tags": [
                     "spending_account"
                 ],
                 "summary": "Get All Entries For Account",
                 "description": "Retrieve all entries for a given spending account.",
-                "operationId": "get_all_entries_for_account_v1_spending_account__account_id__get",
+                "operationId": "get_all_entries_for_account_v1_spending_account__account_id__list_get",
                 "parameters": [
                     {
                         "name": "account_id",
@@ -584,7 +584,7 @@
                                     "items": {
                                         "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
                                     },
-                                    "title": "Response Get All Entries For Account V1 Spending Account  Account Id  Get"
+                                    "title": "Response Get All Entries For Account V1 Spending Account  Account Id  List Get"
                                 }
                             }
                         }
