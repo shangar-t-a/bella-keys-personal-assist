@@ -6,6 +6,8 @@ from app.entities.models.spending_account import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
     SpendingAccountEntryWithCalculatedFieldsPaginated,
+    SpendingAccountEntryWithDetails,
+    SpendingAccountEntryWithDetailsPaginated,
 )
 
 
@@ -53,4 +55,37 @@ class SpendingAccountRepositoryInterface(ABC):
     @abstractmethod
     async def delete_entry(self, entry_id: str) -> None:
         """Delete a spending account entry by its ID."""
+        pass
+
+    # Optimized methods with JOINs (N+1 query optimization)
+
+    @abstractmethod
+    async def add_entry_with_details(self, entry: SpendingAccountEntry) -> SpendingAccountEntryWithDetails:
+        """Add a new entry and return it with joined account and date details."""
+        pass
+
+    @abstractmethod
+    async def get_entry_by_id_with_details(self, entry_id: str) -> SpendingAccountEntryWithDetails:
+        """Retrieve a spending account entry by its ID with joined account and date details."""
+        pass
+
+    @abstractmethod
+    async def get_all_entries_with_details(
+        self, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithDetailsPaginated:
+        """Retrieve all entries with joined account and date details (optimized with JOIN)."""
+        pass
+
+    @abstractmethod
+    async def get_all_entries_for_account_with_details(
+        self, account_id: str, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithDetailsPaginated:
+        """Retrieve all entries for an account with joined details (optimized with JOIN)."""
+        pass
+
+    @abstractmethod
+    async def edit_entry_with_details(
+        self, entry_id: str, entry: SpendingAccountEntry
+    ) -> SpendingAccountEntryWithDetails:
+        """Edit an existing entry and return it with joined account and date details."""
         pass

@@ -178,3 +178,19 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Delete entry
             await session.delete(existing_entry)
             await session.commit()
+
+    # Optimized methods with JOINs - not implemented for SQLite
+    async def add_entry_with_details(self, entry):
+        raise NotImplementedError("SQLite repository does not support optimized JOIN methods")
+
+    async def get_entry_by_id_with_details(self, entry_id: str):
+        raise NotImplementedError("SQLite repository does not support optimized JOIN methods")
+
+    async def get_all_entries_with_details(self, limit: int = 12, offset: int = 0):
+        raise NotImplementedError("SQLite repository does not support optimized JOIN methods")
+
+    async def get_all_entries_for_account_with_details(self, account_id: str, limit: int = 12, offset: int = 0):
+        raise NotImplementedError("SQLite repository does not support optimized JOIN methods")
+
+    async def edit_entry_with_details(self, entry_id: str, entry):
+        raise NotImplementedError("SQLite repository does not support optimized JOIN methods")

@@ -76,3 +76,19 @@ class SpendingAccountRepository(SpendingAccountRepositoryInterface):
                 del self.entries[idx]
                 return
         raise SpendingAccountEntryNotFoundError(entry_id=entry_id)
+
+    # Optimized methods with JOINs - not implemented for InMemory
+    async def add_entry_with_details(self, entry):
+        raise NotImplementedError("InMemory repository does not support optimized JOIN methods")
+
+    async def get_entry_by_id_with_details(self, entry_id: str):
+        raise NotImplementedError("InMemory repository does not support optimized JOIN methods")
+
+    async def get_all_entries_with_details(self, limit: int = 12, offset: int = 0):
+        raise NotImplementedError("InMemory repository does not support optimized JOIN methods")
+
+    async def get_all_entries_for_account_with_details(self, account_id: str, limit: int = 12, offset: int = 0):
+        raise NotImplementedError("InMemory repository does not support optimized JOIN methods")
+
+    async def edit_entry_with_details(self, entry_id: str, entry):
+        raise NotImplementedError("InMemory repository does not support optimized JOIN methods")

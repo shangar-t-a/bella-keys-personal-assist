@@ -11,9 +11,12 @@ from app.entities.models.spending_account import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
     SpendingAccountEntryWithCalculatedFieldsPaginated,
+    SpendingAccountEntryWithDetails,
+    SpendingAccountEntryWithDetailsPaginated,
 )
 from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
 from app.infrastructures.postgres_db.database import get_async_session
+from app.infrastructures.postgres_db.models.accounts import AccountModel, MonthYearModel
 from app.infrastructures.postgres_db.models.spending_account import SpendingAccountEntryModel
 
 
@@ -213,3 +216,227 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Delete entry
             await session.delete(existing_entry)
             await session.commit()
+
+    # Optimized methods with JOINs (N+1 query optimization)
+
+    async def add_entry_with_details(self, entry: SpendingAccountEntry) -> SpendingAccountEntryWithDetails:
+        """Add a new entry and return it with joined account and date details."""
+        async with await self._get_session() as session:
+            # Create new entry
+            new_entry = SpendingAccountEntryModel(
+                account_id=entry.account_id,
+                date_detail_id=entry.date_detail_id,
+                starting_balance=entry.starting_balance,
+                current_balance=entry.current_balance,
+                current_credit=entry.current_credit,
+            )
+            session.add(new_entry)
+            await session.commit()
+            await session.refresh(new_entry)
+
+            # Retrieve with joined details in a single query
+            stmt = (
+                select(
+                    SpendingAccountEntryModel,
+                    AccountModel.account_name,
+                    MonthYearModel.month,
+                    MonthYearModel.year,
+                )
+                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
+                .join(MonthYearModel, SpendingAccountEntryModel.date_detail_id == MonthYearModel.id)
+                .where(SpendingAccountEntryModel.id == new_entry.id)
+            )
+            result = await session.execute(stmt)
+            row = result.one()
+            entry_model, account_name, month, year = row
+
+            return SpendingAccountEntryWithDetails(
+                id=entry_model.id,
+                account_id=entry_model.account_id,
+                date_detail_id=entry_model.date_detail_id,
+                starting_balance=entry_model.starting_balance,
+                current_balance=entry_model.current_balance,
+                current_credit=entry_model.current_credit,
+                account_name=account_name,
+                month=month,
+                year=year,
+            )
+
+    async def get_entry_by_id_with_details(self, entry_id: str) -> SpendingAccountEntryWithDetails:
+        """Retrieve a spending account entry by its ID with joined account and date details."""
+        async with await self._get_session() as session:
+            stmt = (
+                select(
+                    SpendingAccountEntryModel,
+                    AccountModel.account_name,
+                    MonthYearModel.month,
+                    MonthYearModel.year,
+                )
+                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
+                .join(MonthYearModel, SpendingAccountEntryModel.date_detail_id == MonthYearModel.id)
+                .where(SpendingAccountEntryModel.id == entry_id)
+            )
+            result = await session.execute(stmt)
+            row = result.one_or_none()
+
+            if row is None:
+                raise SpendingAccountEntryNotFoundError(entry_id=entry_id)
+
+            entry_model, account_name, month, year = row
+
+            return SpendingAccountEntryWithDetails(
+                id=entry_model.id,
+                account_id=entry_model.account_id,
+                date_detail_id=entry_model.date_detail_id,
+                starting_balance=entry_model.starting_balance,
+                current_balance=entry_model.current_balance,
+                current_credit=entry_model.current_credit,
+                account_name=account_name,
+                month=month,
+                year=year,
+            )
+
+    async def get_all_entries_with_details(
+        self, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithDetailsPaginated:
+        """Retrieve all entries with joined account and date details (optimized with JOIN)."""
+        async with await self._get_session() as session:
+            # Retrieve entries with joined details in a single query
+            stmt = (
+                select(
+                    SpendingAccountEntryModel,
+                    AccountModel.account_name,
+                    MonthYearModel.month,
+                    MonthYearModel.year,
+                )
+                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
+                .join(MonthYearModel, SpendingAccountEntryModel.date_detail_id == MonthYearModel.id)
+                .limit(limit)
+                .offset(offset)
+            )
+            result = await session.execute(stmt)
+            rows = result.all()
+
+            # Count total entries for pagination metadata
+            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id))
+            total_entries_result = await session.execute(total_entries_stmt)
+            total_entries = total_entries_result.scalar_one()
+
+            return SpendingAccountEntryWithDetailsPaginated(
+                entries=[
+                    SpendingAccountEntryWithDetails(
+                        id=entry_model.id,
+                        account_id=entry_model.account_id,
+                        date_detail_id=entry_model.date_detail_id,
+                        starting_balance=entry_model.starting_balance,
+                        current_balance=entry_model.current_balance,
+                        current_credit=entry_model.current_credit,
+                        account_name=account_name,
+                        month=month,
+                        year=year,
+                    )
+                    for entry_model, account_name, month, year in rows
+                ],
+                limit=limit,
+                offset=offset,
+                total_entries=total_entries,
+            )
+
+    async def get_all_entries_for_account_with_details(
+        self, account_id: str, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithDetailsPaginated:
+        """Retrieve all entries for an account with joined details (optimized with JOIN)."""
+        async with await self._get_session() as session:
+            # Retrieve entries with joined details in a single query
+            stmt = (
+                select(
+                    SpendingAccountEntryModel,
+                    AccountModel.account_name,
+                    MonthYearModel.month,
+                    MonthYearModel.year,
+                )
+                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
+                .join(MonthYearModel, SpendingAccountEntryModel.date_detail_id == MonthYearModel.id)
+                .where(SpendingAccountEntryModel.account_id == account_id)
+                .limit(limit)
+                .offset(offset)
+            )
+            result = await session.execute(stmt)
+            rows = result.all()
+
+            # Count total entries for the account
+            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id)).where(
+                SpendingAccountEntryModel.account_id == account_id
+            )
+            total_entries_result = await session.execute(total_entries_stmt)
+            total_entries = total_entries_result.scalar_one()
+
+            return SpendingAccountEntryWithDetailsPaginated(
+                entries=[
+                    SpendingAccountEntryWithDetails(
+                        id=entry_model.id,
+                        account_id=entry_model.account_id,
+                        date_detail_id=entry_model.date_detail_id,
+                        starting_balance=entry_model.starting_balance,
+                        current_balance=entry_model.current_balance,
+                        current_credit=entry_model.current_credit,
+                        account_name=account_name,
+                        month=month,
+                        year=year,
+                    )
+                    for entry_model, account_name, month, year in rows
+                ],
+                limit=limit,
+                offset=offset,
+                total_entries=total_entries,
+            )
+
+    async def edit_entry_with_details(
+        self, entry_id: str, entry: SpendingAccountEntry
+    ) -> SpendingAccountEntryWithDetails:
+        """Edit an existing entry and return it with joined account and date details."""
+        async with await self._get_session() as session:
+            # Get entry
+            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            result = await session.execute(stmt)
+            existing_entry = result.scalar_one_or_none()
+
+            if existing_entry is None:
+                raise SpendingAccountEntryNotFoundError(entry_id=entry_id)
+
+            # Update entry
+            existing_entry.account_id = entry.account_id
+            existing_entry.date_detail_id = entry.date_detail_id
+            existing_entry.starting_balance = entry.starting_balance
+            existing_entry.current_balance = entry.current_balance
+            existing_entry.current_credit = entry.current_credit
+
+            await session.commit()
+
+            # Retrieve with joined details in a single query
+            stmt = (
+                select(
+                    SpendingAccountEntryModel,
+                    AccountModel.account_name,
+                    MonthYearModel.month,
+                    MonthYearModel.year,
+                )
+                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
+                .join(MonthYearModel, SpendingAccountEntryModel.date_detail_id == MonthYearModel.id)
+                .where(SpendingAccountEntryModel.id == entry_id)
+            )
+            result = await session.execute(stmt)
+            row = result.one()
+            entry_model, account_name, month, year = row
+
+            return SpendingAccountEntryWithDetails(
+                id=entry_model.id,
+                account_id=entry_model.account_id,
+                date_detail_id=entry_model.date_detail_id,
+                starting_balance=entry_model.starting_balance,
+                current_balance=entry_model.current_balance,
+                current_credit=entry_model.current_credit,
+                account_name=account_name,
+                month=month,
+                year=year,
+            )

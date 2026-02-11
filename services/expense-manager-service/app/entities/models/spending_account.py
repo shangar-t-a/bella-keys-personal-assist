@@ -39,3 +39,26 @@ class SpendingAccountEntryWithCalculatedFieldsPaginated(BaseEntity):
     limit: int = Field(description="Number of entries per page")
     offset: int = Field(description="Offset for pagination")
     total_entries: int = Field(description="Total number of entries available")
+
+
+class SpendingAccountEntryWithDetails(SpendingAccountEntryWithCalculatedFields):
+    """Entity representing a spending account entry with joined account and date details.
+
+    This model includes account_name, month, and year from related tables,
+    eliminating the need for separate foreign key lookups (N+1 query optimization).
+    """
+
+    account_name: str = Field(description="Name of the account")
+    month: int = Field(description="Month of the entry")
+    year: int = Field(description="Year of the entry")
+
+
+class SpendingAccountEntryWithDetailsPaginated(BaseEntity):
+    """Entity representing a paginated list of spending account entries with details."""
+
+    entries: list[SpendingAccountEntryWithDetails] = Field(
+        description="List of spending account entries with account and date details"
+    )
+    limit: int = Field(description="Number of entries per page")
+    offset: int = Field(description="Offset for pagination")
+    total_entries: int = Field(description="Total number of entries available")

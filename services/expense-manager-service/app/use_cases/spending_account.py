@@ -115,8 +115,8 @@ class SpendingAccountService:
                 month=entry.month, year=entry.year
             )
 
-        # Add entry in repository
-        spending_account_entry_entity = await self.spending_account_repository.add_entry(
+        # Add entry with details to avoid extra query for foreign keys
+        spending_account_entry_entity_with_details = await self.spending_account_repository.add_entry_with_details(
             entry=SpendingAccountEntry(
                 account_id=retrieved_account.id,
                 date_detail_id=retrieved_date_detail.id,
@@ -126,43 +126,48 @@ class SpendingAccountService:
             )
         )
 
-        # Retrieve foreign key details for the new entry
-        spending_account_entry_entity_with_details = await self._retrieve_foreign_key_values_in_spending_account(
-            spending_account_entry_entity
+        return FlattenedSpendingAccountEntryWithCalculatedFields(
+            id=spending_account_entry_entity_with_details.id,
+            account_name=spending_account_entry_entity_with_details.account_name,
+            month=spending_account_entry_entity_with_details.month,
+            year=spending_account_entry_entity_with_details.year,
+            starting_balance=spending_account_entry_entity_with_details.starting_balance,
+            current_balance=spending_account_entry_entity_with_details.current_balance,
+            current_credit=spending_account_entry_entity_with_details.current_credit,
+            balance_after_credit=spending_account_entry_entity_with_details.balance_after_credit,
+            total_spent=spending_account_entry_entity_with_details.total_spent,
         )
-
-        return spending_account_entry_entity_with_details
 
     async def get_all_entries(
         self, limit: int = 12, offset: int = 0
     ) -> FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
         """Retrieve all entries for all spending accounts."""
-        spending_account_entry_with_calculated_fields_paginated = (
-            await self.spending_account_repository.get_all_entries(limit=limit, offset=offset)
+        # Get all entries with details using optimized repository method with JOIN to eliminate N+1 queries
+        spending_account_entry_with_details_paginated = (
+            await self.spending_account_repository.get_all_entries_with_details(limit=limit, offset=offset)
         )
-        # Apply calculated fields for each entry
-        spending_account_entry_entities_with_calculated_fields = [
-            SpendingAccountEntryWithCalculatedFields(
+
+        # Convert to flattened response (account_name, month, year already included)
+        spending_account_entry_entities_with_retrieved_details = [
+            FlattenedSpendingAccountEntryWithCalculatedFields(
                 id=entry.id,
-                account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
+                account_name=entry.account_name,
+                month=entry.month,
+                year=entry.year,
                 starting_balance=entry.starting_balance,
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
+                balance_after_credit=entry.balance_after_credit,
+                total_spent=entry.total_spent,
             )
-            for entry in spending_account_entry_with_calculated_fields_paginated.entries
-        ]
-        # Retrieve foreign key details for each entry
-        spending_account_entry_entities_with_retrieved_details = [
-            await self._retrieve_foreign_key_values_in_spending_account(entry)
-            for entry in spending_account_entry_entities_with_calculated_fields
+            for entry in spending_account_entry_with_details_paginated.entries
         ]
 
         return FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
             entries=spending_account_entry_entities_with_retrieved_details,
-            limit=spending_account_entry_with_calculated_fields_paginated.limit,
-            offset=spending_account_entry_with_calculated_fields_paginated.offset,
-            total_entries=spending_account_entry_with_calculated_fields_paginated.total_entries,
+            limit=spending_account_entry_with_details_paginated.limit,
+            offset=spending_account_entry_with_details_paginated.offset,
+            total_entries=spending_account_entry_with_details_paginated.total_entries,
         )
 
     async def get_all_entries_for_account(
@@ -178,35 +183,34 @@ class SpendingAccountService:
         if not account:
             raise AccountNotFoundError(account_id=account_id)
 
-        # Retrieve all entries for the account
-        spending_account_entry_with_calculated_fields_paginated = (
-            await self.spending_account_repository.get_all_entries_for_account(
+        # Get all entries for account with details using optimized repository method with JOIN to eliminate N+1 queries
+        spending_account_entry_with_details_paginated = (
+            await self.spending_account_repository.get_all_entries_for_account_with_details(
                 account_id=account_id, limit=limit, offset=offset
             )
         )
-        # Apply calculated fields for each entry
-        spending_account_entry_entities_with_calculated_fields = [
-            SpendingAccountEntryWithCalculatedFields(
+
+        # Convert to flattened response (account_name, month, year already included)
+        spending_account_entry_entities_with_retrieved_details = [
+            FlattenedSpendingAccountEntryWithCalculatedFields(
                 id=entry.id,
-                account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
+                account_name=entry.account_name,
+                month=entry.month,
+                year=entry.year,
                 starting_balance=entry.starting_balance,
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
+                balance_after_credit=entry.balance_after_credit,
+                total_spent=entry.total_spent,
             )
-            for entry in spending_account_entry_with_calculated_fields_paginated.entries
-        ]
-        # Retrieve foreign key details for each entry
-        spending_account_entry_entities_with_retrieved_details = [
-            await self._retrieve_foreign_key_values_in_spending_account(entry)
-            for entry in spending_account_entry_entities_with_calculated_fields
+            for entry in spending_account_entry_with_details_paginated.entries
         ]
 
         return FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
             entries=spending_account_entry_entities_with_retrieved_details,
-            limit=spending_account_entry_with_calculated_fields_paginated.limit,
-            offset=spending_account_entry_with_calculated_fields_paginated.offset,
-            total_entries=spending_account_entry_with_calculated_fields_paginated.total_entries,
+            limit=spending_account_entry_with_details_paginated.limit,
+            offset=spending_account_entry_with_details_paginated.offset,
+            total_entries=spending_account_entry_with_details_paginated.total_entries,
         )
 
     async def edit_entry(
@@ -241,20 +245,27 @@ class SpendingAccountService:
         # Convert flattened entry to entity
         spending_account_entry_entity = await self._convert_flattened_spending_account_entry_to_entity(entry=entry)
 
-        # Edit entry in repository
+        # Edit entry with details to avoid extra query for foreign keys
         try:
-            updated_spending_account_entry_entity = await self.spending_account_repository.edit_entry(
-                entry_id=entry_id, entry=spending_account_entry_entity
+            updated_spending_account_entry_entity_with_details = (
+                await self.spending_account_repository.edit_entry_with_details(
+                    entry_id=entry_id, entry=spending_account_entry_entity
+                )
             )
         except EntitySpendingAccountEntryNotFoundError as error:
             raise SpendingAccountEntryNotFoundError(entry_id=error.entry_id) from error
 
-        # Retrieve foreign key details for the updated entry
-        updated_spending_account_entry_entity_with_details = (
-            await self._retrieve_foreign_key_values_in_spending_account(updated_spending_account_entry_entity)
+        return FlattenedSpendingAccountEntryWithCalculatedFields(
+            id=updated_spending_account_entry_entity_with_details.id,
+            account_name=updated_spending_account_entry_entity_with_details.account_name,
+            month=updated_spending_account_entry_entity_with_details.month,
+            year=updated_spending_account_entry_entity_with_details.year,
+            starting_balance=updated_spending_account_entry_entity_with_details.starting_balance,
+            current_balance=updated_spending_account_entry_entity_with_details.current_balance,
+            current_credit=updated_spending_account_entry_entity_with_details.current_credit,
+            balance_after_credit=updated_spending_account_entry_entity_with_details.balance_after_credit,
+            total_spent=updated_spending_account_entry_entity_with_details.total_spent,
         )
-
-        return updated_spending_account_entry_entity_with_details
 
     async def delete_entry(self, entry_id: str) -> None:
         """Delete a spending account entry by its ID.
