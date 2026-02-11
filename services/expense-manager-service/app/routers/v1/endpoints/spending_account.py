@@ -8,8 +8,10 @@ from app.routers.v1.mappers.spending_account import (
     SpendingAccountWithCalculatedFieldsMapper,
 )
 from app.routers.v1.schemas.errors import HTTPErrorResponse
+from app.routers.v1.schemas.pagination import PaginationParams
 from app.routers.v1.schemas.spending_account import (
     SpendingAccountEntryRequest,
+    SpendingAccountEntryWithCalculatedFieldsPaginatedResponse,
     SpendingAccountEntryWithCalculatedFieldsResponse,
 )
 from app.routers.v1.services import get_spending_account_service
@@ -59,18 +61,29 @@ async def add_entry(
     return SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=flattened_entry)
 
 
-@router.get("/list", response_model=list[SpendingAccountEntryWithCalculatedFieldsResponse])
+@router.get("/list", response_model=SpendingAccountEntryWithCalculatedFieldsPaginatedResponse)
 async def get_all_entries(
+    pagination: PaginationParams = Depends(),
     spending_account_service: SpendingAccountService = Depends(get_spending_account_service),
-) -> list[SpendingAccountEntryWithCalculatedFieldsResponse]:
+) -> SpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
     """Retrieve all entries for all spending accounts."""
-    flattened_entries = await spending_account_service.get_all_entries()
-    return [SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=entry) for entry in flattened_entries]
+    flattened_entries_with_calculated_fields_paginated = await spending_account_service.get_all_entries(
+        limit=pagination.limit, offset=pagination.offset
+    )
+    return SpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
+        entries=[
+            SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=entry)
+            for entry in flattened_entries_with_calculated_fields_paginated.entries
+        ],
+        limit=flattened_entries_with_calculated_fields_paginated.limit,
+        offset=flattened_entries_with_calculated_fields_paginated.offset,
+        total_entries=flattened_entries_with_calculated_fields_paginated.total_entries,
+    )
 
 
 @router.get(
     "/{account_id}/list",
-    response_model=list[SpendingAccountEntryWithCalculatedFieldsResponse],
+    response_model=SpendingAccountEntryWithCalculatedFieldsPaginatedResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": HTTPErrorResponse,
@@ -79,17 +92,29 @@ async def get_all_entries(
     },
 )
 async def get_all_entries_for_account(
-    account_id: str, spending_account_service: SpendingAccountService = Depends(get_spending_account_service)
-) -> list[SpendingAccountEntryWithCalculatedFieldsResponse]:
+    account_id: str,
+    pagination: PaginationParams = Depends(),
+    spending_account_service: SpendingAccountService = Depends(get_spending_account_service),
+) -> SpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
     """Retrieve all entries for a given spending account."""
     try:
-        flattened_entries = await spending_account_service.get_all_entries_for_account(account_id=account_id)
+        flattened_entries_with_calculated_fields_paginated = await spending_account_service.get_all_entries_for_account(
+            account_id=account_id, limit=pagination.limit, offset=pagination.offset
+        )
     except AccountNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
         ) from error
-    return [SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=entry) for entry in flattened_entries]
+    return SpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
+        entries=[
+            SpendingAccountWithCalculatedFieldsMapper.to_response_model(entry=entry)
+            for entry in flattened_entries_with_calculated_fields_paginated.entries
+        ],
+        limit=flattened_entries_with_calculated_fields_paginated.limit,
+        offset=flattened_entries_with_calculated_fields_paginated.offset,
+        total_entries=flattened_entries_with_calculated_fields_paginated.total_entries,
+    )
 
 
 @router.put(

@@ -2,7 +2,11 @@
 
 from abc import ABC, abstractmethod
 
-from app.entities.models.spending_account import SpendingAccountEntry, SpendingAccountEntryWithCalculatedFields
+from app.entities.models.spending_account import (
+    SpendingAccountEntry,
+    SpendingAccountEntryWithCalculatedFields,
+    SpendingAccountEntryWithCalculatedFieldsPaginated,
+)
 
 
 class SpendingAccountRepositoryInterface(ABC):
@@ -19,12 +23,16 @@ class SpendingAccountRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_all_entries(self) -> list[SpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries(
+        self, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithCalculatedFieldsPaginated:
         """Retrieve all entries for all spending accounts."""
         pass
 
     @abstractmethod
-    async def get_all_entries_for_account(self, account_id: str) -> list[SpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries_for_account(
+        self, account_id: str, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithCalculatedFieldsPaginated:
         """Retrieve all entries for a given spending account."""
         pass
 

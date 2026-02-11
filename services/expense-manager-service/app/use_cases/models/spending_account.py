@@ -27,3 +27,14 @@ class FlattenedSpendingAccountEntryWithCalculatedFields(FlattenedSpendingAccount
 
     balance_after_credit: float = Field(description="Balance after applying current credit")
     total_spent: float = Field(description="Total amount spent from starting balance to current balance")
+
+
+class FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(BaseEntity):
+    """Model for paginated response of flattened spending account entries with calculated fields."""
+
+    entries: list[FlattenedSpendingAccountEntryWithCalculatedFields] = Field(
+        description="List of flattened spending account entries with calculated fields"
+    )
+    limit: int = Field(description="Number of entries returned in the current page")
+    offset: int = Field(description="Offset for pagination")
+    total_entries: int = Field(description="Total number of entries available")

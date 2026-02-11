@@ -19,6 +19,7 @@ from app.use_cases.models.spending_account import (
     FlattenedSpendingAccountEntry,
     FlattenedSpendingAccountEntryCreate,
     FlattenedSpendingAccountEntryWithCalculatedFields,
+    FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse,
 )
 
 
@@ -132,45 +133,12 @@ class SpendingAccountService:
 
         return spending_account_entry_entity_with_details
 
-    async def get_all_entries(self) -> list[FlattenedSpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries(
+        self, limit: int = 12, offset: int = 0
+    ) -> FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
         """Retrieve all entries for all spending accounts."""
-        spending_account_entry_entities = await self.spending_account_repository.get_all_entries()
-        # Apply calculated fields for each entry
-        spending_account_entry_entities_with_calculated_fields = [
-            SpendingAccountEntryWithCalculatedFields(
-                id=entry.id,
-                account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
-                starting_balance=entry.starting_balance,
-                current_balance=entry.current_balance,
-                current_credit=entry.current_credit,
-            )
-            for entry in spending_account_entry_entities
-        ]
-        # Retrieve foreign key details for each entry
-        spending_account_entry_entities_with_retrieved_details = [
-            await self._retrieve_foreign_key_values_in_spending_account(entry)
-            for entry in spending_account_entry_entities_with_calculated_fields
-        ]
-
-        return spending_account_entry_entities_with_retrieved_details
-
-    async def get_all_entries_for_account(
-        self, account_id: str
-    ) -> list[FlattenedSpendingAccountEntryWithCalculatedFields]:
-        """Retrieve all entries for a given spending account.
-
-        Raises:
-            AccountNotFoundError: If the account with the provided ID does not exist.
-        """
-        # Check if account exists
-        account = await self.account_repository.get_account_by_id(account_id=account_id)
-        if not account:
-            raise AccountNotFoundError(account_id=account_id)
-
-        # Retrieve all entries for the account
-        spending_account_entry_entities = await self.spending_account_repository.get_all_entries_for_account(
-            account_id=account_id
+        spending_account_entry_with_calculated_fields_paginated = (
+            await self.spending_account_repository.get_all_entries(limit=limit, offset=offset)
         )
         # Apply calculated fields for each entry
         spending_account_entry_entities_with_calculated_fields = [
@@ -182,7 +150,7 @@ class SpendingAccountService:
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
             )
-            for entry in spending_account_entry_entities
+            for entry in spending_account_entry_with_calculated_fields_paginated.entries
         ]
         # Retrieve foreign key details for each entry
         spending_account_entry_entities_with_retrieved_details = [
@@ -190,7 +158,56 @@ class SpendingAccountService:
             for entry in spending_account_entry_entities_with_calculated_fields
         ]
 
-        return spending_account_entry_entities_with_retrieved_details
+        return FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
+            entries=spending_account_entry_entities_with_retrieved_details,
+            limit=spending_account_entry_with_calculated_fields_paginated.limit,
+            offset=spending_account_entry_with_calculated_fields_paginated.offset,
+            total_entries=spending_account_entry_with_calculated_fields_paginated.total_entries,
+        )
+
+    async def get_all_entries_for_account(
+        self, account_id: str, limit: int = 12, offset: int = 0
+    ) -> FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
+        """Retrieve all entries for a given spending account.
+
+        Raises:
+            AccountNotFoundError: If the account with the provided ID does not exist.
+        """
+        # Check if account exists
+        account = await self.account_repository.get_account_by_id(account_id=account_id)
+        if not account:
+            raise AccountNotFoundError(account_id=account_id)
+
+        # Retrieve all entries for the account
+        spending_account_entry_with_calculated_fields_paginated = (
+            await self.spending_account_repository.get_all_entries_for_account(
+                account_id=account_id, limit=limit, offset=offset
+            )
+        )
+        # Apply calculated fields for each entry
+        spending_account_entry_entities_with_calculated_fields = [
+            SpendingAccountEntryWithCalculatedFields(
+                id=entry.id,
+                account_id=entry.account_id,
+                date_detail_id=entry.date_detail_id,
+                starting_balance=entry.starting_balance,
+                current_balance=entry.current_balance,
+                current_credit=entry.current_credit,
+            )
+            for entry in spending_account_entry_with_calculated_fields_paginated.entries
+        ]
+        # Retrieve foreign key details for each entry
+        spending_account_entry_entities_with_retrieved_details = [
+            await self._retrieve_foreign_key_values_in_spending_account(entry)
+            for entry in spending_account_entry_entities_with_calculated_fields
+        ]
+
+        return FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
+            entries=spending_account_entry_entities_with_retrieved_details,
+            limit=spending_account_entry_with_calculated_fields_paginated.limit,
+            offset=spending_account_entry_with_calculated_fields_paginated.offset,
+            total_entries=spending_account_entry_with_calculated_fields_paginated.total_entries,
+        )
 
     async def edit_entry(
         self, entry_id: str, entry: FlattenedSpendingAccountEntry

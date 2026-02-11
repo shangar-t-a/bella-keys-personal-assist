@@ -33,3 +33,14 @@ class SpendingAccountEntryWithCalculatedFieldsResponse(SpendingAccountEntryRespo
 
     balance_after_credit: float = Field(..., description="Balance after deducting credit", examples=[6000.0])
     total_spent: float = Field(..., description="Total amount spent from the account", examples=[4000.0])
+
+
+class SpendingAccountEntryWithCalculatedFieldsPaginatedResponse(BaseSchema):
+    """Schema for paginated responses of spending account entries with calculated fields."""
+
+    entries: list[SpendingAccountEntryWithCalculatedFieldsResponse] = Field(
+        ..., description="List of spending account entries with calculated fields"
+    )
+    limit: int = Field(..., description="Number of entries returned in the current page", examples=[12])
+    offset: int = Field(..., description="Offset for pagination", examples=[0])
+    total_entries: int = Field(..., description="Total number of entries available", examples=[100])

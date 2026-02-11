@@ -537,17 +537,48 @@
                 "summary": "Get All Entries",
                 "description": "Retrieve all entries for all spending accounts.",
                 "operationId": "get_all_entries_v1_spending_account_list_get",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 12,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
-                                    },
-                                    "type": "array",
-                                    "title": "Response Get All Entries V1 Spending Account List Get"
+                                    "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsPaginatedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
                                 }
                             }
                         }
@@ -572,6 +603,29 @@
                             "type": "string",
                             "title": "Account Id"
                         }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 12,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
                     }
                 ],
                 "responses": {
@@ -580,11 +634,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
-                                    },
-                                    "title": "Response Get All Entries For Account V1 Spending Account  Account Id  List Get"
+                                    "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsPaginatedResponse"
                                 }
                             }
                         }
@@ -1011,6 +1061,52 @@
                 ],
                 "title": "SpendingAccountEntryRequest",
                 "description": "Schema for spending account entry creation/update requests."
+            },
+            "SpendingAccountEntryWithCalculatedFieldsPaginatedResponse": {
+                "properties": {
+                    "entries": {
+                        "items": {
+                            "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
+                        },
+                        "type": "array",
+                        "title": "Entries",
+                        "description": "List of spending account entries with calculated fields"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "title": "Limit",
+                        "description": "Number of entries returned in the current page",
+                        "examples": [
+                            12
+                        ]
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "title": "Offset",
+                        "description": "Offset for pagination",
+                        "examples": [
+                            0
+                        ]
+                    },
+                    "totalEntries": {
+                        "type": "integer",
+                        "title": "Totalentries",
+                        "description": "Total number of entries available",
+                        "examples": [
+                            100
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "entries",
+                    "limit",
+                    "offset",
+                    "totalEntries"
+                ],
+                "title": "SpendingAccountEntryWithCalculatedFieldsPaginatedResponse",
+                "description": "Schema for paginated responses of spending account entries with calculated fields."
             },
             "SpendingAccountEntryWithCalculatedFieldsResponse": {
                 "properties": {

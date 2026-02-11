@@ -28,3 +28,14 @@ class SpendingAccountEntryWithCalculatedFields(SpendingAccountEntry):
         values["balance_after_credit"] = values["current_balance"] - values["current_credit"]
         values["total_spent"] = (values["starting_balance"] - values["current_balance"]) + values["current_credit"]
         return values
+
+
+class SpendingAccountEntryWithCalculatedFieldsPaginated(BaseEntity):
+    """Entity representing a paginated list of spending account entries with calculated fields."""
+
+    entries: list[SpendingAccountEntryWithCalculatedFields] = Field(
+        description="List of spending account entries with calculated fields"
+    )
+    limit: int = Field(description="Number of entries per page")
+    offset: int = Field(description="Offset for pagination")
+    total_entries: int = Field(description="Total number of entries available")

@@ -30,7 +30,7 @@ async def delete_all_accounts(account_service):
         await account_service.account_repository.delete_account(account.id)
 
 
-async def add_month_year(account_service, month="September", year=2025):
+async def add_month_year(account_service, month=9, year=2025):
     month_year = await account_service.account_repository.get_or_create_month_year(month=month, year=year)
     return month_year
 
@@ -206,7 +206,7 @@ class TestGetOrCreateMonthYear:
         account_service,
     ):
         """Test creating a new month-year entry."""
-        month = "September"
+        month = 9
         year = 2025
         month_year = await account_service.get_or_create_month_year(month=month, year=year)
 
@@ -253,7 +253,7 @@ class TestGetMonthYearByValue:
     ):
         """Test retrieving a non-existent month-year entry by month and year."""
         with pytest.raises(MonthYearWithDetailsNotFoundError):
-            await account_service.get_month_year_by_value(month=f"NonExistentMonth-{uuid4()}", year=1999)
+            await account_service.get_month_year_by_value(month=99, year=1999)
 
 
 class TestGetMonthYearById:
@@ -286,7 +286,7 @@ class TestDeleteMonthYear:
         account_service,
     ):
         """Test deleting an existing month-year entry."""
-        month = "October"
+        month = 10
         year = 2025
         test_month_year = await add_month_year(account_service=account_service, month=month, year=year)
 
@@ -315,8 +315,8 @@ class TestGetAllMonthYears:
     ):
         """Test retrieving all month-year entries when entries exist."""
         await delete_all_month_years(account_service)
-        await add_month_year(account_service=account_service, month="January", year=2025)
-        await add_month_year(account_service=account_service, month="February", year=2025)
+        await add_month_year(account_service=account_service, month=1, year=2025)
+        await add_month_year(account_service=account_service, month=2, year=2025)
         num_month_years = 2
 
         month_years = await account_service.get_all_month_years()
@@ -342,9 +342,9 @@ class TestUpdateMonthYear:
         account_service,
     ):
         """Test updating an existing month-year entry."""
-        month = "March"
+        month = 3
         year = 2025
-        update_month = "April"
+        update_month = 4
         update_year = 2026
         test_month_year = await add_month_year(account_service=account_service, month=month, year=year)
 
@@ -369,6 +369,6 @@ class TestUpdateMonthYear:
         with pytest.raises(MonthYearNotFoundError):
             await account_service.update_month_year(
                 month_year_id=f"non-existent-id-{uuid4()}",
-                month="May",
+                month=5,
                 year=2027,
             )

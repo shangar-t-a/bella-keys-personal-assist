@@ -1,12 +1,16 @@
 """Postgres repository implementation for spending accounts."""
 
-from sqlalchemy import select
+from sqlalchemy import (
+    func,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entities.errors.spending_account import SpendingAccountEntryNotFoundError
 from app.entities.models.spending_account import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
+    SpendingAccountEntryWithCalculatedFieldsPaginated,
 )
 from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
 from app.infrastructures.postgres_db.database import get_async_session
@@ -70,43 +74,74 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 current_credit=entry.current_credit,
             )
 
-    async def get_all_entries(self) -> list[SpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries(
+        self, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithCalculatedFieldsPaginated:
         """Retrieve all entries for all spending accounts."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel)
+            # Retrieve entries with pagination
+            stmt = select(SpendingAccountEntryModel).limit(limit).offset(offset)
             result = await session.execute(stmt)
             entries = result.scalars().all()
+            # Count total entries for pagination metadata
+            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id))
+            total_entries_result = await session.execute(total_entries_stmt)
+            total_entries = total_entries_result.scalar_one()
 
-            return [
-                SpendingAccountEntryWithCalculatedFields(
-                    id=entry.id,
-                    account_id=entry.account_id,
-                    date_detail_id=entry.date_detail_id,
-                    starting_balance=entry.starting_balance,
-                    current_balance=entry.current_balance,
-                    current_credit=entry.current_credit,
-                )
-                for entry in entries
-            ]
+            return SpendingAccountEntryWithCalculatedFieldsPaginated(
+                entries=[
+                    SpendingAccountEntryWithCalculatedFields(
+                        id=entry.id,
+                        account_id=entry.account_id,
+                        date_detail_id=entry.date_detail_id,
+                        starting_balance=entry.starting_balance,
+                        current_balance=entry.current_balance,
+                        current_credit=entry.current_credit,
+                    )
+                    for entry in entries
+                ],
+                limit=limit,
+                offset=offset,
+                total_entries=total_entries,
+            )
 
-    async def get_all_entries_for_account(self, account_id: str) -> list[SpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries_for_account(
+        self, account_id: str, limit: int = 12, offset: int = 0
+    ) -> SpendingAccountEntryWithCalculatedFieldsPaginated:
         """Retrieve all entries for a given spending account."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.account_id == account_id)
+            # Retrieve entries for the account with pagination
+            stmt = (
+                select(SpendingAccountEntryModel)
+                .where(SpendingAccountEntryModel.account_id == account_id)
+                .limit(limit)
+                .offset(offset)
+            )
             result = await session.execute(stmt)
             entries = result.scalars().all()
+            # Count total entries for the account for pagination metadata
+            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id)).where(
+                SpendingAccountEntryModel.account_id == account_id
+            )
+            total_entries_result = await session.execute(total_entries_stmt)
+            total_entries = total_entries_result.scalar_one()
 
-            return [
-                SpendingAccountEntryWithCalculatedFields(
-                    id=entry.id,
-                    account_id=entry.account_id,
-                    date_detail_id=entry.date_detail_id,
-                    starting_balance=entry.starting_balance,
-                    current_balance=entry.current_balance,
-                    current_credit=entry.current_credit,
-                )
-                for entry in entries
-            ]
+            return SpendingAccountEntryWithCalculatedFieldsPaginated(
+                entries=[
+                    SpendingAccountEntryWithCalculatedFields(
+                        id=entry.id,
+                        account_id=entry.account_id,
+                        date_detail_id=entry.date_detail_id,
+                        starting_balance=entry.starting_balance,
+                        current_balance=entry.current_balance,
+                        current_credit=entry.current_credit,
+                    )
+                    for entry in entries
+                ],
+                limit=limit,
+                offset=offset,
+                total_entries=total_entries,
+            )
 
     async def get_entry_by_account_and_month_year_or_none(
         self,
