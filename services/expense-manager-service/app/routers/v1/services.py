@@ -3,16 +3,16 @@
 from enum import Enum
 from functools import lru_cache
 
-from app.entities.repositories.accounts import AccountRepositoryInterface
+from app.entities.repositories.account import AccountRepositoryInterface
 from app.entities.repositories.period import PeriodRepositoryInterface
-from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
-from app.infrastructures.postgres_db.accounts import PostgresAccountRepository
+from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
+from app.infrastructures.postgres_db.account import PostgresAccountRepository
 from app.infrastructures.postgres_db.period import PostgresPeriodRepository
-from app.infrastructures.postgres_db.spending_account import PostgresSpendingAccountRepository
+from app.infrastructures.postgres_db.spending_entry import PostgresSpendingAccountRepository
 from app.settings import get_settings
-from app.use_cases.accounts import AccountService
+from app.use_cases.account import AccountService
 from app.use_cases.period import PeriodService
-from app.use_cases.spending_account import SpendingAccountService
+from app.use_cases.spending_entry import SpendingAccountService
 
 
 class StorageType(str, Enum):

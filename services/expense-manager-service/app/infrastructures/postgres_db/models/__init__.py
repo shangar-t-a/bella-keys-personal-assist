@@ -1,8 +1,8 @@
 """Expense Manager Service - Models."""
 
-from .accounts import AccountModel
+from .account import AccountModel
 from .period import PeriodModel
-from .spending_account import SpendingEntryModel
+from .spending_entry import SpendingEntryModel
 
 __all__ = [
     "AccountModel",

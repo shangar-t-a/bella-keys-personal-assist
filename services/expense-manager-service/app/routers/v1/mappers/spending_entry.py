@@ -1,10 +1,10 @@
-"""Mappers for spending account."""
+"""Mappers for spending entry."""
 
-from app.routers.v1.schemas.spending_account import (
+from app.routers.v1.schemas.spending_entry import (
     SpendingAccountEntryRequest,
     SpendingAccountEntryWithCalculatedFieldsResponse,
 )
-from app.use_cases.models.spending_account import (
+from app.use_cases.models.spending_entry import (
     FlattenedSpendingAccountEntry,
     FlattenedSpendingAccountEntryCreate,
     FlattenedSpendingAccountEntryWithCalculatedFields,

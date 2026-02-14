@@ -4,8 +4,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.use_cases.accounts import AccountService
-from app.use_cases.errors.accounts import (
+from app.use_cases.account import AccountService
+from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
 )

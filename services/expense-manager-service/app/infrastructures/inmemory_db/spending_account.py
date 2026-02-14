@@ -2,9 +2,9 @@
 
 from typing import ClassVar
 
-from app.entities.errors.spending_account import SpendingAccountEntryNotFoundError
-from app.entities.models.spending_account import SpendingAccountEntry, SpendingAccountEntryWithCalculatedFields
-from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
+from app.entities.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.entities.models.spending_entry import SpendingAccountEntry, SpendingAccountEntryWithCalculatedFields
+from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
 
 
 class SpendingAccountRepository(SpendingAccountRepositoryInterface):

@@ -6,19 +6,19 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.entities.errors.spending_account import SpendingAccountEntryNotFoundError
-from app.entities.models.spending_account import (
+from app.entities.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.entities.models.spending_entry import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
     SpendingAccountEntryWithCalculatedFieldsPaginated,
     SpendingAccountEntryWithDetails,
     SpendingAccountEntryWithDetailsPaginated,
 )
-from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
+from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
 from app.infrastructures.postgres_db.database import get_async_session
-from app.infrastructures.postgres_db.models.accounts import AccountModel
+from app.infrastructures.postgres_db.models.account import AccountModel
 from app.infrastructures.postgres_db.models.period import PeriodModel
-from app.infrastructures.postgres_db.models.spending_account import SpendingEntryModel
+from app.infrastructures.postgres_db.models.spending_entry import SpendingEntryModel
 
 
 class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):

@@ -1,22 +1,22 @@
 """Service or use cases for spending account."""
 
-from app.entities.errors.spending_account import (
+from app.entities.errors.spending_entry import (
     SpendingAccountEntryNotFoundError as EntitySpendingAccountEntryNotFoundError,
 )
-from app.entities.models.spending_account import (
+from app.entities.models.spending_entry import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
 )
-from app.entities.repositories.accounts import AccountRepositoryInterface
+from app.entities.repositories.account import AccountRepositoryInterface
 from app.entities.repositories.period import PeriodRepositoryInterface
-from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
-from app.use_cases.errors.accounts import (
+from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
+from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
 )
 from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
-from app.use_cases.errors.spending_account import SpendingAccountEntryNotFoundError
-from app.use_cases.models.spending_account import (
+from app.use_cases.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.use_cases.models.spending_entry import (
     FlattenedSpendingAccountEntry,
     FlattenedSpendingAccountEntryCreate,
     FlattenedSpendingAccountEntryWithCalculatedFields,

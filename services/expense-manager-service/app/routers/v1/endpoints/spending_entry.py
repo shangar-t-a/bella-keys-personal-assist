@@ -2,26 +2,26 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.routers.v1.mappers.spending_account import (
+from app.routers.v1.mappers.spending_entry import (
     CreateSpendingAccountMapper,
     SpendingAccountMapper,
     SpendingAccountWithCalculatedFieldsMapper,
 )
 from app.routers.v1.schemas.errors import HTTPErrorResponse
 from app.routers.v1.schemas.pagination import PaginationParams
-from app.routers.v1.schemas.spending_account import (
+from app.routers.v1.schemas.spending_entry import (
     SpendingAccountEntryRequest,
     SpendingAccountEntryWithCalculatedFieldsPaginatedResponse,
     SpendingAccountEntryWithCalculatedFieldsResponse,
 )
 from app.routers.v1.services import get_spending_account_service
-from app.use_cases.errors.accounts import (
+from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
 )
 from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
-from app.use_cases.errors.spending_account import SpendingAccountEntryNotFoundError
-from app.use_cases.spending_account import SpendingAccountService
+from app.use_cases.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.use_cases.spending_entry import SpendingAccountService
 
 router = APIRouter(prefix="/spending_account", tags=["spending_account"])
 

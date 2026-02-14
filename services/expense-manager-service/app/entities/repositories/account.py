@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from app.entities.models.accounts import (
+from app.entities.models.account import (
     Account,
 )
 

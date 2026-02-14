@@ -3,11 +3,11 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.entities.errors.accounts import AccountNotFoundError
-from app.entities.models.accounts import Account
-from app.entities.repositories.accounts import AccountRepositoryInterface
+from app.entities.errors.account import AccountNotFoundError
+from app.entities.models.account import Account
+from app.entities.repositories.account import AccountRepositoryInterface
 from app.infrastructures.postgres_db.database import get_async_session
-from app.infrastructures.postgres_db.models.accounts import AccountModel
+from app.infrastructures.postgres_db.models.account import AccountModel
 
 
 class PostgresAccountRepository(AccountRepositoryInterface):

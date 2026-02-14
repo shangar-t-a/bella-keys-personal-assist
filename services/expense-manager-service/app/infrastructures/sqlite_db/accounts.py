@@ -3,11 +3,11 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.entities.errors.accounts import AccountNotFoundError
+from app.entities.errors.account import AccountNotFoundError
 from app.entities.errors.period import PeriodNotFoundError
-from app.entities.models.accounts import Account
+from app.entities.models.account import Account
 from app.entities.models.period import Period
-from app.entities.repositories.accounts import AccountRepositoryInterface
+from app.entities.repositories.account import AccountRepositoryInterface
 from app.infrastructures.sqlite_db.database import get_async_session
 from app.infrastructures.sqlite_db.models.accounts import AccountModel, PeriodModel
 

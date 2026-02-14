@@ -5,26 +5,26 @@ from uuid import uuid4
 
 import pytest
 
-from app.entities.errors.spending_account import (
+from app.entities.errors.spending_entry import (
     SpendingAccountEntryNotFoundError as EntitySpendingAccountEntryNotFoundError,
 )
-from app.use_cases.accounts import AccountService
-from app.use_cases.errors.accounts import (
+from app.use_cases.account import AccountService
+from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
 )
 from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
-from app.use_cases.errors.spending_account import SpendingAccountEntryNotFoundError
-from app.use_cases.models.spending_account import (
+from app.use_cases.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.use_cases.models.spending_entry import (
     FlattenedSpendingAccountEntry,
     FlattenedSpendingAccountEntryCreate,
 )
-from app.use_cases.spending_account import SpendingAccountService
+from app.use_cases.spending_entry import SpendingAccountService
 
 if TYPE_CHECKING:
-    from app.entities.repositories.accounts import AccountRepositoryInterface
+    from app.entities.repositories.account import AccountRepositoryInterface
     from app.entities.repositories.period import PeriodRepositoryInterface
-    from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
+    from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
 
 
 @pytest.fixture(scope="module")

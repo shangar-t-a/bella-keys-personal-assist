@@ -2,15 +2,15 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.routers.v1.schemas.accounts import (
+from app.routers.v1.schemas.account import (
     AccountRequest,
     AccountResponse,
     AccountUpdateRequest,
 )
 from app.routers.v1.schemas.errors import HTTPErrorResponse
 from app.routers.v1.services import get_accounts_service
-from app.use_cases.accounts import AccountService
-from app.use_cases.errors.accounts import AccountNotFoundError
+from app.use_cases.account import AccountService
+from app.use_cases.errors.account import AccountNotFoundError
 
 account_router = APIRouter(prefix="/account", tags=["account"])
 

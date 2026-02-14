@@ -8,9 +8,9 @@ from pytest_asyncio import is_async_test
 
 from app import settings
 from app.infrastructures.postgres_db import database
-from app.infrastructures.postgres_db.accounts import PostgresAccountRepository
+from app.infrastructures.postgres_db.account import PostgresAccountRepository
 from app.infrastructures.postgres_db.period import PostgresPeriodRepository
-from app.infrastructures.postgres_db.spending_account import PostgresSpendingAccountRepository
+from app.infrastructures.postgres_db.spending_entry import PostgresSpendingAccountRepository
 from tests.unit.settings import UnitTestSettings
 
 # --------------------------------------------------- Pytest Hooks --------------------------------------------------- #

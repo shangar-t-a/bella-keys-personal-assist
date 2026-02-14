@@ -1,13 +1,13 @@
 """Service or use case for managing accounts."""
 
-from app.entities.errors.accounts import (
+from app.entities.errors.account import (
     AccountNotFoundError as EntityAccountNotFoundError,
 )
-from app.entities.models.accounts import (
+from app.entities.models.account import (
     Account,
 )
-from app.entities.repositories.accounts import AccountRepositoryInterface
-from app.use_cases.errors.accounts import (
+from app.entities.repositories.account import AccountRepositoryInterface
+from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
 )

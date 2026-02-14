@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from app.entities.models.spending_account import (
+from app.entities.models.spending_entry import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
     SpendingAccountEntryWithCalculatedFieldsPaginated,

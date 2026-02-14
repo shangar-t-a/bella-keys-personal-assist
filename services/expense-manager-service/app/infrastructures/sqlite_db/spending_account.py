@@ -3,12 +3,12 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.entities.errors.spending_account import SpendingAccountEntryNotFoundError
-from app.entities.models.spending_account import (
+from app.entities.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.entities.models.spending_entry import (
     SpendingAccountEntry,
     SpendingAccountEntryWithCalculatedFields,
 )
-from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
+from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
 from app.infrastructures.sqlite_db.database import get_async_session
 from app.infrastructures.sqlite_db.models.spending_account import SpendingEntryModel
 
