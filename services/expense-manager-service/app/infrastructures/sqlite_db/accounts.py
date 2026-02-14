@@ -3,11 +3,11 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.entities.errors.accounts import AccountNotFoundError, MonthYearNotFoundError
-from app.entities.models.accounts import AccountName, MonthYear
+from app.entities.errors.accounts import AccountNotFoundError, PeriodNotFoundError
+from app.entities.models.accounts import AccountName, Period
 from app.entities.repositories.accounts import AccountRepositoryInterface
 from app.infrastructures.sqlite_db.database import get_async_session
-from app.infrastructures.sqlite_db.models.accounts import AccountModel, MonthYearModel
+from app.infrastructures.sqlite_db.models.accounts import AccountModel, PeriodModel
 
 
 class SQLiteAccountRepository(AccountRepositoryInterface):
@@ -93,75 +93,75 @@ class SQLiteAccountRepository(AccountRepositoryInterface):
             await session.delete(account)
             await session.commit()
 
-    async def get_or_create_month_year(self, month: str, year: int) -> MonthYear:
-        """Retrieve an existing MonthYear or create a new one with the provided month and year."""
+    async def get_or_create_period(self, month: str, year: int) -> Period:
+        """Retrieve an existing Period or create a new one with the provided month and year."""
         async with await self._get_session() as session:
             # Check if month-year exists
-            stmt = select(MonthYearModel).where(MonthYearModel.month == month, MonthYearModel.year == year)
+            stmt = select(PeriodModel).where(PeriodModel.month == month, PeriodModel.year == year)
             result = await session.execute(stmt)
-            month_year = result.scalar_one_or_none()
+            period = result.scalar_one_or_none()
 
-            if month_year is None:
+            if period is None:
                 # Create new month-year
-                month_year = MonthYearModel(month=month, year=year)
-                session.add(month_year)
+                period = PeriodModel(month=month, year=year)
+                session.add(period)
                 await session.commit()
 
-            return MonthYear(id=month_year.id, month=month_year.month, year=month_year.year)
+            return Period(id=period.id, month=period.month, year=period.year)
 
-    async def get_month_year_by_value(self, month, year) -> MonthYear | None:
-        """Retrieve a MonthYear by its month and year."""
+    async def get_period_by_value(self, month, year) -> Period | None:
+        """Retrieve a Period by its month and year."""
         async with await self._get_session() as session:
-            stmt = select(MonthYearModel).where(MonthYearModel.month == month, MonthYearModel.year == year)
+            stmt = select(PeriodModel).where(PeriodModel.month == month, PeriodModel.year == year)
             result = await session.execute(stmt)
-            month_year = result.scalar_one_or_none()
-            return MonthYear(id=month_year.id, month=month_year.month, year=month_year.year) if month_year else None
+            period = result.scalar_one_or_none()
+            return Period(id=period.id, month=period.month, year=period.year) if period else None
 
-    async def get_month_year_by_id(self, month_year_id: str) -> MonthYear | None:
-        """Retrieve a MonthYear by its ID."""
+    async def get_period_by_id(self, period_id: str) -> Period | None:
+        """Retrieve a Period by its ID."""
         async with await self._get_session() as session:
-            stmt = select(MonthYearModel).where(MonthYearModel.id == month_year_id)
+            stmt = select(PeriodModel).where(PeriodModel.id == period_id)
             result = await session.execute(stmt)
-            month_year = result.scalar_one_or_none()
-            return MonthYear(id=month_year.id, month=month_year.month, year=month_year.year) if month_year else None
+            period = result.scalar_one_or_none()
+            return Period(id=period.id, month=period.month, year=period.year) if period else None
 
-    async def get_all_month_years(self) -> list[MonthYear]:
+    async def get_all_period(self) -> list[Period]:
         """Retrieve all month-year records."""
         async with await self._get_session() as session:
-            stmt = select(MonthYearModel)
+            stmt = select(PeriodModel)
             result = await session.execute(stmt)
-            month_years = result.scalars().all()
-            return [MonthYear(id=my.id, month=my.month, year=my.year) for my in month_years]
+            all_period = result.scalars().all()
+            return [Period(id=period.id, month=period.month, year=period.year) for period in all_period]
 
-    async def update_month_year(self, month_year_id: str, month: str, year: int) -> MonthYear:
-        """Update an existing MonthYear with the provided month and year."""
+    async def update_period(self, period_id: str, month: str, year: int) -> Period:
+        """Update an existing Period with the provided month and year."""
         async with await self._get_session() as session:
             # Get month-year
-            stmt = select(MonthYearModel).where(MonthYearModel.id == month_year_id)
+            stmt = select(PeriodModel).where(PeriodModel.id == period_id)
             result = await session.execute(stmt)
-            month_year = result.scalar_one_or_none()
+            period = result.scalar_one_or_none()
 
-            if month_year is None:
-                raise MonthYearNotFoundError(month_year_id=month_year_id)
+            if period is None:
+                raise PeriodNotFoundError(period_id=period_id)
 
             # Update month-year
-            month_year.month = month
-            month_year.year = year
+            period.month = month
+            period.year = year
             await session.commit()
 
-            return MonthYear(id=month_year.id, month=month_year.month, year=month_year.year)
+            return Period(id=period.id, month=period.month, year=period.year)
 
-    async def delete_month_year(self, month_year_id: str) -> None:
-        """Delete a MonthYear by its ID."""
+    async def delete_period(self, period_id: str) -> None:
+        """Delete a Period by its ID."""
         async with await self._get_session() as session:
             # Get month-year
-            stmt = select(MonthYearModel).where(MonthYearModel.id == month_year_id)
+            stmt = select(PeriodModel).where(PeriodModel.id == period_id)
             result = await session.execute(stmt)
-            month_year = result.scalar_one_or_none()
+            period = result.scalar_one_or_none()
 
-            if month_year is None:
-                raise MonthYearNotFoundError(month_year_id=month_year_id)
+            if period is None:
+                raise PeriodNotFoundError(period_id=period_id)
 
             # Delete month-year
-            await session.delete(month_year)
+            await session.delete(period)
             await session.commit()

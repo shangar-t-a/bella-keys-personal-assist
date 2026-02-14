@@ -18,8 +18,8 @@ from app.routers.v1.services import get_spending_account_service
 from app.use_cases.errors.accounts import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
-    MonthYearAlreadyExistsForAccountError,
 )
+from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
 from app.use_cases.errors.spending_account import SpendingAccountEntryNotFoundError
 from app.use_cases.spending_account import SpendingAccountService
 
@@ -53,7 +53,7 @@ async def add_entry(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
         ) from error
-    except MonthYearAlreadyExistsForAccountError as error:
+    except PeriodAlreadyExistsForAccountError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
@@ -155,7 +155,7 @@ async def edit_entry(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,
         ) from error
-    except MonthYearAlreadyExistsForAccountError as error:
+    except PeriodAlreadyExistsForAccountError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error.message,

@@ -12,8 +12,8 @@ from app.use_cases.accounts import AccountService
 from app.use_cases.errors.accounts import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
-    MonthYearAlreadyExistsForAccountError,
 )
+from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
 from app.use_cases.errors.spending_account import SpendingAccountEntryNotFoundError
 from app.use_cases.models.spending_account import (
     FlattenedSpendingAccountEntry,
@@ -23,6 +23,7 @@ from app.use_cases.spending_account import SpendingAccountService
 
 if TYPE_CHECKING:
     from app.entities.repositories.accounts import AccountRepositoryInterface
+    from app.entities.repositories.period import PeriodRepositoryInterface
     from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
 
 
@@ -34,11 +35,14 @@ def account_service(account_repo: "AccountRepositoryInterface") -> AccountServic
 
 @pytest.fixture(scope="module")
 def spending_account_service(
-    account_repo: "AccountRepositoryInterface", spending_account_repo: "SpendingAccountRepositoryInterface"
+    account_repo: "AccountRepositoryInterface",
+    period_repo: "PeriodRepositoryInterface",
+    spending_account_repo: "SpendingAccountRepositoryInterface",
 ) -> SpendingAccountService:
     """Provide an instance of SpendingAccountService."""
     return SpendingAccountService(
         account_repository=account_repo,
+        period_repository=period_repo,
         spending_account_repository=spending_account_repo,
     )
 
@@ -147,7 +151,7 @@ class TestAddSpendingAccountEntry:
         with pytest.raises(AccountWithNameNotFoundError):
             await spending_account_service.add_entry(entry=entry)
 
-    async def test__add_entry__duplicate_month_year_for_account(
+    async def test__add_entry__duplicate_period_for_account(
         self,
         spending_account_service,
     ):
@@ -161,7 +165,7 @@ class TestAddSpendingAccountEntry:
         await spending_account_service.add_entry(entry=entry)
 
         # Try to add duplicate
-        with pytest.raises(MonthYearAlreadyExistsForAccountError):
+        with pytest.raises(PeriodAlreadyExistsForAccountError):
             await spending_account_service.add_entry(entry=entry)
 
     async def test__add_entry__check_response_data(
@@ -602,7 +606,7 @@ class TestEditSpendingAccountEntry:
         with pytest.raises(AccountWithNameNotFoundError):
             await spending_account_service.edit_entry(entry_id=created_entry.id, entry=edit_entry)
 
-    async def test__edit_entry__duplicate_month_year_for_account(
+    async def test__edit_entry__duplicate_period_for_account(
         self,
         spending_account_service,
     ):
@@ -625,7 +629,7 @@ class TestEditSpendingAccountEntry:
             current_credit=100.0,
         )
 
-        with pytest.raises(MonthYearAlreadyExistsForAccountError):
+        with pytest.raises(PeriodAlreadyExistsForAccountError):
             await spending_account_service.edit_entry(entry_id=entry2.id, entry=edit_entry)
 
     async def test__edit_entry__entry_not_found(

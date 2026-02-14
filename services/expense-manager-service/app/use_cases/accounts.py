@@ -3,19 +3,13 @@
 from app.entities.errors.accounts import (
     AccountNotFoundError as EntityAccountNotFoundError,
 )
-from app.entities.errors.accounts import (
-    MonthYearNotFoundError as EntityMonthYearNotFoundError,
-)
 from app.entities.models.accounts import (
     AccountName,
-    MonthYear,
 )
 from app.entities.repositories.accounts import AccountRepositoryInterface
 from app.use_cases.errors.accounts import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
-    MonthYearNotFoundError,
-    MonthYearWithDetailsNotFoundError,
 )
 
 
@@ -92,70 +86,3 @@ class AccountService:
             await self.account_repository.delete_account(account_id=account_id)
         except EntityAccountNotFoundError as error:
             raise AccountNotFoundError(account_id=error.account_id) from error
-
-    async def get_or_create_month_year(self, month: int, year: int) -> MonthYear:
-        """Retrieve an existing MonthYear or create a new one with the provided month and year."""
-        month_year_entity = await self.account_repository.get_or_create_month_year(month=month, year=year)
-
-        return month_year_entity
-
-    async def get_month_year_by_value(self, month: int, year: int) -> MonthYear | None:
-        """Retrieve a MonthYear by its month and year.
-
-        Raises:
-            MonthYearWithDetailsNotFoundError: If the MonthYear with the provided month and year does not exist.
-        """
-        month_year_entity = await self.account_repository.get_month_year_by_value(month=month, year=year)
-
-        if not month_year_entity:
-            raise MonthYearWithDetailsNotFoundError(month=month, year=year)
-
-        return month_year_entity
-
-    async def get_month_year_by_id(self, month_year_id: str) -> MonthYear | None:
-        """Retrieve a MonthYear by its ID.
-
-        Raises:
-            MonthYearNotFoundError: If the MonthYear with the provided ID does not exist.
-        """
-        month_year_entity = await self.account_repository.get_month_year_by_id(month_year_id=month_year_id)
-
-        if not month_year_entity:
-            raise MonthYearNotFoundError(month_year_id=month_year_id)
-
-        return month_year_entity
-
-    async def get_all_month_years(self) -> list[MonthYear]:
-        """Retrieve all MonthYears."""
-        month_year_entities = await self.account_repository.get_all_month_years()
-
-        if not month_year_entities:
-            return []
-
-        return month_year_entities
-
-    async def update_month_year(self, month_year_id: str, month: int, year: int) -> MonthYear:
-        """Update an existing MonthYear with the provided data.
-
-        Raises:
-            MonthYearNotFoundError: If the MonthYear with the provided ID does not exist.
-        """
-        try:
-            month_year_entity = await self.account_repository.update_month_year(
-                month_year_id=month_year_id, month=month, year=year
-            )
-        except EntityMonthYearNotFoundError as error:
-            raise MonthYearNotFoundError(month_year_id=error.month_year_id) from error
-
-        return month_year_entity
-
-    async def delete_month_year(self, month_year_id: str) -> None:
-        """Delete a MonthYear by its ID.
-
-        Raises:
-            MonthYearNotFoundError: If the MonthYear with the provided ID does not exist.
-        """
-        try:
-            await self.account_repository.delete_month_year(month_year_id=month_year_id)
-        except EntityMonthYearNotFoundError as error:
-            raise MonthYearNotFoundError(month_year_id=error.month_year_id) from error

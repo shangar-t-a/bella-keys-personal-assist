@@ -8,12 +8,13 @@ from app.entities.models.spending_account import (
     SpendingAccountEntryWithCalculatedFields,
 )
 from app.entities.repositories.accounts import AccountRepositoryInterface
+from app.entities.repositories.period import PeriodRepositoryInterface
 from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
 from app.use_cases.errors.accounts import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
-    MonthYearAlreadyExistsForAccountError,
 )
+from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
 from app.use_cases.errors.spending_account import SpendingAccountEntryNotFoundError
 from app.use_cases.models.spending_account import (
     FlattenedSpendingAccountEntry,
@@ -29,10 +30,12 @@ class SpendingAccountService:
     def __init__(
         self,
         account_repository: AccountRepositoryInterface,
+        period_repository: PeriodRepositoryInterface,
         spending_account_repository: SpendingAccountRepositoryInterface,
     ):
         """Initialize the SpendingAccountService with repositories."""
         self.account_repository = account_repository
+        self.period_repository = period_repository
         self.spending_account_repository = spending_account_repository
 
     async def _retrieve_foreign_key_values_in_spending_account(
@@ -40,7 +43,7 @@ class SpendingAccountService:
     ) -> FlattenedSpendingAccountEntryWithCalculatedFields:
         """Retrieve foreign key details for a spending account entry."""
         account = await self.account_repository.get_account_by_id(account_id=entry.account_id)
-        date_detail = await self.account_repository.get_month_year_by_id(month_year_id=entry.date_detail_id)
+        date_detail = await self.period_repository.get_period_by_id(period_id=entry.period_id)
 
         return FlattenedSpendingAccountEntryWithCalculatedFields(
             id=entry.id,
@@ -60,12 +63,12 @@ class SpendingAccountService:
         """Convert a flattened spending account entry to entity."""
         # Retrieve account and month year details
         account = await self.account_repository.get_account_by_name(account_name=entry.account_name)
-        date_detail = await self.account_repository.get_month_year_by_value(month=entry.month, year=entry.year)
+        date_detail = await self.period_repository.get_period_by_value(month=entry.month, year=entry.year)
 
         return SpendingAccountEntry(
             id=entry.id,
             account_id=account.id,
-            date_detail_id=date_detail.id,
+            period_id=date_detail.id,
             starting_balance=entry.starting_balance,
             current_balance=entry.current_balance,
             current_credit=entry.current_credit,
@@ -78,7 +81,7 @@ class SpendingAccountService:
 
         Raises:
             AccountWithNameNotFoundError: If the account with the provided name does not exist.
-            MonthYearAlreadyExistsForAccountError: If the month and year already exist for the account.
+            PeriodAlreadyExistsForAccountError: If the month and year already exist for the account.
         """
         # Retrieve account and month year details
         retrieved_account = await self.account_repository.get_account_by_name(account_name=entry.account_name)
@@ -87,31 +90,29 @@ class SpendingAccountService:
         if not retrieved_account:
             raise AccountWithNameNotFoundError(account_name=entry.account_name)
 
-        # Retrieve MonthYear if it exists
-        retrieved_date_detail = await self.account_repository.get_month_year_by_value(
-            month=entry.month, year=entry.year
-        )
+        # Retrieve Period if it exists
+        retrieved_date_detail = await self.period_repository.get_period_by_value(month=entry.month, year=entry.year)
 
-        # Duplicate MonthYear should not exist
+        # Duplicate Period should not exist
         if retrieved_date_detail:
             # Check if the entry already exists for the account and month/year
-            entry_with_selected_account_and_month_year = (
-                await self.spending_account_repository.get_entry_by_account_and_month_year_or_none(
+            entry_with_selected_account_and_period = (
+                await self.spending_account_repository.get_entry_by_account_and_period_or_none(
                     account_id=retrieved_account.id,
-                    month_year_id=retrieved_date_detail.id,
+                    period_id=retrieved_date_detail.id,
                 )
             )
 
-            if entry_with_selected_account_and_month_year:
-                raise MonthYearAlreadyExistsForAccountError(
+            if entry_with_selected_account_and_period:
+                raise PeriodAlreadyExistsForAccountError(
                     account_name=retrieved_account.account_name,
                     month=retrieved_date_detail.month,
                     year=retrieved_date_detail.year,
                 )
 
-        # Create MonthYear if it does not exist
+        # Create Period if it does not exist
         if not retrieved_date_detail:
-            retrieved_date_detail = await self.account_repository.get_or_create_month_year(
+            retrieved_date_detail = await self.period_repository.get_or_create_period(
                 month=entry.month, year=entry.year
             )
 
@@ -119,7 +120,7 @@ class SpendingAccountService:
         spending_account_entry_entity_with_details = await self.spending_account_repository.add_entry_with_details(
             entry=SpendingAccountEntry(
                 account_id=retrieved_account.id,
-                date_detail_id=retrieved_date_detail.id,
+                period_id=retrieved_date_detail.id,
                 starting_balance=entry.starting_balance,
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
@@ -220,7 +221,7 @@ class SpendingAccountService:
 
         Raises:
             AccountWithNameNotFoundError: If the account with the provided name does not exist.
-            MonthYearAlreadyExistsForAccountError: If the month and year already exist for the account.
+            PeriodAlreadyExistsForAccountError: If the month and year already exist for the account.
             SpendingAccountEntryNotFoundError: If the spending account entry with the provided ID does not exist.
         """
         # Account must exist. If exists, retrieve the account to get its ID
@@ -228,17 +229,17 @@ class SpendingAccountService:
         if not account:
             raise AccountWithNameNotFoundError(account_name=entry.account_name)
 
-        # MonthYear must be unique for the account
-        # Retrieve or Create MonthYear
-        date_detail = await self.account_repository.get_or_create_month_year(month=entry.month, year=entry.year)
-        entry_with_selected_account_and_month_year = (
-            await self.spending_account_repository.get_entry_by_account_and_month_year_or_none(
+        # Period must be unique for the account
+        # Retrieve or Create Period
+        date_detail = await self.period_repository.get_or_create_period(month=entry.month, year=entry.year)
+        entry_with_selected_account_and_period = (
+            await self.spending_account_repository.get_entry_by_account_and_period_or_none(
                 account_id=account.id,
-                month_year_id=date_detail.id,
+                period_id=date_detail.id,
             )
         )
-        if entry_with_selected_account_and_month_year and entry_with_selected_account_and_month_year.id != entry_id:
-            raise MonthYearAlreadyExistsForAccountError(
+        if entry_with_selected_account_and_period and entry_with_selected_account_and_period.id != entry_id:
+            raise PeriodAlreadyExistsForAccountError(
                 account_name=account.account_name, month=entry.month, year=entry.year
             )
 

@@ -20,10 +20,10 @@ class AccountModel(Base):
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC), onupdate=datetime.now(UTC))
 
 
-class MonthYearModel(Base):
+class PeriodModel(Base):
     """SQLite model for month-year records."""
 
-    __tablename__ = "month_years"
+    __tablename__ = "period"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid.uuid4().hex)
     month: Mapped[str] = mapped_column(String, nullable=False, index=True)
@@ -31,4 +31,4 @@ class MonthYearModel(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC), onupdate=datetime.now(UTC))
 
-    __table_args__ = (UniqueConstraint("month", "year", name="uq_month_year"),)
+    __table_args__ = (UniqueConstraint("month", "year", name="uq_period"),)

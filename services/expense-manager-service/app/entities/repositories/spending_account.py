@@ -39,10 +39,10 @@ class SpendingAccountRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_entry_by_account_and_month_year_or_none(
+    async def get_entry_by_account_and_period_or_none(
         self,
         account_id: str,
-        month_year_id: str,
+        period_id: str,
     ) -> SpendingAccountEntryWithCalculatedFields | None:
         """Retrieve a specific entry for a given account and month-year."""
         pass

@@ -236,19 +236,19 @@
                 }
             }
         },
-        "/v1/month_year/get_or_create": {
+        "/v1/period/get_or_create": {
             "post": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Get Or Create Month Year",
-                "description": "Retrieve an existing MonthYear or create a new one with the provided month and year.",
-                "operationId": "get_or_create_month_year_v1_month_year_get_or_create_post",
+                "summary": "Get Or Create Period",
+                "description": "Retrieve an existing Period or create a new one with the provided month and year.",
+                "operationId": "get_or_create_period_v1_period_get_or_create_post",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/MonthYearRequest"
+                                "$ref": "#/components/schemas/PeriodRequest"
                             }
                         }
                     },
@@ -260,7 +260,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MonthYearResponse"
+                                    "$ref": "#/components/schemas/PeriodResponse"
                                 }
                             }
                         }
@@ -278,14 +278,14 @@
                 }
             }
         },
-        "/v1/month_year/list": {
+        "/v1/period/list": {
             "get": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Get All Month Years",
-                "description": "Retrieve all MonthYears.",
-                "operationId": "get_all_month_years_v1_month_year_list_get",
+                "summary": "Get All Period",
+                "description": "Retrieve all Periods.",
+                "operationId": "get_all_period_v1_period_list_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -293,10 +293,10 @@
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/MonthYearResponse"
+                                        "$ref": "#/components/schemas/PeriodResponse"
                                     },
                                     "type": "array",
-                                    "title": "Response Get All Month Years V1 Month Year List Get"
+                                    "title": "Response Get All Period V1 Period List Get"
                                 }
                             }
                         }
@@ -304,22 +304,22 @@
                 }
             }
         },
-        "/v1/month_year/{month_year_id}": {
+        "/v1/period/{period_id}": {
             "get": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Get Month Year By Id",
-                "description": "Retrieve a MonthYear by its ID.",
-                "operationId": "get_month_year_by_id_v1_month_year__month_year_id__get",
+                "summary": "Get Period By Id",
+                "description": "Retrieve a Period by its ID.",
+                "operationId": "get_period_by_id_v1_period__period_id__get",
                 "parameters": [
                     {
-                        "name": "month_year_id",
+                        "name": "period_id",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "title": "Month Year Id"
+                            "title": "Period Id"
                         }
                     }
                 ],
@@ -329,13 +329,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MonthYearResponse"
+                                    "$ref": "#/components/schemas/PeriodResponse"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "MonthYear not found",
+                        "description": "Period not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -358,19 +358,19 @@
             },
             "put": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Update Month Year",
-                "description": "Update an existing MonthYear with the provided data.",
-                "operationId": "update_month_year_v1_month_year__month_year_id__put",
+                "summary": "Update Period",
+                "description": "Update an existing Period with the provided data.",
+                "operationId": "update_period_v1_period__period_id__put",
                 "parameters": [
                     {
-                        "name": "month_year_id",
+                        "name": "period_id",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "title": "Month Year Id"
+                            "title": "Period Id"
                         }
                     }
                 ],
@@ -379,7 +379,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/MonthYearRequest"
+                                "$ref": "#/components/schemas/PeriodRequest"
                             }
                         }
                     }
@@ -390,13 +390,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MonthYearResponse"
+                                    "$ref": "#/components/schemas/PeriodResponse"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "MonthYear not found",
+                        "description": "Period not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -419,19 +419,19 @@
             },
             "delete": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Delete Month Year",
-                "description": "Delete a MonthYear by its ID.",
-                "operationId": "delete_month_year_v1_month_year__month_year_id__delete",
+                "summary": "Delete Period",
+                "description": "Delete a Period by its ID.",
+                "operationId": "delete_period_v1_period__period_id__delete",
                 "parameters": [
                     {
-                        "name": "month_year_id",
+                        "name": "period_id",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "title": "Month Year Id"
+                            "title": "Period Id"
                         }
                     }
                 ],
@@ -445,7 +445,7 @@
                         }
                     },
                     "404": {
-                        "description": "MonthYear not found",
+                        "description": "Period not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -921,7 +921,7 @@
                 "type": "object",
                 "title": "HTTPValidationError"
             },
-            "MonthYearRequest": {
+            "PeriodRequest": {
                 "properties": {
                     "month": {
                         "type": "integer",
@@ -953,10 +953,10 @@
                     "month",
                     "year"
                 ],
-                "title": "MonthYearRequest",
+                "title": "PeriodRequest",
                 "description": "Schema for month-year creation requests."
             },
-            "MonthYearResponse": {
+            "PeriodResponse": {
                 "properties": {
                     "id": {
                         "type": "string",
@@ -988,7 +988,7 @@
                     "month",
                     "year"
                 ],
-                "title": "MonthYearResponse",
+                "title": "PeriodResponse",
                 "description": "Schema for month-year responses."
             },
             "SpendingAccountEntryRequest": {

@@ -19,11 +19,11 @@ class SpendingAccountRepository(SpendingAccountRepositoryInterface):
     async def add_entry(self, entry: SpendingAccountEntry) -> SpendingAccountEntryWithCalculatedFields:
         """Add a new entry to the spending account."""
         for existing_entry in self.entries:
-            if existing_entry["date_detail_id"] == entry.date_detail_id:
-                raise ValueError(f"Entry for date {entry.date_detail_id} already exists.")
+            if existing_entry["period_id"] == entry.period_id:
+                raise ValueError(f"Entry for date {entry.period_id} already exists.")
         new_entry = SpendingAccountEntryWithCalculatedFields(
             account_id=entry.account_id,
-            date_detail_id=entry.date_detail_id,
+            period_id=entry.period_id,
             starting_balance=entry.starting_balance,
             current_balance=entry.current_balance,
             current_credit=entry.current_credit,
@@ -50,12 +50,12 @@ class SpendingAccountRepository(SpendingAccountRepositoryInterface):
             if entry["account_id"] == account_id
         ]
 
-    async def get_entry_by_account_and_month_year_or_none(
-        self, account_id: str, month_year_id: str
+    async def get_entry_by_account_and_period_or_none(
+        self, account_id: str, period_id: str
     ) -> SpendingAccountEntryWithCalculatedFields | None:
         """Retrieve a specific entry for a given account and month-year."""
         for entry in self.entries:
-            if entry["account_id"] == account_id and entry["date_detail_id"] == month_year_id:
+            if entry["account_id"] == account_id and entry["period_id"] == period_id:
                 return SpendingAccountEntryWithCalculatedFields(**entry)
         return None
 

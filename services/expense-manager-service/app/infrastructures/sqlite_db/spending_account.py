@@ -30,7 +30,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Create new entry
             new_entry = SpendingAccountEntryModel(
                 account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
+                period_id=entry.period_id,
                 starting_balance=entry.starting_balance,
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
@@ -45,7 +45,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             return SpendingAccountEntryWithCalculatedFields(
                 id=new_entry.id,
                 account_id=new_entry.account_id,
-                date_detail_id=new_entry.date_detail_id,
+                period_id=new_entry.period_id,
                 starting_balance=new_entry.starting_balance,
                 current_balance=new_entry.current_balance,
                 current_credit=new_entry.current_credit,
@@ -64,7 +64,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             return SpendingAccountEntryWithCalculatedFields(
                 id=entry.id,
                 account_id=entry.account_id,
-                date_detail_id=entry.date_detail_id,
+                period_id=entry.period_id,
                 starting_balance=entry.starting_balance,
                 current_balance=entry.current_balance,
                 current_credit=entry.current_credit,
@@ -81,7 +81,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 SpendingAccountEntryWithCalculatedFields(
                     id=entry.id,
                     account_id=entry.account_id,
-                    date_detail_id=entry.date_detail_id,
+                    period_id=entry.period_id,
                     starting_balance=entry.starting_balance,
                     current_balance=entry.current_balance,
                     current_credit=entry.current_credit,
@@ -100,7 +100,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 SpendingAccountEntryWithCalculatedFields(
                     id=entry.id,
                     account_id=entry.account_id,
-                    date_detail_id=entry.date_detail_id,
+                    period_id=entry.period_id,
                     starting_balance=entry.starting_balance,
                     current_balance=entry.current_balance,
                     current_credit=entry.current_credit,
@@ -108,16 +108,16 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 for entry in entries
             ]
 
-    async def get_entry_by_account_and_month_year_or_none(
+    async def get_entry_by_account_and_period_or_none(
         self,
         account_id: str,
-        month_year_id: str,
+        period_id: str,
     ) -> SpendingAccountEntryWithCalculatedFields | None:
         """Retrieve a specific entry for a given account and month-year."""
         async with await self._get_session() as session:
             stmt = select(SpendingAccountEntryModel).where(
                 SpendingAccountEntryModel.account_id == account_id,
-                SpendingAccountEntryModel.date_detail_id == month_year_id,
+                SpendingAccountEntryModel.period_id == period_id,
             )
             result = await session.execute(stmt)
             entry = result.scalar_one_or_none()
@@ -126,7 +126,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 return SpendingAccountEntryWithCalculatedFields(
                     id=entry.id,
                     account_id=entry.account_id,
-                    date_detail_id=entry.date_detail_id,
+                    period_id=entry.period_id,
                     starting_balance=entry.starting_balance,
                     current_balance=entry.current_balance,
                     current_credit=entry.current_credit,
@@ -147,7 +147,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
             # Update entry
             existing_entry.account_id = entry.account_id
-            existing_entry.date_detail_id = entry.date_detail_id
+            existing_entry.period_id = entry.period_id
             existing_entry.starting_balance = entry.starting_balance
             existing_entry.current_balance = entry.current_balance
             existing_entry.current_credit = entry.current_credit
@@ -158,7 +158,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
             return SpendingAccountEntryWithCalculatedFields(
                 id=existing_entry.id,
                 account_id=existing_entry.account_id,
-                date_detail_id=existing_entry.date_detail_id,
+                period_id=existing_entry.period_id,
                 starting_balance=existing_entry.starting_balance,
                 current_balance=existing_entry.current_balance,
                 current_credit=existing_entry.current_credit,

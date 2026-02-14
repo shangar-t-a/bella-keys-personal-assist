@@ -16,10 +16,3 @@ class AccountName(BaseEntity):
         """Ensure the account name is stored in uppercase."""
         values["account_name"] = values["account_name"].upper()
         return values
-
-
-class MonthYear(BaseEntity):
-    """Entity representing date details with month and year."""
-
-    month: int = Field(ge=1, le=12, description="Month of the year")
-    year: int = Field(ge=2000, le=2100, description="Year of the entry")

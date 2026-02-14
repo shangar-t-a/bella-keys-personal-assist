@@ -9,6 +9,7 @@ from pytest_asyncio import is_async_test
 from app import settings
 from app.infrastructures.postgres_db import database
 from app.infrastructures.postgres_db.accounts import PostgresAccountRepository
+from app.infrastructures.postgres_db.period import PostgresPeriodRepository
 from app.infrastructures.postgres_db.spending_account import PostgresSpendingAccountRepository
 from tests.unit.settings import UnitTestSettings
 
@@ -60,6 +61,14 @@ def account_repo(patch_settings, init_and_drop_db):
     """Provide an instance of AccountRepository."""
     if settings.get_settings().STORAGE_TYPE == "postgresql":
         return PostgresAccountRepository()
+    raise NotImplementedError("Invalid STORAGE_TYPE")
+
+
+@pytest.fixture(scope="session")
+def period_repo(patch_settings, init_and_drop_db):
+    """Provide an instance of PeriodRepository."""
+    if settings.get_settings().STORAGE_TYPE == "postgresql":
+        return PostgresPeriodRepository()
     raise NotImplementedError("Invalid STORAGE_TYPE")
 
 

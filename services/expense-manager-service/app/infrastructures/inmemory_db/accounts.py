@@ -2,8 +2,10 @@
 
 from typing import ClassVar
 
-from app.entities.errors.accounts import AccountNotFoundError, MonthYearNotFoundError
-from app.entities.models.accounts import AccountName, MonthYear
+from app.entities.errors.accounts import AccountNotFoundError
+from app.entities.errors.period import PeriodNotFoundError
+from app.entities.models.accounts import AccountName
+from app.entities.models.period import Period
 from app.entities.repositories.accounts import AccountRepositoryInterface
 
 
@@ -11,7 +13,7 @@ class AccountRepository(AccountRepositoryInterface):
     """Implementation of the AccountRepositoryInterface."""
 
     accounts: ClassVar[dict[str, dict]] = {}
-    month_years: ClassVar[dict[str, dict]] = {}
+    periods: ClassVar[dict[str, dict]] = {}
 
     def __init__(self):
         """Initialize the in-memory account repository."""
@@ -60,45 +62,45 @@ class AccountRepository(AccountRepositoryInterface):
         else:
             raise AccountNotFoundError(account_id=account_id)
 
-    async def get_or_create_month_year(self, month: str, year: int) -> MonthYear:
-        """Retrieve an existing MonthYear or create a new one with the provided month and year."""
-        for month_year in self.month_years.values():
-            if month_year["month"] == month and month_year["year"] == year:
-                return MonthYear(**month_year)
-        new_month_year = MonthYear(month=month, year=year)
-        self.month_years[new_month_year.id] = new_month_year.model_dump()
-        return new_month_year
+    async def get_or_create_period(self, month: str, year: int) -> Period:
+        """Retrieve an existing Period or create a new one with the provided month and year."""
+        for period in self.periods.values():
+            if period["month"] == month and period["year"] == year:
+                return Period(**period)
+        new_period = Period(month=month, year=year)
+        self.periods[new_period.id] = new_period.model_dump()
+        return new_period
 
-    async def get_month_year_by_value(self, month: str, year: int) -> MonthYear | None:
-        """Retrieve a MonthYear by its month and year."""
-        for month_year in self.month_years.values():
-            if month_year["month"] == month and month_year["year"] == year:
-                return MonthYear(**month_year)
+    async def get_period_by_value(self, month: str, year: int) -> Period | None:
+        """Retrieve a Period by its month and year."""
+        for period in self.periods.values():
+            if period["month"] == month and period["year"] == year:
+                return Period(**period)
         return None
 
-    async def get_month_year_by_id(self, month_year_id: str) -> MonthYear | None:
-        """Retrieve a MonthYear by its ID."""
-        month_year = self.month_years.get(month_year_id)
-        if month_year:
-            return MonthYear(**month_year)
+    async def get_period_by_id(self, period_id: str) -> Period | None:
+        """Retrieve a Period by its ID."""
+        period = self.periods.get(period_id)
+        if period:
+            return Period(**period)
         return None
 
-    async def get_all_month_years(self) -> list[MonthYear]:
+    async def get_all_period(self) -> list[Period]:
         """Retrieve all month-year records."""
-        return [MonthYear(**month_year) for month_year in self.month_years.values()]
+        return [Period(**period) for period in self.periods.values()]
 
-    async def update_month_year(self, month_year_id: str, month: str, year: int) -> MonthYear:
-        """Update an existing MonthYear with the provided month and year."""
-        month_year = self.month_years.get(month_year_id)
-        if not month_year:
-            raise MonthYearNotFoundError(month_year_id=month_year_id)
-        month_year["month"] = month
-        month_year["year"] = year
-        return MonthYear(**month_year)
+    async def update_period(self, period_id: str, month: str, year: int) -> Period:
+        """Update an existing Period with the provided month and year."""
+        period = self.periods.get(period_id)
+        if not period:
+            raise PeriodNotFoundError(period_id=period_id)
+        period["month"] = month
+        period["year"] = year
+        return Period(**period)
 
-    async def delete_month_year(self, month_year_id: str) -> None:
-        """Delete a MonthYear by its ID."""
-        if month_year_id in self.month_years:
-            del self.month_years[month_year_id]
+    async def delete_period(self, period_id: str) -> None:
+        """Delete a Period by its ID."""
+        if period_id in self.periods:
+            del self.periods[period_id]
         else:
-            raise MonthYearNotFoundError(month_year_id=month_year_id)
+            raise PeriodNotFoundError(period_id=period_id)

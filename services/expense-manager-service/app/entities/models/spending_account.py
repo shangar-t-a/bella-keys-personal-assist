@@ -9,7 +9,7 @@ class SpendingAccountEntry(BaseEntity):
     """Entity representing an entry in spending account with basic details."""
 
     account_id: str = Field(description="ID of the account")
-    date_detail_id: str = Field(description="ID of the date detail")
+    period_id: str = Field(description="ID of the date detail")
     starting_balance: float = Field(description="Starting balance of the account")
     current_balance: float = Field(description="Current balance of the account")
     current_credit: float = Field(description="Current credit of the account")

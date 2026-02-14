@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 
 from app.entities.models.accounts import (
     AccountName,
-    MonthYear,
 )
 
 
@@ -39,34 +38,4 @@ class AccountRepositoryInterface(ABC):
     @abstractmethod
     async def delete_account(self, account_id: str) -> None:
         """Delete an account by its ID."""
-        pass
-
-    @abstractmethod
-    async def get_or_create_month_year(self, month: int, year: int) -> MonthYear:
-        """Retrieve an existing MonthYear or create a new one with the provided month and year."""
-        pass
-
-    @abstractmethod
-    async def get_month_year_by_value(self, month: int, year: int) -> MonthYear | None:
-        """Retrieve a MonthYear by its month and year."""
-        pass
-
-    @abstractmethod
-    async def get_month_year_by_id(self, month_year_id: str) -> MonthYear | None:
-        """Retrieve a MonthYear by its ID."""
-        pass
-
-    @abstractmethod
-    async def get_all_month_years(self) -> list[MonthYear]:
-        """Retrieve all month-year records."""
-        pass
-
-    @abstractmethod
-    async def update_month_year(self, month_year_id: str, month: int, year: int) -> MonthYear:
-        """Update an existing MonthYear with the provided month and year."""
-        pass
-
-    @abstractmethod
-    async def delete_month_year(self, month_year_id: str) -> None:
-        """Delete a MonthYear by its ID."""
         pass
