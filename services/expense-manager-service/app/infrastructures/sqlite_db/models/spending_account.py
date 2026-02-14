@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructures.sqlite_db.database import Base
 
 
-class SpendingAccountEntryModel(Base):
+class SpendingEntryModel(Base):
     """SQLite model for spending account entries."""
 
     __tablename__ = "spending_account_entries"

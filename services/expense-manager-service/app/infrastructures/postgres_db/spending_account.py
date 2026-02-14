@@ -18,7 +18,7 @@ from app.entities.repositories.spending_account import SpendingAccountRepository
 from app.infrastructures.postgres_db.database import get_async_session
 from app.infrastructures.postgres_db.models.accounts import AccountModel
 from app.infrastructures.postgres_db.models.period import PeriodModel
-from app.infrastructures.postgres_db.models.spending_account import SpendingAccountEntryModel
+from app.infrastructures.postgres_db.models.spending_account import SpendingEntryModel
 
 
 class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
@@ -36,7 +36,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Add a new entry to the spending account."""
         async with await self._get_session() as session:
             # Create new entry
-            new_entry = SpendingAccountEntryModel(
+            new_entry = SpendingEntryModel(
                 account_id=entry.account_id,
                 period_id=entry.period_id,
                 starting_balance=entry.starting_balance,
@@ -62,7 +62,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
     async def get_entry_by_id(self, entry_id: str) -> SpendingAccountEntryWithCalculatedFields:
         """Retrieve a spending account entry by its ID."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             entry = result.scalar_one_or_none()
 
@@ -84,11 +84,11 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Retrieve all entries for all spending accounts."""
         async with await self._get_session() as session:
             # Retrieve entries with pagination
-            stmt = select(SpendingAccountEntryModel).limit(limit).offset(offset)
+            stmt = select(SpendingEntryModel).limit(limit).offset(offset)
             result = await session.execute(stmt)
             entries = result.scalars().all()
             # Count total entries for pagination metadata
-            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id))
+            total_entries_stmt = select(func.count(SpendingEntryModel.id))
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
 
@@ -116,16 +116,16 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         async with await self._get_session() as session:
             # Retrieve entries for the account with pagination
             stmt = (
-                select(SpendingAccountEntryModel)
-                .where(SpendingAccountEntryModel.account_id == account_id)
+                select(SpendingEntryModel)
+                .where(SpendingEntryModel.account_id == account_id)
                 .limit(limit)
                 .offset(offset)
             )
             result = await session.execute(stmt)
             entries = result.scalars().all()
             # Count total entries for the account for pagination metadata
-            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id)).where(
-                SpendingAccountEntryModel.account_id == account_id
+            total_entries_stmt = select(func.count(SpendingEntryModel.id)).where(
+                SpendingEntryModel.account_id == account_id
             )
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
@@ -154,9 +154,9 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
     ) -> SpendingAccountEntryWithCalculatedFields | None:
         """Retrieve a specific entry for a given account and month-year."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel).where(
-                SpendingAccountEntryModel.account_id == account_id,
-                SpendingAccountEntryModel.period_id == period_id,
+            stmt = select(SpendingEntryModel).where(
+                SpendingEntryModel.account_id == account_id,
+                SpendingEntryModel.period_id == period_id,
             )
             result = await session.execute(stmt)
             entry = result.scalar_one_or_none()
@@ -177,7 +177,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Edit an existing spending account entry."""
         async with await self._get_session() as session:
             # Get entry
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             existing_entry = result.scalar_one_or_none()
 
@@ -207,7 +207,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Delete a spending account entry by its ID."""
         async with await self._get_session() as session:
             # Get entry
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             existing_entry = result.scalar_one_or_none()
 
@@ -224,7 +224,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Add a new entry and return it with joined account and date details."""
         async with await self._get_session() as session:
             # Create new entry
-            new_entry = SpendingAccountEntryModel(
+            new_entry = SpendingEntryModel(
                 account_id=entry.account_id,
                 period_id=entry.period_id,
                 starting_balance=entry.starting_balance,
@@ -238,14 +238,14 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Retrieve with joined details in a single query
             stmt = (
                 select(
-                    SpendingAccountEntryModel,
+                    SpendingEntryModel,
                     AccountModel.account_name,
                     PeriodModel.month,
                     PeriodModel.year,
                 )
-                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
-                .join(PeriodModel, SpendingAccountEntryModel.period_id == PeriodModel.id)
-                .where(SpendingAccountEntryModel.id == new_entry.id)
+                .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
+                .where(SpendingEntryModel.id == new_entry.id)
             )
             result = await session.execute(stmt)
             row = result.one()
@@ -268,14 +268,14 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         async with await self._get_session() as session:
             stmt = (
                 select(
-                    SpendingAccountEntryModel,
+                    SpendingEntryModel,
                     AccountModel.account_name,
                     PeriodModel.month,
                     PeriodModel.year,
                 )
-                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
-                .join(PeriodModel, SpendingAccountEntryModel.period_id == PeriodModel.id)
-                .where(SpendingAccountEntryModel.id == entry_id)
+                .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
+                .where(SpendingEntryModel.id == entry_id)
             )
             result = await session.execute(stmt)
             row = result.one_or_none()
@@ -305,13 +305,13 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Retrieve entries with joined details in a single query
             stmt = (
                 select(
-                    SpendingAccountEntryModel,
+                    SpendingEntryModel,
                     AccountModel.account_name,
                     PeriodModel.month,
                     PeriodModel.year,
                 )
-                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
-                .join(PeriodModel, SpendingAccountEntryModel.period_id == PeriodModel.id)
+                .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
                 .limit(limit)
                 .offset(offset)
             )
@@ -319,7 +319,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             rows = result.all()
 
             # Count total entries for pagination metadata
-            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id))
+            total_entries_stmt = select(func.count(SpendingEntryModel.id))
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
 
@@ -351,14 +351,14 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Retrieve entries with joined details in a single query
             stmt = (
                 select(
-                    SpendingAccountEntryModel,
+                    SpendingEntryModel,
                     AccountModel.account_name,
                     PeriodModel.month,
                     PeriodModel.year,
                 )
-                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
-                .join(PeriodModel, SpendingAccountEntryModel.period_id == PeriodModel.id)
-                .where(SpendingAccountEntryModel.account_id == account_id)
+                .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
+                .where(SpendingEntryModel.account_id == account_id)
                 .limit(limit)
                 .offset(offset)
             )
@@ -366,8 +366,8 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             rows = result.all()
 
             # Count total entries for the account
-            total_entries_stmt = select(func.count(SpendingAccountEntryModel.id)).where(
-                SpendingAccountEntryModel.account_id == account_id
+            total_entries_stmt = select(func.count(SpendingEntryModel.id)).where(
+                SpendingEntryModel.account_id == account_id
             )
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
@@ -398,7 +398,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Edit an existing entry and return it with joined account and date details."""
         async with await self._get_session() as session:
             # Get entry
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             existing_entry = result.scalar_one_or_none()
 
@@ -417,14 +417,14 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             # Retrieve with joined details in a single query
             stmt = (
                 select(
-                    SpendingAccountEntryModel,
+                    SpendingEntryModel,
                     AccountModel.account_name,
                     PeriodModel.month,
                     PeriodModel.year,
                 )
-                .join(AccountModel, SpendingAccountEntryModel.account_id == AccountModel.id)
-                .join(PeriodModel, SpendingAccountEntryModel.period_id == PeriodModel.id)
-                .where(SpendingAccountEntryModel.id == entry_id)
+                .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
+                .where(SpendingEntryModel.id == entry_id)
             )
             result = await session.execute(stmt)
             row = result.one()

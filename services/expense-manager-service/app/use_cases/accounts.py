@@ -4,7 +4,7 @@ from app.entities.errors.accounts import (
     AccountNotFoundError as EntityAccountNotFoundError,
 )
 from app.entities.models.accounts import (
-    AccountName,
+    Account,
 )
 from app.entities.repositories.accounts import AccountRepositoryInterface
 from app.use_cases.errors.accounts import (
@@ -20,13 +20,13 @@ class AccountService:
         """Initialize the account service with the repository."""
         self.account_repository = account_repository
 
-    async def get_or_create_account(self, account_name: str) -> AccountName:
+    async def get_or_create_account(self, account_name: str) -> Account:
         """Retrieve an existing account or create a new one with the provided name."""
         account_name_entity = await self.account_repository.get_or_create_account(account_name=account_name)
 
         return account_name_entity
 
-    async def get_account_by_name(self, account_name: str) -> AccountName:
+    async def get_account_by_name(self, account_name: str) -> Account:
         """Retrieve an account by its name.
 
         Raises:
@@ -39,7 +39,7 @@ class AccountService:
 
         return account_name_entity
 
-    async def get_account_by_id(self, account_id: str) -> AccountName:
+    async def get_account_by_id(self, account_id: str) -> Account:
         """Retrieve an account by its ID.
 
         Raises:
@@ -52,7 +52,7 @@ class AccountService:
 
         return account_name_entity
 
-    async def get_all_accounts(self) -> list[AccountName]:
+    async def get_all_accounts(self) -> list[Account]:
         """Retrieve all accounts."""
         account_name_entities = await self.account_repository.get_all_accounts()
 
@@ -61,7 +61,7 @@ class AccountService:
 
         return account_name_entities
 
-    async def update_account_name(self, account_id: str, account_name: str) -> AccountName:
+    async def update_account_name(self, account_id: str, account_name: str) -> Account:
         """Update an existing account name with the provided data.
 
         Raises:

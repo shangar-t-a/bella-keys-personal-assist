@@ -129,7 +129,7 @@ class TestDeleteAccount:
             await account_service.delete_account(account_id=f"non-existent-id-{uuid4()}")
 
 
-class TestGetAllAccounts:
+class TestGetAllAccount:
     async def test__get_all_accounts__with_existing_accounts__retrieve_accounts(
         self,
         account_service,
@@ -157,7 +157,7 @@ class TestGetAllAccounts:
         assert accounts == []
 
 
-class TestUpdateAccountName:
+class TestUpdateAccount:
     async def test__update_account_name__existing_account__update_account(
         self,
         account_service,

@@ -2,10 +2,10 @@
 
 from .accounts import AccountModel
 from .period import PeriodModel
-from .spending_account import SpendingAccountEntryModel
+from .spending_account import SpendingEntryModel
 
 __all__ = [
     "AccountModel",
     "PeriodModel",
-    "SpendingAccountEntryModel",
+    "SpendingEntryModel",
 ]

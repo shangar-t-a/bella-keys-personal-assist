@@ -10,7 +10,7 @@ from app.entities.models.spending_account import (
 )
 from app.entities.repositories.spending_account import SpendingAccountRepositoryInterface
 from app.infrastructures.sqlite_db.database import get_async_session
-from app.infrastructures.sqlite_db.models.spending_account import SpendingAccountEntryModel
+from app.infrastructures.sqlite_db.models.spending_account import SpendingEntryModel
 
 
 class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
@@ -28,7 +28,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Add a new entry to the spending account."""
         async with await self._get_session() as session:
             # Create new entry
-            new_entry = SpendingAccountEntryModel(
+            new_entry = SpendingEntryModel(
                 account_id=entry.account_id,
                 period_id=entry.period_id,
                 starting_balance=entry.starting_balance,
@@ -54,7 +54,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
     async def get_entry_by_id(self, entry_id: str) -> SpendingAccountEntryWithCalculatedFields:
         """Retrieve a spending account entry by its ID."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             entry = result.scalar_one_or_none()
 
@@ -73,7 +73,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
     async def get_all_entries(self) -> list[SpendingAccountEntryWithCalculatedFields]:
         """Retrieve all entries for all spending accounts."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel)
+            stmt = select(SpendingEntryModel)
             result = await session.execute(stmt)
             entries = result.scalars().all()
 
@@ -92,7 +92,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
     async def get_all_entries_for_account(self, account_id: str) -> list[SpendingAccountEntryWithCalculatedFields]:
         """Retrieve all entries for a given spending account."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.account_id == account_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.account_id == account_id)
             result = await session.execute(stmt)
             entries = result.scalars().all()
 
@@ -115,9 +115,9 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
     ) -> SpendingAccountEntryWithCalculatedFields | None:
         """Retrieve a specific entry for a given account and month-year."""
         async with await self._get_session() as session:
-            stmt = select(SpendingAccountEntryModel).where(
-                SpendingAccountEntryModel.account_id == account_id,
-                SpendingAccountEntryModel.period_id == period_id,
+            stmt = select(SpendingEntryModel).where(
+                SpendingEntryModel.account_id == account_id,
+                SpendingEntryModel.period_id == period_id,
             )
             result = await session.execute(stmt)
             entry = result.scalar_one_or_none()
@@ -138,7 +138,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Edit an existing spending account entry."""
         async with await self._get_session() as session:
             # Get entry
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             existing_entry = result.scalar_one_or_none()
 
@@ -168,7 +168,7 @@ class SQLiteSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Delete a spending account entry by its ID."""
         async with await self._get_session() as session:
             # Get entry
-            stmt = select(SpendingAccountEntryModel).where(SpendingAccountEntryModel.id == entry_id)
+            stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
             result = await session.execute(stmt)
             existing_entry = result.scalar_one_or_none()
 

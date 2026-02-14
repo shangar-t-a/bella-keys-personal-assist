@@ -5,13 +5,13 @@ from pydantic import Field
 from app.routers.v1.schemas.base import BaseSchema
 
 
-class AccountNameRequest(BaseSchema):
+class AccountRequest(BaseSchema):
     """Schema for account name creation/update requests."""
 
     account_name: str = Field(..., description="Name of the account", examples=["ICICI", "SBI"])
 
 
-class AccountNameResponse(BaseSchema):
+class AccountResponse(BaseSchema):
     """Schema for account name responses."""
 
     id: str = Field(..., description="Unique identifier for the account")

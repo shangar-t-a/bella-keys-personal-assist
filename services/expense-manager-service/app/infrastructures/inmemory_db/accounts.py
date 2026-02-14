@@ -4,7 +4,7 @@ from typing import ClassVar
 
 from app.entities.errors.accounts import AccountNotFoundError
 from app.entities.errors.period import PeriodNotFoundError
-from app.entities.models.accounts import AccountName
+from app.entities.models.accounts import Account
 from app.entities.models.period import Period
 from app.entities.repositories.accounts import AccountRepositoryInterface
 
@@ -19,41 +19,41 @@ class AccountRepository(AccountRepositoryInterface):
         """Initialize the in-memory account repository."""
         pass
 
-    async def get_or_create_account(self, account_name: str) -> AccountName:
+    async def get_or_create_account(self, account_name: str) -> Account:
         """Retrieve an existing account or create a new one with the provided name."""
-        new_account = AccountName(account_name=account_name)
+        new_account = Account(account_name=account_name)
         new_account_data = new_account.model_dump()
         for account in self.accounts.values():
             if account["account_name"] == new_account.account_name:
-                return AccountName(**account)
+                return Account(**account)
         self.accounts[new_account_data["id"]] = new_account_data
         return new_account
 
-    async def get_account_by_name(self, account_name: str) -> AccountName | None:
+    async def get_account_by_name(self, account_name: str) -> Account | None:
         """Retrieve an account by its name."""
         for account in self.accounts.values():
             if account["account_name"] == account_name:
-                return AccountName(**account)
+                return Account(**account)
         return None
 
-    async def get_account_by_id(self, account_id: str) -> AccountName | None:
+    async def get_account_by_id(self, account_id: str) -> Account | None:
         """Retrieve an account by its ID."""
         account = self.accounts.get(account_id)
         if account:
-            return AccountName(**account)
+            return Account(**account)
         return None
 
-    async def get_all_accounts(self) -> list[AccountName]:
+    async def get_all_accounts(self) -> list[Account]:
         """Retrieve all accounts."""
-        return [AccountName(**account) for account in self.accounts.values()]
+        return [Account(**account) for account in self.accounts.values()]
 
-    async def update_account_name(self, account_id: str, account_name: str) -> AccountName:
+    async def update_account_name(self, account_id: str, account_name: str) -> Account:
         """Update an existing account name with the provided data."""
         account = self.accounts.get(account_id)
         if not account:
             raise AccountNotFoundError(account_id=account_id)
         account["account_name"] = account_name
-        return AccountName(**account)
+        return Account(**account)
 
     async def delete_account(self, account_id: str) -> None:
         """Delete an account by its ID."""

@@ -3,8 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.routers.v1.schemas.accounts import (
-    AccountNameRequest,
-    AccountNameResponse,
+    AccountRequest,
+    AccountResponse,
     AccountUpdateRequest,
 )
 from app.routers.v1.schemas.errors import HTTPErrorResponse
@@ -15,29 +15,29 @@ from app.use_cases.errors.accounts import AccountNotFoundError
 account_router = APIRouter(prefix="/account", tags=["account"])
 
 
-@account_router.post("/get_or_create", response_model=AccountNameResponse)
+@account_router.post("/get_or_create", response_model=AccountResponse)
 async def get_or_create_account(
-    account_name_request: AccountNameRequest, account_service: AccountService = Depends(get_accounts_service)
-) -> AccountNameResponse:
+    account_name_request: AccountRequest, account_service: AccountService = Depends(get_accounts_service)
+) -> AccountResponse:
     """Create or retrieve an account with the given name."""
     account = await account_service.get_or_create_account(account_name=account_name_request.account_name)
 
-    return AccountNameResponse(id=account.id, account_name=account.account_name)
+    return AccountResponse(id=account.id, account_name=account.account_name)
 
 
-@account_router.get("/list", response_model=list[AccountNameResponse])
+@account_router.get("/list", response_model=list[AccountResponse])
 async def get_all_accounts(
     account_service: AccountService = Depends(get_accounts_service),
-) -> list[AccountNameResponse]:
+) -> list[AccountResponse]:
     """Retrieve all accounts."""
     accounts = await account_service.get_all_accounts()
 
-    return [AccountNameResponse(id=acc.id, account_name=acc.account_name) for acc in accounts]
+    return [AccountResponse(id=acc.id, account_name=acc.account_name) for acc in accounts]
 
 
 @account_router.get(
     "/{account_id}",
-    response_model=AccountNameResponse,
+    response_model=AccountResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": HTTPErrorResponse,
@@ -47,7 +47,7 @@ async def get_all_accounts(
 )
 async def get_account_by_id(
     account_id: str, account_service: AccountService = Depends(get_accounts_service)
-) -> AccountNameResponse:
+) -> AccountResponse:
     """Retrieve an account by its ID."""
     try:
         account = await account_service.get_account_by_id(account_id=account_id)
@@ -57,12 +57,12 @@ async def get_account_by_id(
             detail=error.message,
         ) from error
 
-    return AccountNameResponse(id=account.id, account_name=account.account_name)
+    return AccountResponse(id=account.id, account_name=account.account_name)
 
 
 @account_router.put(
     "/{account_id}",
-    response_model=AccountNameResponse,
+    response_model=AccountResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": HTTPErrorResponse,
@@ -74,7 +74,7 @@ async def update_account_name(
     account_id: str,
     account_name_update_request: AccountUpdateRequest,
     account_service: AccountService = Depends(get_accounts_service),
-) -> AccountNameResponse:
+) -> AccountResponse:
     """Update an existing account name with the provided data."""
     try:
         account = await account_service.update_account_name(
@@ -86,7 +86,7 @@ async def update_account_name(
             detail=error.message,
         ) from error
 
-    return AccountNameResponse(id=account.id, account_name=account.account_name)
+    return AccountResponse(id=account.id, account_name=account.account_name)
 
 
 @account_router.delete(
