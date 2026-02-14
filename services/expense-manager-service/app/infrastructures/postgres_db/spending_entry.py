@@ -8,21 +8,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entities.errors.spending_entry import SpendingAccountEntryNotFoundError
 from app.entities.models.spending_entry import (
-    SpendingAccountEntry,
-    SpendingAccountEntryWithCalculatedFields,
-    SpendingAccountEntryWithCalculatedFieldsPaginated,
-    SpendingAccountEntryWithDetails,
-    SpendingAccountEntryWithDetailsPaginated,
+    SpendingEntry,
+    SpendingEntryDetailWithCalc,
+    SpendingEntryDetailWithCalcPage,
+    SpendingEntryWithCalc,
+    SpendingEntryWithCalcPage,
 )
-from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
+from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
 from app.infrastructures.postgres_db.database import get_async_session
 from app.infrastructures.postgres_db.models.account import AccountModel
 from app.infrastructures.postgres_db.models.period import PeriodModel
 from app.infrastructures.postgres_db.models.spending_entry import SpendingEntryModel
 
 
-class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
-    """Postgres implementation of the SpendingAccountRepositoryInterface."""
+class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
+    """Postgres implementation of the SpendingEntryRepositoryInterface."""
 
     def __init__(self):
         """Initialize the Postgres spending account repository."""
@@ -32,7 +32,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Get a new database session."""
         return self.session_factory()
 
-    async def add_entry(self, entry: SpendingAccountEntry) -> SpendingAccountEntryWithCalculatedFields:
+    async def add_entry(self, entry: SpendingEntry) -> SpendingEntryWithCalc:
         """Add a new entry to the spending account."""
         async with await self._get_session() as session:
             # Create new entry
@@ -50,7 +50,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             await session.refresh(new_entry)
 
             # Convert to domain model with calculated fields
-            return SpendingAccountEntryWithCalculatedFields(
+            return SpendingEntryWithCalc(
                 id=new_entry.id,
                 account_id=new_entry.account_id,
                 period_id=new_entry.period_id,
@@ -59,7 +59,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 current_credit=new_entry.current_credit,
             )
 
-    async def get_entry_by_id(self, entry_id: str) -> SpendingAccountEntryWithCalculatedFields:
+    async def get_entry_by_id(self, entry_id: str) -> SpendingEntryWithCalc:
         """Retrieve a spending account entry by its ID."""
         async with await self._get_session() as session:
             stmt = select(SpendingEntryModel).where(SpendingEntryModel.id == entry_id)
@@ -69,7 +69,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             if entry is None:
                 raise SpendingAccountEntryNotFoundError(entry_id=entry_id)
 
-            return SpendingAccountEntryWithCalculatedFields(
+            return SpendingEntryWithCalc(
                 id=entry.id,
                 account_id=entry.account_id,
                 period_id=entry.period_id,
@@ -78,9 +78,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 current_credit=entry.current_credit,
             )
 
-    async def get_all_entries(
-        self, limit: int = 12, offset: int = 0
-    ) -> SpendingAccountEntryWithCalculatedFieldsPaginated:
+    async def get_all_entries(self, limit: int = 12, offset: int = 0) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for all spending accounts."""
         async with await self._get_session() as session:
             # Retrieve entries with pagination
@@ -92,9 +90,9 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
 
-            return SpendingAccountEntryWithCalculatedFieldsPaginated(
+            return SpendingEntryWithCalcPage(
                 entries=[
-                    SpendingAccountEntryWithCalculatedFields(
+                    SpendingEntryWithCalc(
                         id=entry.id,
                         account_id=entry.account_id,
                         period_id=entry.period_id,
@@ -111,7 +109,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
     async def get_all_entries_for_account(
         self, account_id: str, limit: int = 12, offset: int = 0
-    ) -> SpendingAccountEntryWithCalculatedFieldsPaginated:
+    ) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for a given spending account."""
         async with await self._get_session() as session:
             # Retrieve entries for the account with pagination
@@ -130,9 +128,9 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
 
-            return SpendingAccountEntryWithCalculatedFieldsPaginated(
+            return SpendingEntryWithCalcPage(
                 entries=[
-                    SpendingAccountEntryWithCalculatedFields(
+                    SpendingEntryWithCalc(
                         id=entry.id,
                         account_id=entry.account_id,
                         period_id=entry.period_id,
@@ -151,7 +149,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
         self,
         account_id: str,
         period_id: str,
-    ) -> SpendingAccountEntryWithCalculatedFields | None:
+    ) -> SpendingEntryWithCalc | None:
         """Retrieve a specific entry for a given account and month-year."""
         async with await self._get_session() as session:
             stmt = select(SpendingEntryModel).where(
@@ -162,7 +160,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             entry = result.scalar_one_or_none()
 
             if entry is not None:
-                return SpendingAccountEntryWithCalculatedFields(
+                return SpendingEntryWithCalc(
                     id=entry.id,
                     account_id=entry.account_id,
                     period_id=entry.period_id,
@@ -173,7 +171,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
             return None
 
-    async def edit_entry(self, entry_id: str, entry: SpendingAccountEntry) -> SpendingAccountEntryWithCalculatedFields:
+    async def edit_entry(self, entry_id: str, entry: SpendingEntry) -> SpendingEntryWithCalc:
         """Edit an existing spending account entry."""
         async with await self._get_session() as session:
             # Get entry
@@ -194,7 +192,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             await session.commit()
 
             # Convert to domain model with calculated fields
-            return SpendingAccountEntryWithCalculatedFields(
+            return SpendingEntryWithCalc(
                 id=existing_entry.id,
                 account_id=existing_entry.account_id,
                 period_id=existing_entry.period_id,
@@ -220,7 +218,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
     # Optimized methods with JOINs (N+1 query optimization)
 
-    async def add_entry_with_details(self, entry: SpendingAccountEntry) -> SpendingAccountEntryWithDetails:
+    async def add_entry_with_details(self, entry: SpendingEntry) -> SpendingEntryDetailWithCalc:
         """Add a new entry and return it with joined account and date details."""
         async with await self._get_session() as session:
             # Create new entry
@@ -251,7 +249,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             row = result.one()
             entry_model, account_name, month, year = row
 
-            return SpendingAccountEntryWithDetails(
+            return SpendingEntryDetailWithCalc(
                 id=entry_model.id,
                 account_id=entry_model.account_id,
                 period_id=entry_model.period_id,
@@ -263,7 +261,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 year=year,
             )
 
-    async def get_entry_by_id_with_details(self, entry_id: str) -> SpendingAccountEntryWithDetails:
+    async def get_entry_by_id_with_details(self, entry_id: str) -> SpendingEntryDetailWithCalc:
         """Retrieve a spending account entry by its ID with joined account and date details."""
         async with await self._get_session() as session:
             stmt = (
@@ -285,7 +283,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
             entry_model, account_name, month, year = row
 
-            return SpendingAccountEntryWithDetails(
+            return SpendingEntryDetailWithCalc(
                 id=entry_model.id,
                 account_id=entry_model.account_id,
                 period_id=entry_model.period_id,
@@ -297,9 +295,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 year=year,
             )
 
-    async def get_all_entries_with_details(
-        self, limit: int = 12, offset: int = 0
-    ) -> SpendingAccountEntryWithDetailsPaginated:
+    async def get_all_entries_with_details(self, limit: int = 12, offset: int = 0) -> SpendingEntryDetailWithCalcPage:
         """Retrieve all entries with joined account and date details (optimized with JOIN)."""
         async with await self._get_session() as session:
             # Retrieve entries with joined details in a single query
@@ -323,9 +319,9 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
 
-            return SpendingAccountEntryWithDetailsPaginated(
+            return SpendingEntryDetailWithCalcPage(
                 entries=[
-                    SpendingAccountEntryWithDetails(
+                    SpendingEntryDetailWithCalc(
                         id=entry_model.id,
                         account_id=entry_model.account_id,
                         period_id=entry_model.period_id,
@@ -345,7 +341,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
 
     async def get_all_entries_for_account_with_details(
         self, account_id: str, limit: int = 12, offset: int = 0
-    ) -> SpendingAccountEntryWithDetailsPaginated:
+    ) -> SpendingEntryDetailWithCalcPage:
         """Retrieve all entries for an account with joined details (optimized with JOIN)."""
         async with await self._get_session() as session:
             # Retrieve entries with joined details in a single query
@@ -372,9 +368,9 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             total_entries_result = await session.execute(total_entries_stmt)
             total_entries = total_entries_result.scalar_one()
 
-            return SpendingAccountEntryWithDetailsPaginated(
+            return SpendingEntryDetailWithCalcPage(
                 entries=[
-                    SpendingAccountEntryWithDetails(
+                    SpendingEntryDetailWithCalc(
                         id=entry_model.id,
                         account_id=entry_model.account_id,
                         period_id=entry_model.period_id,
@@ -392,9 +388,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
                 total_entries=total_entries,
             )
 
-    async def edit_entry_with_details(
-        self, entry_id: str, entry: SpendingAccountEntry
-    ) -> SpendingAccountEntryWithDetails:
+    async def edit_entry_with_details(self, entry_id: str, entry: SpendingEntry) -> SpendingEntryDetailWithCalc:
         """Edit an existing entry and return it with joined account and date details."""
         async with await self._get_session() as session:
             # Get entry
@@ -430,7 +424,7 @@ class PostgresSpendingAccountRepository(SpendingAccountRepositoryInterface):
             row = result.one()
             entry_model, account_name, month, year = row
 
-            return SpendingAccountEntryWithDetails(
+            return SpendingEntryDetailWithCalc(
                 id=entry_model.id,
                 account_id=entry_model.account_id,
                 period_id=entry_model.period_id,

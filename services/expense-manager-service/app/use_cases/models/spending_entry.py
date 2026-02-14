@@ -5,7 +5,7 @@ from pydantic import Field
 from app.use_cases.models.base import BaseEntity
 
 
-class FlattenedSpendingAccountEntryCreate(BaseEntity):
+class SpendingEntryCreate(BaseEntity):
     """Model for creating a spending account entry with flattened details."""
 
     account_name: str = Field(description="Name of the account")
@@ -16,23 +16,23 @@ class FlattenedSpendingAccountEntryCreate(BaseEntity):
     current_credit: float = Field(description="Current credit of the account")
 
 
-class FlattenedSpendingAccountEntry(FlattenedSpendingAccountEntryCreate):
-    """Flattened output model for SpendingAccountEntry with related details."""
+class SpendingEntry(SpendingEntryCreate):
+    """Flattened output model for SpendingEntry with related details."""
 
     id: str = Field(description="ID of the spending account entry")
 
 
-class FlattenedSpendingAccountEntryWithCalculatedFields(FlattenedSpendingAccountEntry):
-    """Flattened output model for SpendingAccountEntry with related details and calculated fields."""
+class SpendingEntryWithCalc(SpendingEntry):
+    """Flattened output model for SpendingEntry with related details and calculated fields."""
 
     balance_after_credit: float = Field(description="Balance after applying current credit")
     total_spent: float = Field(description="Total amount spent from starting balance to current balance")
 
 
-class FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(BaseEntity):
+class SpendingEntryWithCalcPage(BaseEntity):
     """Model for paginated response of flattened spending account entries with calculated fields."""
 
-    entries: list[FlattenedSpendingAccountEntryWithCalculatedFields] = Field(
+    entries: list[SpendingEntryWithCalc] = Field(
         description="List of flattened spending account entries with calculated fields"
     )
     limit: int = Field(description="Number of entries returned in the current page")

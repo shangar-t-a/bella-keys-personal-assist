@@ -5,7 +5,7 @@ from pydantic import Field
 from app.routers.v1.schemas.base import BaseSchema
 
 
-class SpendingAccountEntryBase(BaseSchema):
+class SpendingEntryBase(BaseSchema):
     """Base schema for spending account entries."""
 
     account_name: str = Field(..., description="Name of the spending account", examples=["ICICI", "SBI"])
@@ -16,29 +16,29 @@ class SpendingAccountEntryBase(BaseSchema):
     current_credit: float = Field(..., description="Current credit of the account", examples=[2000.0])
 
 
-class SpendingAccountEntryRequest(SpendingAccountEntryBase):
+class SpendingEntryRequest(SpendingEntryBase):
     """Schema for spending account entry creation/update requests."""
 
     pass
 
 
-class SpendingAccountEntryResponse(SpendingAccountEntryBase):
+class SpendingEntryResponse(SpendingEntryBase):
     """Schema for spending account entry responses."""
 
     id: str = Field(..., description="Unique identifier for the entry")
 
 
-class SpendingAccountEntryWithCalculatedFieldsResponse(SpendingAccountEntryResponse):
+class SpendingEntryWithCalcResponse(SpendingEntryResponse):
     """Schema for spending account entry responses with calculated fields."""
 
     balance_after_credit: float = Field(..., description="Balance after deducting credit", examples=[6000.0])
     total_spent: float = Field(..., description="Total amount spent from the account", examples=[4000.0])
 
 
-class SpendingAccountEntryWithCalculatedFieldsPaginatedResponse(BaseSchema):
+class SpendingEntryWithCalcPageResponse(BaseSchema):
     """Schema for paginated responses of spending account entries with calculated fields."""
 
-    entries: list[SpendingAccountEntryWithCalculatedFieldsResponse] = Field(
+    entries: list[SpendingEntryWithCalcResponse] = Field(
         ..., description="List of spending account entries with calculated fields"
     )
     limit: int = Field(..., description="Number of entries returned in the current page", examples=[12])

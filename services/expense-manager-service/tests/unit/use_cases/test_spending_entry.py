@@ -16,15 +16,15 @@ from app.use_cases.errors.account import (
 from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
 from app.use_cases.errors.spending_entry import SpendingAccountEntryNotFoundError
 from app.use_cases.models.spending_entry import (
-    FlattenedSpendingAccountEntry,
-    FlattenedSpendingAccountEntryCreate,
+    SpendingEntry,
+    SpendingEntryCreate,
 )
-from app.use_cases.spending_entry import SpendingAccountService
+from app.use_cases.spending_entry import SpendingEntryService
 
 if TYPE_CHECKING:
     from app.entities.repositories.account import AccountRepositoryInterface
     from app.entities.repositories.period import PeriodRepositoryInterface
-    from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
+    from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
 
 
 @pytest.fixture(scope="module")
@@ -37,10 +37,10 @@ def account_service(account_repo: "AccountRepositoryInterface") -> AccountServic
 def spending_account_service(
     account_repo: "AccountRepositoryInterface",
     period_repo: "PeriodRepositoryInterface",
-    spending_account_repo: "SpendingAccountRepositoryInterface",
-) -> SpendingAccountService:
-    """Provide an instance of SpendingAccountService."""
-    return SpendingAccountService(
+    spending_account_repo: "SpendingEntryRepositoryInterface",
+) -> SpendingEntryService:
+    """Provide an instance of SpendingEntryService."""
+    return SpendingEntryService(
         account_repository=account_repo,
         period_repository=period_repo,
         spending_account_repository=spending_account_repo,
@@ -70,7 +70,7 @@ def get_entry_data(
     }
 
 
-async def delete_all_entries(spending_account_service: "SpendingAccountService"):
+async def delete_all_entries(spending_account_service: "SpendingEntryService"):
     """Helper function to delete all entries in the repository."""
     # Keep deleting until no entries remain (handle pagination)
     while True:
@@ -81,13 +81,13 @@ async def delete_all_entries(spending_account_service: "SpendingAccountService")
             await spending_account_service.spending_account_repository.delete_entry(entry.id)
 
 
-async def add_entry(spending_account_service: "SpendingAccountService", entry_data):
-    entry = FlattenedSpendingAccountEntryCreate(**entry_data)
+async def add_entry(spending_account_service: "SpendingEntryService", entry_data):
+    entry = SpendingEntryCreate(**entry_data)
     return await spending_account_service.add_entry(entry)
 
 
 async def create_multiple_entries(
-    spending_account_service: "SpendingAccountService",
+    spending_account_service: "SpendingEntryService",
     account_name: str,
     count: int,
     start_month: int = 1,
@@ -127,7 +127,7 @@ class TestAddSpendingAccountEntry:
         """Test successfully adding a spending account entry."""
         await add_account(spending_account_service)
         entry_data = get_entry_data()
-        entry = FlattenedSpendingAccountEntryCreate(**entry_data)
+        entry = SpendingEntryCreate(**entry_data)
 
         result = await spending_account_service.add_entry(entry=entry)
 
@@ -146,7 +146,7 @@ class TestAddSpendingAccountEntry:
         """Test adding entry with non-existent account raises error."""
         await add_account(spending_account_service)
         entry_data = get_entry_data(account_name=f"NonExistent-{uuid4()}")
-        entry = FlattenedSpendingAccountEntryCreate(**entry_data)
+        entry = SpendingEntryCreate(**entry_data)
 
         with pytest.raises(AccountWithNameNotFoundError):
             await spending_account_service.add_entry(entry=entry)
@@ -159,7 +159,7 @@ class TestAddSpendingAccountEntry:
         await delete_all_entries(spending_account_service)
         await add_account(spending_account_service)
         entry_data = get_entry_data(account_name="Spending Account Test", month=10, year=2025)
-        entry = FlattenedSpendingAccountEntryCreate(**entry_data)
+        entry = SpendingEntryCreate(**entry_data)
 
         # Add first entry
         await spending_account_service.add_entry(entry=entry)
@@ -175,7 +175,7 @@ class TestAddSpendingAccountEntry:
         """Test the response data of adding a spending account entry."""
         await add_account(spending_account_service)
         entry_data = get_entry_data()
-        entry = FlattenedSpendingAccountEntryCreate(**entry_data)
+        entry = SpendingEntryCreate(**entry_data)
 
         result = await spending_account_service.add_entry(entry=entry)
 
@@ -550,7 +550,7 @@ class TestEditSpendingAccountEntry:
             current_balance=1800.0,
             current_credit=100.0,
         )
-        edit_entry = FlattenedSpendingAccountEntry(id=created_entry.id, **edit_data)
+        edit_entry = SpendingEntry(id=created_entry.id, **edit_data)
         result = await spending_account_service.edit_entry(entry_id=created_entry.id, entry=edit_entry)
 
         assert result is not None
@@ -573,7 +573,7 @@ class TestEditSpendingAccountEntry:
 
         # Edit entry: change month/year and balances
         edit_data = get_entry_data(account_name=account.account_name)
-        edit_entry = FlattenedSpendingAccountEntry(id=created_entry.id, **edit_data)
+        edit_entry = SpendingEntry(id=created_entry.id, **edit_data)
         result = await spending_account_service.edit_entry(entry_id=created_entry.id, entry=edit_entry)
 
         assert result is not None
@@ -601,7 +601,7 @@ class TestEditSpendingAccountEntry:
 
         # Try to edit with a non-existent account name
         edit_data = get_entry_data(account_name=f"NonExistent-{uuid4()}")
-        edit_entry = FlattenedSpendingAccountEntry(id=created_entry.id, **edit_data)
+        edit_entry = SpendingEntry(id=created_entry.id, **edit_data)
 
         with pytest.raises(AccountWithNameNotFoundError):
             await spending_account_service.edit_entry(entry_id=created_entry.id, entry=edit_entry)
@@ -619,7 +619,7 @@ class TestEditSpendingAccountEntry:
         entry2 = await add_entry(spending_account_service, entry_data2)
 
         # Try to edit entry2 to have same month/year as entry1
-        edit_entry = FlattenedSpendingAccountEntry(
+        edit_entry = SpendingEntry(
             id=entry2.id,
             account_name=account.account_name,
             month=6,
@@ -641,7 +641,7 @@ class TestEditSpendingAccountEntry:
         account = await add_account(spending_account_service)
 
         edit_data = get_entry_data(account_name=account.account_name)
-        edit_entry = FlattenedSpendingAccountEntry(id=f"non-existent-id-{uuid4()}", **edit_data)
+        edit_entry = SpendingEntry(id=f"non-existent-id-{uuid4()}", **edit_data)
 
         with pytest.raises(SpendingAccountEntryNotFoundError):
             await spending_account_service.edit_entry(entry_id=edit_entry.id, entry=edit_entry)

@@ -5,7 +5,7 @@ from pydantic import Field, model_validator
 from app.entities.models.base import BaseEntity
 
 
-class SpendingAccountEntry(BaseEntity):
+class SpendingEntry(BaseEntity):
     """Entity representing an entry in spending account with basic details."""
 
     account_id: str = Field(description="ID of the account")
@@ -15,7 +15,7 @@ class SpendingAccountEntry(BaseEntity):
     current_credit: float = Field(description="Current credit of the account")
 
 
-class SpendingAccountEntryWithCalculatedFields(SpendingAccountEntry):
+class SpendingEntryWithCalc(SpendingEntry):
     """Entity representing an entry in spending account with calculated fields."""
 
     balance_after_credit: float = Field(default=0, description="Balance after deducting credit")
@@ -23,25 +23,23 @@ class SpendingAccountEntryWithCalculatedFields(SpendingAccountEntry):
 
     @model_validator(mode="before")
     @classmethod
-    def calculate_fields(cls, values) -> "SpendingAccountEntryWithCalculatedFields":
+    def calculate_fields(cls, values) -> "SpendingEntryWithCalc":
         """Calculate balance after credit and total spent."""
         values["balance_after_credit"] = values["current_balance"] - values["current_credit"]
         values["total_spent"] = (values["starting_balance"] - values["current_balance"]) + values["current_credit"]
         return values
 
 
-class SpendingAccountEntryWithCalculatedFieldsPaginated(BaseEntity):
+class SpendingEntryWithCalcPage(BaseEntity):
     """Entity representing a paginated list of spending account entries with calculated fields."""
 
-    entries: list[SpendingAccountEntryWithCalculatedFields] = Field(
-        description="List of spending account entries with calculated fields"
-    )
+    entries: list[SpendingEntryWithCalc] = Field(description="List of spending account entries with calculated fields")
     limit: int = Field(description="Number of entries per page")
     offset: int = Field(description="Offset for pagination")
     total_entries: int = Field(description="Total number of entries available")
 
 
-class SpendingAccountEntryWithDetails(SpendingAccountEntryWithCalculatedFields):
+class SpendingEntryDetailWithCalc(SpendingEntryWithCalc):
     """Entity representing a spending account entry with joined account and date details.
 
     This model includes account_name, month, and year from related tables,
@@ -53,10 +51,10 @@ class SpendingAccountEntryWithDetails(SpendingAccountEntryWithCalculatedFields):
     year: int = Field(description="Year of the entry")
 
 
-class SpendingAccountEntryWithDetailsPaginated(BaseEntity):
+class SpendingEntryDetailWithCalcPage(BaseEntity):
     """Entity representing a paginated list of spending account entries with details."""
 
-    entries: list[SpendingAccountEntryWithDetails] = Field(
+    entries: list[SpendingEntryDetailWithCalc] = Field(
         description="List of spending account entries with account and date details"
     )
     limit: int = Field(description="Number of entries per page")

@@ -1,15 +1,13 @@
 """Service or use cases for spending account."""
 
+from typing import TYPE_CHECKING
+
 from app.entities.errors.spending_entry import (
     SpendingAccountEntryNotFoundError as EntitySpendingAccountEntryNotFoundError,
 )
 from app.entities.models.spending_entry import (
-    SpendingAccountEntry,
-    SpendingAccountEntryWithCalculatedFields,
+    SpendingEntry as SpendingEntryEntity,
 )
-from app.entities.repositories.account import AccountRepositoryInterface
-from app.entities.repositories.period import PeriodRepositoryInterface
-from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
 from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
@@ -17,35 +15,43 @@ from app.use_cases.errors.account import (
 from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
 from app.use_cases.errors.spending_entry import SpendingAccountEntryNotFoundError
 from app.use_cases.models.spending_entry import (
-    FlattenedSpendingAccountEntry,
-    FlattenedSpendingAccountEntryCreate,
-    FlattenedSpendingAccountEntryWithCalculatedFields,
-    FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse,
+    SpendingEntryWithCalc,
+    SpendingEntryWithCalcPage,
 )
 
+if TYPE_CHECKING:
+    from app.entities.models.spending_entry import SpendingEntryWithCalc as SpendingEntryWithCalcEntity
+    from app.entities.repositories.account import AccountRepositoryInterface
+    from app.entities.repositories.period import PeriodRepositoryInterface
+    from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
+    from app.use_cases.models.spending_entry import (
+        SpendingEntry,
+        SpendingEntryCreate,
+    )
 
-class SpendingAccountService:
+
+class SpendingEntryService:
     """Spending account service to handle business logic."""
 
     def __init__(
         self,
-        account_repository: AccountRepositoryInterface,
-        period_repository: PeriodRepositoryInterface,
-        spending_account_repository: SpendingAccountRepositoryInterface,
+        account_repository: "AccountRepositoryInterface",
+        period_repository: "PeriodRepositoryInterface",
+        spending_account_repository: "SpendingEntryRepositoryInterface",
     ):
-        """Initialize the SpendingAccountService with repositories."""
+        """Initialize the SpendingEntryService with repositories."""
         self.account_repository = account_repository
         self.period_repository = period_repository
         self.spending_account_repository = spending_account_repository
 
     async def _retrieve_foreign_key_values_in_spending_account(
-        self, entry: SpendingAccountEntryWithCalculatedFields
-    ) -> FlattenedSpendingAccountEntryWithCalculatedFields:
+        self, entry: "SpendingEntryWithCalcEntity"
+    ) -> SpendingEntryWithCalc:
         """Retrieve foreign key details for a spending account entry."""
         account = await self.account_repository.get_account_by_id(account_id=entry.account_id)
         date_detail = await self.period_repository.get_period_by_id(period_id=entry.period_id)
 
-        return FlattenedSpendingAccountEntryWithCalculatedFields(
+        return SpendingEntryWithCalc(
             id=entry.id,
             account_name=account.account_name,
             month=date_detail.month,
@@ -57,15 +63,13 @@ class SpendingAccountService:
             total_spent=entry.total_spent,
         )
 
-    async def _convert_flattened_spending_account_entry_to_entity(
-        self, entry: FlattenedSpendingAccountEntry
-    ) -> SpendingAccountEntry:
+    async def _convert_flattened_spending_account_entry_to_entity(self, entry: "SpendingEntry") -> SpendingEntryEntity:
         """Convert a flattened spending account entry to entity."""
         # Retrieve account and month year details
         account = await self.account_repository.get_account_by_name(account_name=entry.account_name)
         date_detail = await self.period_repository.get_period_by_value(month=entry.month, year=entry.year)
 
-        return SpendingAccountEntry(
+        return SpendingEntryEntity(
             id=entry.id,
             account_id=account.id,
             period_id=date_detail.id,
@@ -74,9 +78,7 @@ class SpendingAccountService:
             current_credit=entry.current_credit,
         )
 
-    async def add_entry(
-        self, entry: FlattenedSpendingAccountEntryCreate
-    ) -> FlattenedSpendingAccountEntryWithCalculatedFields:
+    async def add_entry(self, entry: "SpendingEntryCreate") -> SpendingEntryWithCalc:
         """Add a new entry to the spending account.
 
         Raises:
@@ -118,7 +120,7 @@ class SpendingAccountService:
 
         # Add entry with details to avoid extra query for foreign keys
         spending_account_entry_entity_with_details = await self.spending_account_repository.add_entry_with_details(
-            entry=SpendingAccountEntry(
+            entry=SpendingEntryEntity(
                 account_id=retrieved_account.id,
                 period_id=retrieved_date_detail.id,
                 starting_balance=entry.starting_balance,
@@ -127,7 +129,7 @@ class SpendingAccountService:
             )
         )
 
-        return FlattenedSpendingAccountEntryWithCalculatedFields(
+        return SpendingEntryWithCalc(
             id=spending_account_entry_entity_with_details.id,
             account_name=spending_account_entry_entity_with_details.account_name,
             month=spending_account_entry_entity_with_details.month,
@@ -139,18 +141,16 @@ class SpendingAccountService:
             total_spent=spending_account_entry_entity_with_details.total_spent,
         )
 
-    async def get_all_entries(
-        self, limit: int = 12, offset: int = 0
-    ) -> FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
+    async def get_all_entries(self, limit: int = 12, offset: int = 0) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for all spending accounts."""
         # Get all entries with details using optimized repository method with JOIN to eliminate N+1 queries
-        spending_account_entry_with_details_paginated = (
-            await self.spending_account_repository.get_all_entries_with_details(limit=limit, offset=offset)
+        spending_entry_detail_with_calc_page = await self.spending_account_repository.get_all_entries_with_details(
+            limit=limit, offset=offset
         )
 
         # Convert to flattened response (account_name, month, year already included)
         spending_account_entry_entities_with_retrieved_details = [
-            FlattenedSpendingAccountEntryWithCalculatedFields(
+            SpendingEntryWithCalc(
                 id=entry.id,
                 account_name=entry.account_name,
                 month=entry.month,
@@ -161,19 +161,19 @@ class SpendingAccountService:
                 balance_after_credit=entry.balance_after_credit,
                 total_spent=entry.total_spent,
             )
-            for entry in spending_account_entry_with_details_paginated.entries
+            for entry in spending_entry_detail_with_calc_page.entries
         ]
 
-        return FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
+        return SpendingEntryWithCalcPage(
             entries=spending_account_entry_entities_with_retrieved_details,
-            limit=spending_account_entry_with_details_paginated.limit,
-            offset=spending_account_entry_with_details_paginated.offset,
-            total_entries=spending_account_entry_with_details_paginated.total_entries,
+            limit=spending_entry_detail_with_calc_page.limit,
+            offset=spending_entry_detail_with_calc_page.offset,
+            total_entries=spending_entry_detail_with_calc_page.total_entries,
         )
 
     async def get_all_entries_for_account(
         self, account_id: str, limit: int = 12, offset: int = 0
-    ) -> FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse:
+    ) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for a given spending account.
 
         Raises:
@@ -185,7 +185,7 @@ class SpendingAccountService:
             raise AccountNotFoundError(account_id=account_id)
 
         # Get all entries for account with details using optimized repository method with JOIN to eliminate N+1 queries
-        spending_account_entry_with_details_paginated = (
+        spending_entry_detail_with_calc_page = (
             await self.spending_account_repository.get_all_entries_for_account_with_details(
                 account_id=account_id, limit=limit, offset=offset
             )
@@ -193,7 +193,7 @@ class SpendingAccountService:
 
         # Convert to flattened response (account_name, month, year already included)
         spending_account_entry_entities_with_retrieved_details = [
-            FlattenedSpendingAccountEntryWithCalculatedFields(
+            SpendingEntryWithCalc(
                 id=entry.id,
                 account_name=entry.account_name,
                 month=entry.month,
@@ -204,19 +204,17 @@ class SpendingAccountService:
                 balance_after_credit=entry.balance_after_credit,
                 total_spent=entry.total_spent,
             )
-            for entry in spending_account_entry_with_details_paginated.entries
+            for entry in spending_entry_detail_with_calc_page.entries
         ]
 
-        return FlattenedSpendingAccountEntryWithCalculatedFieldsPaginatedResponse(
+        return SpendingEntryWithCalcPage(
             entries=spending_account_entry_entities_with_retrieved_details,
-            limit=spending_account_entry_with_details_paginated.limit,
-            offset=spending_account_entry_with_details_paginated.offset,
-            total_entries=spending_account_entry_with_details_paginated.total_entries,
+            limit=spending_entry_detail_with_calc_page.limit,
+            offset=spending_entry_detail_with_calc_page.offset,
+            total_entries=spending_entry_detail_with_calc_page.total_entries,
         )
 
-    async def edit_entry(
-        self, entry_id: str, entry: FlattenedSpendingAccountEntry
-    ) -> FlattenedSpendingAccountEntryWithCalculatedFields:
+    async def edit_entry(self, entry_id: str, entry: "SpendingEntry") -> SpendingEntryWithCalc:
         """Edit an existing spending account entry.
 
         Raises:
@@ -256,7 +254,7 @@ class SpendingAccountService:
         except EntitySpendingAccountEntryNotFoundError as error:
             raise SpendingAccountEntryNotFoundError(entry_id=error.entry_id) from error
 
-        return FlattenedSpendingAccountEntryWithCalculatedFields(
+        return SpendingEntryWithCalc(
             id=updated_spending_account_entry_entity_with_details.id,
             account_name=updated_spending_account_entry_entity_with_details.account_name,
             month=updated_spending_account_entry_entity_with_details.month,

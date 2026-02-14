@@ -3,12 +3,12 @@
 from typing import ClassVar
 
 from app.entities.errors.spending_entry import SpendingAccountEntryNotFoundError
-from app.entities.models.spending_entry import SpendingAccountEntry, SpendingAccountEntryWithCalculatedFields
-from app.entities.repositories.spending_entry import SpendingAccountRepositoryInterface
+from app.entities.models.spending_entry import SpendingEntry, SpendingEntryWithCalc
+from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
 
 
-class SpendingAccountRepository(SpendingAccountRepositoryInterface):
-    """Implementation of the SpendingAccountRepositoryInterface."""
+class SpendingAccountRepository(SpendingEntryRepositoryInterface):
+    """Implementation of the SpendingEntryRepositoryInterface."""
 
     entries: ClassVar = []
 
@@ -16,12 +16,12 @@ class SpendingAccountRepository(SpendingAccountRepositoryInterface):
         """Initialize the in-memory spending account repository."""
         pass
 
-    async def add_entry(self, entry: SpendingAccountEntry) -> SpendingAccountEntryWithCalculatedFields:
+    async def add_entry(self, entry: SpendingEntry) -> SpendingEntryWithCalc:
         """Add a new entry to the spending account."""
         for existing_entry in self.entries:
             if existing_entry["period_id"] == entry.period_id:
                 raise ValueError(f"Entry for date {entry.period_id} already exists.")
-        new_entry = SpendingAccountEntryWithCalculatedFields(
+        new_entry = SpendingEntryWithCalc(
             account_id=entry.account_id,
             period_id=entry.period_id,
             starting_balance=entry.starting_balance,
@@ -31,42 +31,38 @@ class SpendingAccountRepository(SpendingAccountRepositoryInterface):
         self.entries.append(new_entry.model_dump())
         return new_entry
 
-    async def get_entry_by_id(self, entry_id: str) -> SpendingAccountEntryWithCalculatedFields:
+    async def get_entry_by_id(self, entry_id: str) -> SpendingEntryWithCalc:
         """Retrieve a spending account entry by its ID."""
         for entry in self.entries:
             if entry["id"] == entry_id:
-                return SpendingAccountEntryWithCalculatedFields(**entry)
+                return SpendingEntryWithCalc(**entry)
         raise SpendingAccountEntryNotFoundError(entry_id=entry_id)
 
-    async def get_all_entries(self) -> list[SpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries(self) -> list[SpendingEntryWithCalc]:
         """Retrieve all entries for all spending accounts."""
-        return [SpendingAccountEntryWithCalculatedFields(**entry) for entry in self.entries]
+        return [SpendingEntryWithCalc(**entry) for entry in self.entries]
 
-    async def get_all_entries_for_account(self, account_id: str) -> list[SpendingAccountEntryWithCalculatedFields]:
+    async def get_all_entries_for_account(self, account_id: str) -> list[SpendingEntryWithCalc]:
         """Retrieve all entries for a given spending account."""
-        return [
-            SpendingAccountEntryWithCalculatedFields(**entry)
-            for entry in self.entries
-            if entry["account_id"] == account_id
-        ]
+        return [SpendingEntryWithCalc(**entry) for entry in self.entries if entry["account_id"] == account_id]
 
     async def get_entry_by_account_and_period_or_none(
         self, account_id: str, period_id: str
-    ) -> SpendingAccountEntryWithCalculatedFields | None:
+    ) -> SpendingEntryWithCalc | None:
         """Retrieve a specific entry for a given account and month-year."""
         for entry in self.entries:
             if entry["account_id"] == account_id and entry["period_id"] == period_id:
-                return SpendingAccountEntryWithCalculatedFields(**entry)
+                return SpendingEntryWithCalc(**entry)
         return None
 
-    async def edit_entry(self, entry_id: str, entry: SpendingAccountEntry) -> SpendingAccountEntryWithCalculatedFields:
+    async def edit_entry(self, entry_id: str, entry: SpendingEntry) -> SpendingEntryWithCalc:
         """Edit an existing spending account entry."""
         for idx, existing_entry in enumerate(self.entries):
             if existing_entry["id"] == entry_id:
                 update_entry = entry.model_dump()
                 update_entry["id"] = entry_id
                 self.entries[idx] = update_entry
-                return SpendingAccountEntryWithCalculatedFields(**self.entries[idx])
+                return SpendingEntryWithCalc(**self.entries[idx])
         raise SpendingAccountEntryNotFoundError(entry_id=entry_id)
 
     async def delete_entry(self, entry_id: str) -> None:

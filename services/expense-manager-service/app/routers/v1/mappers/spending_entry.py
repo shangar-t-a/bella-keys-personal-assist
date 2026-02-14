@@ -1,23 +1,23 @@
 """Mappers for spending entry."""
 
 from app.routers.v1.schemas.spending_entry import (
-    SpendingAccountEntryRequest,
-    SpendingAccountEntryWithCalculatedFieldsResponse,
+    SpendingEntryRequest,
+    SpendingEntryWithCalcResponse,
 )
 from app.use_cases.models.spending_entry import (
-    FlattenedSpendingAccountEntry,
-    FlattenedSpendingAccountEntryCreate,
-    FlattenedSpendingAccountEntryWithCalculatedFields,
+    SpendingEntry,
+    SpendingEntryCreate,
+    SpendingEntryWithCalc,
 )
 
 
-class CreateSpendingAccountMapper:
+class SpendingEntryCreateMapper:
     """Mapper for create spending account request to use case model."""
 
     @staticmethod
-    def to_use_case_model(request: SpendingAccountEntryRequest) -> FlattenedSpendingAccountEntryCreate:
+    def to_use_case_model(request: SpendingEntryRequest) -> SpendingEntryCreate:
         """Map the request model to the use case model."""
-        return FlattenedSpendingAccountEntryCreate(
+        return SpendingEntryCreate(
             account_name=request.account_name,
             month=request.month,
             year=request.year,
@@ -27,13 +27,13 @@ class CreateSpendingAccountMapper:
         )
 
 
-class SpendingAccountMapper:
+class SpendingEntryMapper:
     """Mapper for spending account."""
 
     @staticmethod
-    def to_use_case_model(entry_id: str, request: SpendingAccountEntryRequest) -> FlattenedSpendingAccountEntry:
+    def to_use_case_model(entry_id: str, request: SpendingEntryRequest) -> SpendingEntry:
         """Map the use case model to the response model."""
-        return FlattenedSpendingAccountEntry(
+        return SpendingEntry(
             id=entry_id,
             account_name=request.account_name,
             month=request.month,
@@ -44,15 +44,15 @@ class SpendingAccountMapper:
         )
 
 
-class SpendingAccountWithCalculatedFieldsMapper:
+class SpendingEntryWithCalcMapper:
     """Mapper for spending account with calculated fields."""
 
     @staticmethod
     def to_response_model(
-        entry: FlattenedSpendingAccountEntryWithCalculatedFields,
-    ) -> SpendingAccountEntryWithCalculatedFieldsResponse:
+        entry: SpendingEntryWithCalc,
+    ) -> SpendingEntryWithCalcResponse:
         """Map the use case model to the response model."""
-        return SpendingAccountEntryWithCalculatedFieldsResponse(
+        return SpendingEntryWithCalcResponse(
             id=entry.id,
             account_name=entry.account_name,
             month=entry.month,
