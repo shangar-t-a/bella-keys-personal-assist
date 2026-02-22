@@ -3,6 +3,7 @@
 from pydantic import Field
 
 from app.use_cases.models.base import BaseEntity
+from app.use_cases.models.pagination import Page
 
 
 class SpendingEntryCreate(BaseEntity):
@@ -32,9 +33,7 @@ class SpendingEntryWithCalc(SpendingEntry):
 class SpendingEntryWithCalcPage(BaseEntity):
     """Model for paginated response of flattened spending account entries with calculated fields."""
 
-    entries: list[SpendingEntryWithCalc] = Field(
+    spending_entries: list[SpendingEntryWithCalc] = Field(
         description="List of flattened spending account entries with calculated fields"
     )
-    limit: int = Field(description="Number of entries returned in the current page")
-    offset: int = Field(description="Offset for pagination")
-    total_entries: int = Field(description="Total number of entries available")
+    page: Page = Field(description="Pagination metadata for the current page")

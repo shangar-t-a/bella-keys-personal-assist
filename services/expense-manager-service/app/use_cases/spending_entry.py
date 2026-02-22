@@ -1,5 +1,6 @@
 """Service or use cases for spending account."""
 
+import math
 from typing import TYPE_CHECKING
 
 from app.entities.errors.spending_entry import (
@@ -12,15 +13,18 @@ from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
 )
-from app.use_cases.errors.period import PeriodAlreadyExistsForAccountError
+from app.use_cases.errors.period import (
+    PeriodAlreadyExistsForAccountError,
+    PeriodWithDetailsNotFoundError,
+)
 from app.use_cases.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.use_cases.models.pagination import Page
 from app.use_cases.models.spending_entry import (
     SpendingEntryWithCalc,
     SpendingEntryWithCalcPage,
 )
 
 if TYPE_CHECKING:
-    from app.entities.models.spending_entry import SpendingEntryWithCalc as SpendingEntryWithCalcEntity
     from app.entities.repositories.account import AccountRepositoryInterface
     from app.entities.repositories.period import PeriodRepositoryInterface
     from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
@@ -44,30 +48,15 @@ class SpendingEntryService:
         self.period_repository = period_repository
         self.spending_account_repository = spending_account_repository
 
-    async def _retrieve_foreign_key_values_in_spending_account(
-        self, entry: "SpendingEntryWithCalcEntity"
-    ) -> SpendingEntryWithCalc:
-        """Retrieve foreign key details for a spending account entry."""
-        account = await self.account_repository.get_account_by_id(account_id=entry.account_id)
-        date_detail = await self.period_repository.get_period_by_id(period_id=entry.period_id)
-
-        return SpendingEntryWithCalc(
-            id=entry.id,
-            account_name=account.account_name,
-            month=date_detail.month,
-            year=date_detail.year,
-            starting_balance=entry.starting_balance,
-            current_balance=entry.current_balance,
-            current_credit=entry.current_credit,
-            balance_after_credit=entry.balance_after_credit,
-            total_spent=entry.total_spent,
-        )
-
     async def _convert_flattened_spending_account_entry_to_entity(self, entry: "SpendingEntry") -> SpendingEntryEntity:
         """Convert a flattened spending account entry to entity."""
         # Retrieve account and month year details
         account = await self.account_repository.get_account_by_name(account_name=entry.account_name)
+        if not account:
+            raise AccountWithNameNotFoundError(account_name=entry.account_name)
         date_detail = await self.period_repository.get_period_by_value(month=entry.month, year=entry.year)
+        if not date_detail:
+            raise PeriodWithDetailsNotFoundError(month=entry.month, year=entry.year)
 
         return SpendingEntryEntity(
             id=entry.id,
@@ -141,11 +130,11 @@ class SpendingEntryService:
             total_spent=spending_account_entry_entity_with_details.total_spent,
         )
 
-    async def get_all_entries(self, limit: int = 12, offset: int = 0) -> SpendingEntryWithCalcPage:
+    async def get_all_entries(self, page: int = 0, size: int = 12) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for all spending accounts."""
         # Get all entries with details using optimized repository method with JOIN to eliminate N+1 queries
         spending_entry_detail_with_calc_page = await self.spending_account_repository.get_all_entries_with_details(
-            limit=limit, offset=offset
+            limit=size, offset=page * size
         )
 
         # Convert to flattened response (account_name, month, year already included)
@@ -165,14 +154,17 @@ class SpendingEntryService:
         ]
 
         return SpendingEntryWithCalcPage(
-            entries=spending_account_entry_entities_with_retrieved_details,
-            limit=spending_entry_detail_with_calc_page.limit,
-            offset=spending_entry_detail_with_calc_page.offset,
-            total_entries=spending_entry_detail_with_calc_page.total_entries,
+            spending_entries=spending_account_entry_entities_with_retrieved_details,
+            page=Page(
+                number=page,
+                size=size,
+                total_elements=spending_entry_detail_with_calc_page.total_entries,
+                total_pages=math.ceil(spending_entry_detail_with_calc_page.total_entries / size),
+            ),
         )
 
     async def get_all_entries_for_account(
-        self, account_id: str, limit: int = 12, offset: int = 0
+        self, account_id: str, page: int = 0, size: int = 12
     ) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for a given spending account.
 
@@ -187,7 +179,7 @@ class SpendingEntryService:
         # Get all entries for account with details using optimized repository method with JOIN to eliminate N+1 queries
         spending_entry_detail_with_calc_page = (
             await self.spending_account_repository.get_all_entries_for_account_with_details(
-                account_id=account_id, limit=limit, offset=offset
+                account_id=account_id, limit=size, offset=page * size
             )
         )
 
@@ -208,10 +200,13 @@ class SpendingEntryService:
         ]
 
         return SpendingEntryWithCalcPage(
-            entries=spending_account_entry_entities_with_retrieved_details,
-            limit=spending_entry_detail_with_calc_page.limit,
-            offset=spending_entry_detail_with_calc_page.offset,
-            total_entries=spending_entry_detail_with_calc_page.total_entries,
+            spending_entries=spending_account_entry_entities_with_retrieved_details,
+            page=Page(
+                number=page,
+                size=size,
+                total_elements=spending_entry_detail_with_calc_page.total_entries,
+                total_pages=math.ceil(spending_entry_detail_with_calc_page.total_entries / size),
+            ),
         )
 
     async def edit_entry(self, entry_id: str, entry: "SpendingEntry") -> SpendingEntryWithCalc:

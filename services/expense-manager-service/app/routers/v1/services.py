@@ -1,6 +1,6 @@
 """Services for Expense Manager Service."""
 
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 
 from app.entities.repositories.account import AccountRepositoryInterface
@@ -15,7 +15,7 @@ from app.use_cases.period import PeriodService
 from app.use_cases.spending_entry import SpendingEntryService
 
 
-class StorageType(str, Enum):
+class StorageType(StrEnum):
     """Storage type enum."""
 
     INMEMORY = "inmemory"

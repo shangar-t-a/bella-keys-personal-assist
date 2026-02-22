@@ -3,6 +3,7 @@
 from pydantic import Field
 
 from app.routers.v1.schemas.base import BaseSchema
+from app.routers.v1.schemas.pagination import PaginationResponse
 
 
 class SpendingEntryBase(BaseSchema):
@@ -38,9 +39,31 @@ class SpendingEntryWithCalcResponse(SpendingEntryResponse):
 class SpendingEntryWithCalcPageResponse(BaseSchema):
     """Schema for paginated responses of spending account entries with calculated fields."""
 
-    entries: list[SpendingEntryWithCalcResponse] = Field(
+    spending_entries: list[SpendingEntryWithCalcResponse] = Field(
         ..., description="List of spending account entries with calculated fields"
     )
-    limit: int = Field(..., description="Number of entries returned in the current page", examples=[12])
-    offset: int = Field(..., description="Offset for pagination", examples=[0])
-    total_entries: int = Field(..., description="Total number of entries available", examples=[100])
+    page: PaginationResponse = Field(..., description="Pagination metadata for the current page")
+
+
+class SpendingEntrySortingParams(BaseSchema):
+    """Schema for sorting parameters when retrieving spending account entries."""
+
+    sort_by: str = Field(
+        "month",
+        description="Field to sort by (e.g., month, year, current_balance)",
+        examples=["month", "year", "current_balance"],
+    )
+    sort_order: str = Field(
+        "asc",
+        description="Sort order (asc for ascending, desc for descending)",
+        examples=["asc", "desc"],
+    )
+
+
+class SpendingEntryFilterParams(BaseSchema):
+    """Schema for filtering parameters when retrieving spending account entries."""
+
+    month: int | None = Field(None, ge=1, le=12, description="Filter by month", examples=[1, 2])
+    year: int | None = Field(
+        None, ge=2000, le=2100, description="Filter by year between 2000 and 2100", examples=[2024, 2025]
+    )

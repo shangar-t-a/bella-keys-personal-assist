@@ -25,7 +25,7 @@ class PeriodService:
         period_entity = await self.period_repository.get_or_create_period(month=month, year=year)
         return period_entity
 
-    async def get_period_by_value(self, month: int, year: int) -> Period | None:
+    async def get_period_by_value(self, month: int, year: int) -> Period:
         """Retrieve a Period by its month and year.
 
         Raises:
@@ -38,7 +38,7 @@ class PeriodService:
 
         return period_entity
 
-    async def get_period_by_id(self, period_id: str) -> Period | None:
+    async def get_period_by_id(self, period_id: str) -> Period:
         """Retrieve a Period by its ID.
 
         Raises:

@@ -409,7 +409,7 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
             await session.commit()
 
             # Retrieve with joined details in a single query
-            stmt = (
+            details_stmt = (
                 select(
                     SpendingEntryModel,
                     AccountModel.account_name,
@@ -420,7 +420,7 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
                 .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
                 .where(SpendingEntryModel.id == entry_id)
             )
-            result = await session.execute(stmt)
+            result = await session.execute(details_stmt)
             row = result.one()
             entry_model, account_name, month, year = row
 

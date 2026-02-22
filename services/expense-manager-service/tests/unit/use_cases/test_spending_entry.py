@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from app.entities.errors.spending_entry import (
     SpendingAccountEntryNotFoundError as EntitySpendingAccountEntryNotFoundError,
@@ -193,6 +195,143 @@ class TestAddSpendingAccountEntry:
             == (entry_data["starting_balance"] - entry_data["current_balance"]) + entry_data["current_credit"]
         )
 
+    async def test__add_entry__calculated_fields_when_balance_increases(
+        self,
+        spending_account_service,
+    ):
+        """Test calculated fields when current balance is higher than starting balance."""
+        await add_account(spending_account_service)
+
+        # Current balance > Starting balance (money added to account)
+        entry_data = get_entry_data(
+            month=1,
+            year=2024,
+            starting_balance=1000.0,
+            current_balance=1500.0,  # Increased by 500
+            current_credit=100.0,
+        )
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        # balance_after_credit = current_balance - current_credit
+        assert result.balance_after_credit == 1500.0 - 100.0
+        assert result.balance_after_credit == 1400.0
+
+        # total_spent = (starting_balance - current_balance) + current_credit
+        # When balance increases, total_spent should be negative
+        assert result.total_spent == (1000.0 - 1500.0) + 100.0
+        assert result.total_spent == -400.0
+
+    async def test__add_entry__calculated_fields_with_zero_credit(
+        self,
+        spending_account_service,
+    ):
+        """Test calculated fields when current_credit is zero."""
+        await add_account(spending_account_service)
+
+        entry_data = get_entry_data(
+            month=2,
+            year=2024,
+            starting_balance=1000.0,
+            current_balance=800.0,
+            current_credit=0.0,
+        )
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        assert result.balance_after_credit == 800.0
+        assert result.total_spent == 200.0
+
+    async def test__add_entry__calculated_fields_when_credit_exceeds_balance(
+        self,
+        spending_account_service,
+    ):
+        """Test calculated fields when current_credit is larger than current_balance."""
+        await add_account(spending_account_service)
+
+        entry_data = get_entry_data(
+            month=3,
+            year=2024,
+            starting_balance=1000.0,
+            current_balance=500.0,
+            current_credit=700.0,  # Credit exceeds balance
+        )
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        # balance_after_credit can be negative
+        assert result.balance_after_credit == 500.0 - 700.0
+        assert result.balance_after_credit == -200.0
+
+        # total_spent calculation
+        assert result.total_spent == (1000.0 - 500.0) + 700.0
+        assert result.total_spent == 1200.0
+
+    async def test__add_entry__with_zero_values(
+        self,
+        spending_account_service,
+    ):
+        """Test adding entry with zero values for all balance fields."""
+        await add_account(spending_account_service)
+
+        entry_data = get_entry_data(
+            month=4,
+            year=2024,
+            starting_balance=0.0,
+            current_balance=0.0,
+            current_credit=0.0,
+        )
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        assert result.starting_balance == 0.0
+        assert result.current_balance == 0.0
+        assert result.current_credit == 0.0
+        assert result.balance_after_credit == 0.0
+        assert result.total_spent == 0.0
+
+    async def test__add_entry__with_large_float_values(
+        self,
+        spending_account_service,
+    ):
+        """Test adding entry with very large float values."""
+        await add_account(spending_account_service)
+
+        entry_data = get_entry_data(
+            month=5,
+            year=2024,
+            starting_balance=999999999.99,
+            current_balance=999999000.50,
+            current_credit=500.25,
+        )
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        assert result.starting_balance == 999999999.99
+        assert result.current_balance == 999999000.50
+        assert result.current_credit == 500.25
+
+    async def test__add_entry__with_precise_decimal_values(
+        self,
+        spending_account_service,
+    ):
+        """Test adding entry with precise decimal values."""
+        await add_account(spending_account_service)
+
+        entry_data = get_entry_data(
+            month=6,
+            year=2024,
+            starting_balance=1234.56,
+            current_balance=987.65,
+            current_credit=123.45,
+        )
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        # Verify precision is maintained
+        assert result.balance_after_credit == 987.65 - 123.45
+        assert result.total_spent == (1234.56 - 987.65) + 123.45
+
 
 class TestGetAllSpendingAccountEntries:
     async def test__get_all_entries__success(
@@ -211,8 +350,8 @@ class TestGetAllSpendingAccountEntries:
         results = await spending_account_service.get_all_entries()
 
         assert results is not None
-        assert results.total_entries == num_entries
-        assert len(results.entries) == num_entries
+        assert results.page.total_elements == num_entries
+        assert len(results.spending_entries) == num_entries
 
     async def test__get_all_entries__empty(
         self,
@@ -223,8 +362,8 @@ class TestGetAllSpendingAccountEntries:
 
         results = await spending_account_service.get_all_entries()
 
-        assert results.total_entries == 0
-        assert results.entries == []
+        assert results.page.total_elements == 0
+        assert results.spending_entries == []
 
     async def test__get_all_entries__check_response_data(
         self,
@@ -239,9 +378,9 @@ class TestGetAllSpendingAccountEntries:
         results = await spending_account_service.get_all_entries()
 
         assert results is not None
-        assert results.total_entries == 1
-        assert len(results.entries) == 1
-        result = results.entries[0]
+        assert results.page.total_elements == 1
+        assert len(results.spending_entries) == 1
+        result = results.spending_entries[0]
         assert result.id is not None
         assert result.account_name == entry_data["account_name"].upper()
         assert result.month == entry_data["month"]
@@ -266,26 +405,26 @@ class TestGetAllSpendingAccountEntries:
         # Create 25 entries
         await create_multiple_entries(spending_account_service, account.account_name, 25)
 
-        # First page: limit=10, offset=0
-        page1 = await spending_account_service.get_all_entries(limit=10, offset=0)
-        assert page1.total_entries == 25
-        assert page1.limit == 10
-        assert page1.offset == 0
-        assert len(page1.entries) == 10
+        # First page: size=10, page=0
+        page1 = await spending_account_service.get_all_entries(page=0, size=10)
+        assert page1.page.total_elements == 25
+        assert page1.page.size == 10
+        assert page1.page.number == 0
+        assert len(page1.spending_entries) == 10
 
-        # Second page: limit=10, offset=10
-        page2 = await spending_account_service.get_all_entries(limit=10, offset=10)
-        assert page2.total_entries == 25
-        assert page2.limit == 10
-        assert page2.offset == 10
-        assert len(page2.entries) == 10
+        # Second page: size=10, page=1
+        page2 = await spending_account_service.get_all_entries(page=1, size=10)
+        assert page2.page.total_elements == 25
+        assert page2.page.size == 10
+        assert page2.page.number == 1
+        assert len(page2.spending_entries) == 10
 
-        # Third page: limit=10, offset=20 (partial page)
-        page3 = await spending_account_service.get_all_entries(limit=10, offset=20)
-        assert page3.total_entries == 25
-        assert page3.limit == 10
-        assert page3.offset == 20
-        assert len(page3.entries) == 5
+        # Third page: size=10, page=2 (partial page)
+        page3 = await spending_account_service.get_all_entries(page=2, size=10)
+        assert page3.page.total_elements == 25
+        assert page3.page.size == 10
+        assert page3.page.number == 2
+        assert len(page3.spending_entries) == 5
 
     async def test__get_all_entries__offset_beyond_total(
         self,
@@ -299,11 +438,11 @@ class TestGetAllSpendingAccountEntries:
         await create_multiple_entries(spending_account_service, account.account_name, 5)
 
         # Request with offset beyond total
-        results = await spending_account_service.get_all_entries(limit=10, offset=10)
-        assert results.total_entries == 5
-        assert results.limit == 10
-        assert results.offset == 10
-        assert len(results.entries) == 0
+        results = await spending_account_service.get_all_entries(page=1, size=10)
+        assert results.page.total_elements == 5
+        assert results.page.size == 10
+        assert results.page.number == 1
+        assert len(results.spending_entries) == 0
 
     async def test__get_all_entries__pagination_metadata_accuracy(
         self,
@@ -316,14 +455,14 @@ class TestGetAllSpendingAccountEntries:
         # Create 30 entries
         await create_multiple_entries(spending_account_service, account.account_name, 30)
 
-        results = await spending_account_service.get_all_entries(limit=12, offset=0)
+        results = await spending_account_service.get_all_entries(page=0, size=12)
 
-        assert results.total_entries == 30
-        assert results.limit == 12
-        assert results.offset == 0
-        assert len(results.entries) == 12
+        assert results.page.total_elements == 30
+        assert results.page.size == 12
+        assert results.page.number == 0
+        assert len(results.spending_entries) == 12
         # Verify all entries have required fields
-        for entry in results.entries:
+        for entry in results.spending_entries:
             assert entry.id is not None
             assert entry.account_name is not None
             assert entry.balance_after_credit is not None
@@ -343,10 +482,10 @@ class TestGetAllSpendingAccountEntries:
         # Call without pagination parameters (should use defaults)
         results = await spending_account_service.get_all_entries()
 
-        assert results.total_entries == 15
-        assert results.limit == 12  # Default limit
-        assert results.offset == 0  # Default offset
-        assert len(results.entries) == 12  # Only first 12 returned
+        assert results.page.total_elements == 15
+        assert results.page.size == 12  # Default size
+        assert results.page.number == 0  # Default page
+        assert len(results.spending_entries) == 12  # Only first 12 returned
 
     async def test__get_all_entries__last_page_partial_results(
         self,
@@ -360,12 +499,91 @@ class TestGetAllSpendingAccountEntries:
         await create_multiple_entries(spending_account_service, account.account_name, 23)
 
         # Get last page
-        results = await spending_account_service.get_all_entries(limit=10, offset=20)
+        results = await spending_account_service.get_all_entries(page=2, size=10)
 
-        assert results.total_entries == 23
-        assert results.limit == 10
-        assert results.offset == 20
-        assert len(results.entries) == 3  # Only 3 entries remain
+        assert results.page.total_elements == 23
+        assert results.page.size == 10
+        assert results.page.number == 2
+        assert len(results.spending_entries) == 3  # Only 3 entries remain
+
+    async def test__get_all_entries__total_pages_calculation(
+        self,
+        spending_account_service,
+    ):
+        """Test that total_pages is calculated correctly."""
+        await delete_all_entries(spending_account_service)
+        account = await add_account(spending_account_service, account_name=f"TotalPagesTest-{uuid4()}")
+
+        # Create 25 entries
+        await create_multiple_entries(spending_account_service, account.account_name, 25)
+
+        results = await spending_account_service.get_all_entries(page=0, size=10)
+
+        assert results.page.total_pages == 3  # 25 / 10 = 3 pages (ceil)
+        assert results.page.total_elements == 25
+        assert results.page.size == 10
+        assert results.page.number == 0
+
+    async def test__get_all_entries__total_pages_with_exact_multiple(
+        self,
+        spending_account_service,
+    ):
+        """Test total_pages when entries exactly divide by size."""
+        await delete_all_entries(spending_account_service)
+        account = await add_account(spending_account_service, account_name=f"ExactPages-{uuid4()}")
+
+        await create_multiple_entries(spending_account_service, account.account_name, 20)
+
+        results = await spending_account_service.get_all_entries(page=0, size=10)
+
+        assert results.page.total_pages == 2  # Exactly 2 pages
+        assert results.page.total_elements == 20
+
+    async def test__get_all_entries__total_pages_with_zero_entries(
+        self,
+        spending_account_service,
+    ):
+        """Test total_pages calculation with zero entries."""
+        await delete_all_entries(spending_account_service)
+
+        results = await spending_account_service.get_all_entries(page=0, size=10)
+
+        assert results.page.total_pages == 0  # No pages when no entries
+        assert results.page.total_elements == 0
+
+    async def test__get_all_entries__verify_all_response_fields(
+        self,
+        spending_account_service,
+    ):
+        """Test that response contains all expected fields."""
+        await delete_all_entries(spending_account_service)
+        await add_account(spending_account_service)
+        entry_data = get_entry_data()
+        await add_entry(spending_account_service, entry_data)
+
+        results = await spending_account_service.get_all_entries()
+
+        # Check page object has all required fields
+        assert hasattr(results.page, "number")
+        assert hasattr(results.page, "size")
+        assert hasattr(results.page, "total_elements")
+        assert hasattr(results.page, "total_pages")
+
+        # Check entry has all required fields
+        entry = results.spending_entries[0]
+        required_fields = [
+            "id",
+            "account_name",
+            "month",
+            "year",
+            "starting_balance",
+            "current_balance",
+            "current_credit",
+            "balance_after_credit",
+            "total_spent",
+        ]
+        for field in required_fields:
+            assert hasattr(entry, field), f"Missing field: {field}"
 
 
 class TestGetAllEntriesForAccount:
@@ -391,9 +609,9 @@ class TestGetAllEntriesForAccount:
         results = await spending_account_service.get_all_entries_for_account(account_id=account1.id)
 
         assert results is not None
-        assert results.total_entries == num_entries
-        assert len(results.entries) == num_entries
-        for result in results.entries:
+        assert results.page.total_elements == num_entries
+        assert len(results.spending_entries) == num_entries
+        for result in results.spending_entries:
             assert result.account_name == account1.account_name.upper()
             assert result.id is not None
 
@@ -407,8 +625,8 @@ class TestGetAllEntriesForAccount:
 
         results = await spending_account_service.get_all_entries_for_account(account_id=account.id)
 
-        assert results.total_entries == 0
-        assert results.entries == []
+        assert results.page.total_elements == 0
+        assert results.spending_entries == []
 
     async def test__get_all_entries_for_account__account_not_found(
         self,
@@ -434,26 +652,26 @@ class TestGetAllEntriesForAccount:
         await create_multiple_entries(spending_account_service, account2.account_name, 15)
 
         # Get first page for account1
-        page1 = await spending_account_service.get_all_entries_for_account(account_id=account1.id, limit=5, offset=0)
-        assert page1.total_entries == 20
-        assert page1.limit == 5
-        assert page1.offset == 0
-        assert len(page1.entries) == 5
+        page1 = await spending_account_service.get_all_entries_for_account(account_id=account1.id, page=0, size=5)
+        assert page1.page.total_elements == 20
+        assert page1.page.size == 5
+        assert page1.page.number == 0
+        assert len(page1.spending_entries) == 5
         # Verify all entries belong to account1
-        for entry in page1.entries:
+        for entry in page1.spending_entries:
             assert entry.account_name == account1.account_name.upper()
 
         # Get fourth page for account1
-        page4 = await spending_account_service.get_all_entries_for_account(account_id=account1.id, limit=5, offset=15)
-        assert page4.total_entries == 20
-        assert len(page4.entries) == 5
+        page4 = await spending_account_service.get_all_entries_for_account(account_id=account1.id, page=3, size=5)
+        assert page4.page.total_elements == 20
+        assert len(page4.spending_entries) == 5
 
         # Verify account2 has correct total
         account2_results = await spending_account_service.get_all_entries_for_account(
-            account_id=account2.id, limit=10, offset=0
+            account_id=account2.id, page=0, size=10
         )
-        assert account2_results.total_entries == 15
-        assert len(account2_results.entries) == 10
+        assert account2_results.page.total_elements == 15
+        assert len(account2_results.spending_entries) == 10
 
     async def test__get_all_entries_for_account__multiple_pages_navigation(
         self,
@@ -471,17 +689,16 @@ class TestGetAllEntriesForAccount:
         all_retrieved_ids = []
 
         for page_num in range(4):  # 4 pages: 5+5+5+3
-            offset = page_num * page_size
             page = await spending_account_service.get_all_entries_for_account(
-                account_id=account.id, limit=page_size, offset=offset
+                account_id=account.id, page=page_num, size=page_size
             )
 
-            assert page.total_entries == 18
-            assert page.limit == page_size
-            assert page.offset == offset
+            assert page.page.total_elements == 18
+            assert page.page.size == page_size
+            assert page.page.number == page_num
 
             # Collect IDs
-            for entry in page.entries:
+            for entry in page.spending_entries:
                 all_retrieved_ids.append(entry.id)
 
         # Verify we got all entries without duplicates
@@ -499,17 +716,17 @@ class TestGetAllEntriesForAccount:
         # Create exactly 10 entries
         await create_multiple_entries(spending_account_service, account.account_name, 10)
 
-        results = await spending_account_service.get_all_entries_for_account(account_id=account.id, limit=10, offset=0)
+        results = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=0, size=10)
 
-        assert results.total_entries == 10
-        assert results.limit == 10
-        assert results.offset == 0
-        assert len(results.entries) == 10
+        assert results.page.total_elements == 10
+        assert results.page.size == 10
+        assert results.page.number == 0
+        assert len(results.spending_entries) == 10
 
         # Request second page (should be empty)
-        page2 = await spending_account_service.get_all_entries_for_account(account_id=account.id, limit=10, offset=10)
-        assert page2.total_entries == 10
-        assert len(page2.entries) == 0
+        page2 = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=1, size=10)
+        assert page2.page.total_elements == 10
+        assert len(page2.spending_entries) == 0
 
     async def test__get_all_entries_for_account__default_pagination_parameters(
         self,
@@ -525,10 +742,10 @@ class TestGetAllEntriesForAccount:
         # Call without explicit pagination (should use defaults)
         results = await spending_account_service.get_all_entries_for_account(account_id=account.id)
 
-        assert results.total_entries == 20
-        assert results.limit == 12  # Default limit
-        assert results.offset == 0  # Default offset
-        assert len(results.entries) == 12
+        assert results.page.total_elements == 20
+        assert results.page.size == 12  # Default size
+        assert results.page.number == 0  # Default page
+        assert len(results.spending_entries) == 12
 
 
 class TestEditSpendingAccountEntry:
@@ -675,6 +892,115 @@ class TestDeleteSpendingAccountEntry:
             await spending_account_service.delete_entry(entry_id=fake_entry_id)
 
 
+class TestInputValidation:
+    """Test input validation for spending entry fields."""
+
+    async def test__add_entry__invalid_month_zero(
+        self,
+        spending_account_service,
+    ):
+        """Test that month value of 0 is rejected by database constraint."""
+        await add_account(spending_account_service)
+        entry_data = get_entry_data(month=0)
+
+        with pytest.raises((ValidationError, ValueError, IntegrityError)):
+            entry = SpendingEntryCreate(**entry_data)
+            await spending_account_service.add_entry(entry=entry)
+
+    async def test__add_entry__invalid_month_thirteen(
+        self,
+        spending_account_service,
+    ):
+        """Test that month value of 13 is rejected by database constraint."""
+        await add_account(spending_account_service)
+        entry_data = get_entry_data(month=13)
+
+        with pytest.raises((ValidationError, ValueError, IntegrityError)):
+            entry = SpendingEntryCreate(**entry_data)
+            await spending_account_service.add_entry(entry=entry)
+
+    async def test__add_entry__invalid_month_negative(
+        self,
+        spending_account_service,
+    ):
+        """Test that negative month value is rejected by database constraint."""
+        await add_account(spending_account_service)
+        entry_data = get_entry_data(month=-1)
+
+        with pytest.raises((ValidationError, ValueError, IntegrityError)):
+            entry = SpendingEntryCreate(**entry_data)
+            await spending_account_service.add_entry(entry=entry)
+
+    async def test__add_entry__valid_boundary_months(
+        self,
+        spending_account_service,
+    ):
+        """Test that boundary month values 1 and 12 are accepted."""
+        await delete_all_entries(spending_account_service)
+        await add_account(spending_account_service)
+
+        # Test month = 1
+        entry_data = get_entry_data(month=1, year=2024)
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+        assert result.month == 1
+
+        # Test month = 12
+        entry_data = get_entry_data(month=12, year=2024)
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+        assert result.month == 12
+
+    async def test__add_entry__negative_year(
+        self,
+        spending_account_service,
+    ):
+        """Test that negative year value is handled."""
+        await add_account(spending_account_service)
+        entry_data = get_entry_data(year=-2024)
+
+        # Depending on business rules, this might be allowed or rejected
+        # For now, test that it doesn't crash
+        try:
+            entry = SpendingEntryCreate(**entry_data)
+            result = await spending_account_service.add_entry(entry=entry)
+            # If accepted, verify it's stored correctly
+            assert result.year == -2024
+        except (ValidationError, ValueError):
+            # If rejected, that's also valid
+            pass
+
+    async def test__add_entry__negative_starting_balance(
+        self,
+        spending_account_service,
+    ):
+        """Test entry with negative starting balance."""
+        await add_account(spending_account_service)
+        entry_data = get_entry_data(starting_balance=-100.0, current_balance=-50.0, current_credit=0.0)
+
+        # Test that negative balances are handled
+        entry = SpendingEntryCreate(**entry_data)
+        result = await spending_account_service.add_entry(entry=entry)
+
+        assert result.starting_balance == -100.0
+        assert result.current_balance == -50.0
+        # Verify calculated fields work with negative values
+        assert result.balance_after_credit == -50.0
+        assert result.total_spent == (-100.0 - (-50.0)) + 0.0
+        assert result.total_spent == -50.0
+
+    async def test__add_entry__empty_account_name(
+        self,
+        spending_account_service,
+    ):
+        """Test that empty account name is rejected."""
+        entry_data = get_entry_data(account_name="")
+
+        with pytest.raises((ValidationError, ValueError, AccountWithNameNotFoundError)):
+            entry = SpendingEntryCreate(**entry_data)
+            await spending_account_service.add_entry(entry=entry)
+
+
 class TestPaginationBoundaryConditions:
     """Test boundary conditions for pagination."""
 
@@ -685,12 +1011,12 @@ class TestPaginationBoundaryConditions:
         """Test pagination with zero entries."""
         await delete_all_entries(spending_account_service)
 
-        results = await spending_account_service.get_all_entries(limit=10, offset=0)
+        results = await spending_account_service.get_all_entries(page=0, size=10)
 
-        assert results.total_entries == 0
-        assert results.limit == 10
-        assert results.offset == 0
-        assert results.entries == []
+        assert results.page.total_elements == 0
+        assert results.page.size == 10
+        assert results.page.number == 0
+        assert results.spending_entries == []
 
     async def test__pagination__single_entry(
         self,
@@ -701,12 +1027,12 @@ class TestPaginationBoundaryConditions:
         account = await add_account(spending_account_service, account_name=f"SingleEntry-{uuid4()}")
         await create_multiple_entries(spending_account_service, account.account_name, 1)
 
-        results = await spending_account_service.get_all_entries(limit=10, offset=0)
+        results = await spending_account_service.get_all_entries(page=0, size=10)
 
-        assert results.total_entries == 1
-        assert results.limit == 10
-        assert results.offset == 0
-        assert len(results.entries) == 1
+        assert results.page.total_elements == 1
+        assert results.page.size == 10
+        assert results.page.number == 0
+        assert len(results.spending_entries) == 1
 
     async def test__pagination__limit_one_with_multiple_entries(
         self,
@@ -717,19 +1043,19 @@ class TestPaginationBoundaryConditions:
         account = await add_account(spending_account_service, account_name=f"LimitOne-{uuid4()}")
         await create_multiple_entries(spending_account_service, account.account_name, 10)
 
-        results = await spending_account_service.get_all_entries(limit=1, offset=0)
+        results = await spending_account_service.get_all_entries(page=0, size=1)
 
-        assert results.total_entries == 10
-        assert results.limit == 1
-        assert results.offset == 0
-        assert len(results.entries) == 1
+        assert results.page.total_elements == 10
+        assert results.page.size == 1
+        assert results.page.number == 0
+        assert len(results.spending_entries) == 1
 
         # Get second entry
-        results2 = await spending_account_service.get_all_entries(limit=1, offset=1)
-        assert results2.total_entries == 10
-        assert len(results2.entries) == 1
+        results2 = await spending_account_service.get_all_entries(page=1, size=1)
+        assert results2.page.total_elements == 10
+        assert len(results2.spending_entries) == 1
         # Verify different entry
-        assert results.entries[0].id != results2.entries[0].id
+        assert results.spending_entries[0].id != results2.spending_entries[0].id
 
     async def test__pagination__very_large_limit(
         self,
@@ -740,12 +1066,12 @@ class TestPaginationBoundaryConditions:
         account = await add_account(spending_account_service, account_name=f"LargeLimit-{uuid4()}")
         await create_multiple_entries(spending_account_service, account.account_name, 10)
 
-        results = await spending_account_service.get_all_entries(limit=1000, offset=0)
+        results = await spending_account_service.get_all_entries(page=0, size=1000)
 
-        assert results.total_entries == 10
-        assert results.limit == 1000
-        assert results.offset == 0
-        assert len(results.entries) == 10  # Only 10 entries exist
+        assert results.page.total_elements == 10
+        assert results.page.size == 1000
+        assert results.page.number == 0
+        assert len(results.spending_entries) == 10  # Only 10 entries exist
 
     async def test__pagination__limit_exceeds_total_entries(
         self,
@@ -756,12 +1082,12 @@ class TestPaginationBoundaryConditions:
         account = await add_account(spending_account_service, account_name=f"ExceedLimit-{uuid4()}")
         await create_multiple_entries(spending_account_service, account.account_name, 5)
 
-        results = await spending_account_service.get_all_entries(limit=20, offset=0)
+        results = await spending_account_service.get_all_entries(page=0, size=20)
 
-        assert results.total_entries == 5
-        assert results.limit == 20
-        assert results.offset == 0
-        assert len(results.entries) == 5
+        assert results.page.total_elements == 5
+        assert results.page.size == 20
+        assert results.page.number == 0
+        assert len(results.spending_entries) == 5
 
     async def test__pagination__offset_at_last_entry(
         self,
@@ -772,12 +1098,14 @@ class TestPaginationBoundaryConditions:
         account = await add_account(spending_account_service, account_name=f"LastEntry-{uuid4()}")
         await create_multiple_entries(spending_account_service, account.account_name, 10)
 
-        results = await spending_account_service.get_all_entries(limit=5, offset=9)
+        # With page-based pagination, to get near the end with 5 entries:
+        # page=1, size=5 gets entries 6-10 (5 entries)
+        results = await spending_account_service.get_all_entries(page=1, size=5)
 
-        assert results.total_entries == 10
-        assert results.limit == 5
-        assert results.offset == 9
-        assert len(results.entries) == 1  # Only last entry
+        assert results.page.total_elements == 10
+        assert results.page.size == 5
+        assert results.page.number == 1
+        assert len(results.spending_entries) == 5  # Gets entries 6-10
 
     async def test__pagination__account_specific_zero_entries(
         self,
@@ -792,12 +1120,12 @@ class TestPaginationBoundaryConditions:
         await create_multiple_entries(spending_account_service, account2.account_name, 10)
 
         # Query account1 (no entries)
-        results = await spending_account_service.get_all_entries_for_account(account_id=account1.id, limit=10, offset=0)
+        results = await spending_account_service.get_all_entries_for_account(account_id=account1.id, page=0, size=10)
 
-        assert results.total_entries == 0
-        assert results.limit == 10
-        assert results.offset == 0
-        assert results.entries == []
+        assert results.page.total_elements == 0
+        assert results.page.size == 10
+        assert results.page.number == 0
+        assert results.spending_entries == []
 
     async def test__pagination__consecutive_pages_no_gaps(
         self,
@@ -812,14 +1140,14 @@ class TestPaginationBoundaryConditions:
         created_ids = {entry.id for entry in created_entries}
 
         # Fetch in pages
-        page1 = await spending_account_service.get_all_entries_for_account(account_id=account.id, limit=5, offset=0)
-        page2 = await spending_account_service.get_all_entries_for_account(account_id=account.id, limit=5, offset=5)
-        page3 = await spending_account_service.get_all_entries_for_account(account_id=account.id, limit=5, offset=10)
+        page1 = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=0, size=5)
+        page2 = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=1, size=5)
+        page3 = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=2, size=5)
 
         # Collect all retrieved IDs
-        page1_ids = {entry.id for entry in page1.entries}
-        page2_ids = {entry.id for entry in page2.entries}
-        page3_ids = {entry.id for entry in page3.entries}
+        page1_ids = {entry.id for entry in page1.spending_entries}
+        page2_ids = {entry.id for entry in page2.spending_entries}
+        page3_ids = {entry.id for entry in page3.spending_entries}
 
         # Verify no overlaps
         assert len(page1_ids & page2_ids) == 0  # No overlap between page 1 and 2
@@ -830,3 +1158,79 @@ class TestPaginationBoundaryConditions:
         all_retrieved_ids = page1_ids | page2_ids | page3_ids
         assert len(all_retrieved_ids) == 15
         assert all_retrieved_ids == created_ids
+
+    async def test__pagination__order_consistency_across_page_sizes(
+        self,
+        spending_account_service,
+    ):
+        """Test that entries are returned in consistent order across different page sizes."""
+        await delete_all_entries(spending_account_service)
+        account = await add_account(spending_account_service, account_name=f"OrderTest-{uuid4()}")
+
+        await create_multiple_entries(spending_account_service, account.account_name, 15)
+
+        # Get all entries at once
+        all_at_once = await spending_account_service.get_all_entries(page=0, size=15)
+
+        # Get same entries with different pagination
+        page1 = await spending_account_service.get_all_entries(page=0, size=5)
+        page2 = await spending_account_service.get_all_entries(page=1, size=5)
+        page3 = await spending_account_service.get_all_entries(page=2, size=5)
+
+        # Order should be consistent
+        paginated_ids = (
+            [e.id for e in page1.spending_entries]
+            + [e.id for e in page2.spending_entries]
+            + [e.id for e in page3.spending_entries]
+        )
+        all_ids = [e.id for e in all_at_once.spending_entries]
+
+        assert paginated_ids == all_ids  # Same order regardless of pagination
+
+    async def test__pagination__data_consistency_across_pages(
+        self,
+        spending_account_service,
+    ):
+        """Test that entry data is consistent when retrieved on different pages."""
+        await delete_all_entries(spending_account_service)
+        account = await add_account(spending_account_service, account_name=f"DataConsistency-{uuid4()}")
+
+        # Create entries with specific data
+        created_entries = await create_multiple_entries(spending_account_service, account.account_name, 10)
+
+        # Get all entries
+        all_results = await spending_account_service.get_all_entries(page=0, size=10)
+
+        # Verify each entry matches the created data
+        for i, entry in enumerate(all_results.spending_entries):
+            assert entry.id is not None
+            assert entry.account_name == account.account_name.upper()
+            assert entry.month is not None
+            assert entry.year is not None
+            assert entry.starting_balance is not None
+            assert entry.current_balance is not None
+            assert entry.current_credit is not None
+            # Verify calculated fields are present
+            assert entry.balance_after_credit == entry.current_balance - entry.current_credit
+            assert entry.total_spent == (entry.starting_balance - entry.current_balance) + entry.current_credit
+
+    async def test__pagination__total_pages_for_account_specific(
+        self,
+        spending_account_service,
+    ):
+        """Test total_pages calculation for account-specific queries."""
+        await delete_all_entries(spending_account_service)
+        account = await add_account(spending_account_service, account_name=f"AccountPages-{uuid4()}")
+
+        # Create 17 entries
+        await create_multiple_entries(spending_account_service, account.account_name, 17)
+
+        results = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=0, size=5)
+
+        assert results.page.total_pages == 4  # 17 / 5 = 4 pages (ceil)
+        assert results.page.total_elements == 17
+        assert results.page.size == 5
+
+        # Verify last page has correct number
+        last_page = await spending_account_service.get_all_entries_for_account(account_id=account.id, page=3, size=5)
+        assert len(last_page.spending_entries) == 2  # Only 2 entries on last page

@@ -8,7 +8,10 @@ from app.routers.v1.mappers.spending_entry import (
     SpendingEntryWithCalcMapper,
 )
 from app.routers.v1.schemas.errors import HTTPErrorResponse
-from app.routers.v1.schemas.pagination import PaginationParams
+from app.routers.v1.schemas.pagination import (
+    PaginationParams,
+    PaginationResponse,
+)
 from app.routers.v1.schemas.spending_entry import (
     SpendingEntryRequest,
     SpendingEntryWithCalcPageResponse,
@@ -68,16 +71,19 @@ async def get_all_entries(
 ) -> SpendingEntryWithCalcPageResponse:
     """Retrieve all entries for all spending accounts."""
     spending_entry_with_calc_page = await spending_account_service.get_all_entries(
-        limit=pagination.limit, offset=pagination.offset
+        page=pagination.page, size=pagination.size
     )
     return SpendingEntryWithCalcPageResponse(
-        entries=[
+        spending_entries=[
             SpendingEntryWithCalcMapper.to_response_model(entry=entry)
-            for entry in spending_entry_with_calc_page.entries
+            for entry in spending_entry_with_calc_page.spending_entries
         ],
-        limit=spending_entry_with_calc_page.limit,
-        offset=spending_entry_with_calc_page.offset,
-        total_entries=spending_entry_with_calc_page.total_entries,
+        page=PaginationResponse(
+            number=spending_entry_with_calc_page.page.number,
+            size=spending_entry_with_calc_page.page.size,
+            total_elements=spending_entry_with_calc_page.page.total_elements,
+            total_pages=spending_entry_with_calc_page.page.total_pages,
+        ),
     )
 
 
@@ -99,7 +105,7 @@ async def get_all_entries_for_account(
     """Retrieve all entries for a given spending account."""
     try:
         spending_entry_with_calc_page = await spending_account_service.get_all_entries_for_account(
-            account_id=account_id, limit=pagination.limit, offset=pagination.offset
+            account_id=account_id, page=pagination.page, size=pagination.size
         )
     except AccountNotFoundError as error:
         raise HTTPException(
@@ -107,13 +113,16 @@ async def get_all_entries_for_account(
             detail=error.message,
         ) from error
     return SpendingEntryWithCalcPageResponse(
-        entries=[
+        spending_entries=[
             SpendingEntryWithCalcMapper.to_response_model(entry=entry)
-            for entry in spending_entry_with_calc_page.entries
+            for entry in spending_entry_with_calc_page.spending_entries
         ],
-        limit=spending_entry_with_calc_page.limit,
-        offset=spending_entry_with_calc_page.offset,
-        total_entries=spending_entry_with_calc_page.total_entries,
+        page=PaginationResponse(
+            number=spending_entry_with_calc_page.page.number,
+            size=spending_entry_with_calc_page.page.size,
+            total_elements=spending_entry_with_calc_page.page.total_elements,
+            total_pages=spending_entry_with_calc_page.page.total_pages,
+        ),
     )
 
 
