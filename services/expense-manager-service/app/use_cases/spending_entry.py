@@ -9,6 +9,10 @@ from app.entities.errors.spending_entry import (
 from app.entities.models.spending_entry import (
     SpendingEntry as SpendingEntryEntity,
 )
+from app.entities.models.spending_entry import (
+    SpendingEntryFilter,
+    SpendingEntrySort,
+)
 from app.use_cases.errors.account import (
     AccountNotFoundError,
     AccountWithNameNotFoundError,
@@ -130,11 +134,17 @@ class SpendingEntryService:
             total_spent=spending_account_entry_entity_with_details.total_spent,
         )
 
-    async def get_all_entries(self, page: int = 0, size: int = 12) -> SpendingEntryWithCalcPage:
+    async def get_all_entries(
+        self,
+        page: int = 0,
+        size: int = 12,
+        filters: SpendingEntryFilter | None = None,
+        sort: SpendingEntrySort | None = None,
+    ) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for all spending accounts."""
         # Get all entries with details using optimized repository method with JOIN to eliminate N+1 queries
         spending_entry_detail_with_calc_page = await self.spending_account_repository.get_all_entries_with_details(
-            limit=size, offset=page * size
+            limit=size, offset=page * size, filters=filters, sort=sort
         )
 
         # Convert to flattened response (account_name, month, year already included)
@@ -164,7 +174,12 @@ class SpendingEntryService:
         )
 
     async def get_all_entries_for_account(
-        self, account_id: str, page: int = 0, size: int = 12
+        self,
+        account_id: str,
+        page: int = 0,
+        size: int = 12,
+        filters: SpendingEntryFilter | None = None,
+        sort: SpendingEntrySort | None = None,
     ) -> SpendingEntryWithCalcPage:
         """Retrieve all entries for a given spending account.
 
@@ -179,7 +194,7 @@ class SpendingEntryService:
         # Get all entries for account with details using optimized repository method with JOIN to eliminate N+1 queries
         spending_entry_detail_with_calc_page = (
             await self.spending_account_repository.get_all_entries_for_account_with_details(
-                account_id=account_id, limit=size, offset=page * size
+                account_id=account_id, limit=size, offset=page * size, filters=filters, sort=sort
             )
         )
 

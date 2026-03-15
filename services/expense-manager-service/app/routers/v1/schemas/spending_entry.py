@@ -2,6 +2,8 @@
 
 from pydantic import Field
 
+from app.entities.models.sort import SortOrder
+from app.entities.models.spending_entry import SpendingEntrySortField
 from app.routers.v1.schemas.base import BaseSchema
 from app.routers.v1.schemas.pagination import PaginationResponse
 
@@ -45,18 +47,18 @@ class SpendingEntryWithCalcPageResponse(BaseSchema):
     page: PaginationResponse = Field(..., description="Pagination metadata for the current page")
 
 
-class SpendingEntrySortingParams(BaseSchema):
+class SpendingEntrySortParams(BaseSchema):
     """Schema for sorting parameters when retrieving spending account entries."""
 
-    sort_by: str = Field(
-        "month",
-        description="Field to sort by (e.g., month, year, current_balance)",
-        examples=["month", "year", "current_balance"],
+    sort_by: SpendingEntrySortField = Field(
+        SpendingEntrySortField.YEAR,
+        description="Field to sort by",
+        examples=[SpendingEntrySortField.YEAR, SpendingEntrySortField.MONTH, SpendingEntrySortField.CURRENT_BALANCE],
     )
-    sort_order: str = Field(
-        "asc",
+    sort_order: SortOrder = Field(
+        SortOrder.ASC,
         description="Sort order (asc for ascending, desc for descending)",
-        examples=["asc", "desc"],
+        examples=[SortOrder.ASC, SortOrder.DESC],
     )
 
 
@@ -67,3 +69,4 @@ class SpendingEntryFilterParams(BaseSchema):
     year: int | None = Field(
         None, ge=2000, le=2100, description="Filter by year between 2000 and 2100", examples=[2024, 2025]
     )
+    account_name: str | None = Field(None, description="Filter by account name", examples=["ICICI", "SBI"])

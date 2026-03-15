@@ -1,16 +1,15 @@
-"""Conftest for expense-manager-service unit testing."""
+"""Conftest for expense-manager-service integration tests."""
 
 from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from pytest_asyncio import is_async_test
 
 from app import settings
 from app.infrastructures.postgres_db import database
-from app.infrastructures.postgres_db.account import PostgresAccountRepository
-from app.infrastructures.postgres_db.period import PostgresPeriodRepository
-from app.infrastructures.postgres_db.spending_entry import PostgresSpendingEntryRepository
+from app.main import app
 from tests.unit.settings import UnitTestSettings
 
 # --------------------------------------------------- Pytest Hooks --------------------------------------------------- #
@@ -38,7 +37,7 @@ def pytest_collection_modifyitems(items):
 
 @pytest_asyncio.fixture(autouse=True, scope="session")
 async def patch_settings():
-    """Patch settings for unit tests."""
+    """Patch settings for integration tests."""
     unit_test_settings = UnitTestSettings(
         APP_ENV="test",
         STORAGE_TYPE="postgresql",
@@ -63,28 +62,11 @@ async def init_and_drop_db(patch_settings):
     await database.drop_db()
 
 
-@pytest.fixture(scope="session")
-def account_repo(patch_settings, init_and_drop_db):
-    """Provide an instance of AccountRepository."""
-    if settings.get_settings().STORAGE_TYPE == "postgresql":
-        return PostgresAccountRepository()
-    raise NotImplementedError("Invalid STORAGE_TYPE")
-
-
-@pytest.fixture(scope="session")
-def period_repo(patch_settings, init_and_drop_db):
-    """Provide an instance of PeriodRepository."""
-    if settings.get_settings().STORAGE_TYPE == "postgresql":
-        return PostgresPeriodRepository()
-    raise NotImplementedError("Invalid STORAGE_TYPE")
-
-
-@pytest.fixture(scope="session")
-def spending_account_repo(patch_settings, init_and_drop_db):
-    """Provide an instance of SpendingAccountRepository."""
-    if settings.get_settings().STORAGE_TYPE == "postgresql":
-        return PostgresSpendingEntryRepository()
-    raise NotImplementedError("Invalid STORAGE_TYPE")
+@pytest_asyncio.fixture(scope="session")
+async def client(patch_settings, init_and_drop_db) -> AsyncClient:
+    """Provide an httpx AsyncClient wired to the FastAPI app."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
 
 
 # ------------------------------------------------- End of Fixtures -------------------------------------------------- #

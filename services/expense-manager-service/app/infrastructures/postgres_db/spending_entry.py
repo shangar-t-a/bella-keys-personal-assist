@@ -7,10 +7,14 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entities.errors.spending_entry import SpendingAccountEntryNotFoundError
+from app.entities.models.sort import SortOrder
 from app.entities.models.spending_entry import (
     SpendingEntry,
     SpendingEntryDetailWithCalc,
     SpendingEntryDetailWithCalcPage,
+    SpendingEntryFilter,
+    SpendingEntrySort,
+    SpendingEntrySortField,
     SpendingEntryWithCalc,
     SpendingEntryWithCalcPage,
 )
@@ -20,9 +24,27 @@ from app.infrastructures.postgres_db.models.account import AccountModel
 from app.infrastructures.postgres_db.models.period import PeriodModel
 from app.infrastructures.postgres_db.models.spending_entry import SpendingEntryModel
 
+# Mapping of sort fields to SQLAlchemy column expressions
+SORT_COLUMN_MAP = {
+    SpendingEntrySortField.MONTH: PeriodModel.month,
+    SpendingEntrySortField.YEAR: PeriodModel.year,
+    SpendingEntrySortField.ACCOUNT_NAME: AccountModel.account_name,
+    SpendingEntrySortField.STARTING_BALANCE: SpendingEntryModel.starting_balance,
+    SpendingEntrySortField.CURRENT_BALANCE: SpendingEntryModel.current_balance,
+    SpendingEntrySortField.CURRENT_CREDIT: SpendingEntryModel.current_credit,
+    SpendingEntrySortField.BALANCE_AFTER_CREDIT: (
+        SpendingEntryModel.current_balance - SpendingEntryModel.current_credit
+    ),
+    SpendingEntrySortField.TOTAL_SPENT: (
+        (SpendingEntryModel.starting_balance - SpendingEntryModel.current_balance) + SpendingEntryModel.current_credit
+    ),
+}
+
 
 class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
     """Postgres implementation of the SpendingEntryRepositoryInterface."""
+
+    _SORT_TIEBREAKERS = [PeriodModel.year, PeriodModel.month, SpendingEntryModel.id]
 
     def __init__(self):
         """Initialize the Postgres spending account repository."""
@@ -31,6 +53,36 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
     async def _get_session(self) -> AsyncSession:
         """Get a new database session."""
         return self.session_factory()
+
+    def _build_filter_clauses(self, filters: SpendingEntryFilter) -> list:
+        """Build WHERE clauses for global queries. Requires AccountModel and PeriodModel in the JOIN."""
+        clauses = []
+        if filters.month is not None:
+            clauses.append(PeriodModel.month == filters.month)
+        if filters.year is not None:
+            clauses.append(PeriodModel.year == filters.year)
+        if filters.account_name is not None:
+            clauses.append(AccountModel.account_name == filters.account_name)
+        return clauses
+
+    def _build_per_account_filter_clauses(self, filters: SpendingEntryFilter) -> list:
+        """Build WHERE clauses for per-account queries. Requires PeriodModel in the JOIN.
+
+        Month/year only - account_name is redundant when account_id is already fixed.
+        """
+        clauses = []
+        if filters.month is not None:
+            clauses.append(PeriodModel.month == filters.month)
+        if filters.year is not None:
+            clauses.append(PeriodModel.year == filters.year)
+        return clauses
+
+    def _apply_sort(self, stmt, sort: SpendingEntrySort):
+        """Apply ORDER BY to a statement. Falls back to year sort if sort_by is unmapped."""
+        sort_col = SORT_COLUMN_MAP.get(sort.sort_by, SORT_COLUMN_MAP[SpendingEntrySortField.YEAR])
+        if sort.sort_order == SortOrder.DESC:
+            return stmt.order_by(sort_col.desc(), *[col.desc() for col in self._SORT_TIEBREAKERS])
+        return stmt.order_by(sort_col.asc(), *[col.asc() for col in self._SORT_TIEBREAKERS])
 
     async def add_entry(self, entry: SpendingEntry) -> SpendingEntryWithCalc:
         """Add a new entry to the spending account."""
@@ -295,11 +347,16 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
                 year=year,
             )
 
-    async def get_all_entries_with_details(self, limit: int = 12, offset: int = 0) -> SpendingEntryDetailWithCalcPage:
+    async def get_all_entries_with_details(
+        self,
+        limit: int = 12,
+        offset: int = 0,
+        filters: SpendingEntryFilter | None = None,
+        sort: SpendingEntrySort | None = None,
+    ) -> SpendingEntryDetailWithCalcPage:
         """Retrieve all entries with joined account and date details (optimized with JOIN)."""
         async with await self._get_session() as session:
-            # Retrieve entries with joined details in a single query
-            stmt = (
+            base = (
                 select(
                     SpendingEntryModel,
                     AccountModel.account_name,
@@ -308,16 +365,24 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
                 )
                 .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
                 .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
-                .limit(limit)
-                .offset(offset)
             )
-            result = await session.execute(stmt)
-            rows = result.all()
 
-            # Count total entries for pagination metadata
-            total_entries_stmt = select(func.count(SpendingEntryModel.id))
-            total_entries_result = await session.execute(total_entries_stmt)
-            total_entries = total_entries_result.scalar_one()
+            filter_clauses = self._build_filter_clauses(filters) if filters else []
+
+            stmt = base.where(*filter_clauses)
+            stmt = (
+                self._apply_sort(stmt, sort) if sort else stmt.order_by(*[col.asc() for col in self._SORT_TIEBREAKERS])
+            )
+            stmt = stmt.limit(limit).offset(offset)
+            rows = (await session.execute(stmt)).all()
+
+            count_stmt = (
+                select(func.count(SpendingEntryModel.id))
+                .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
+                .where(*filter_clauses)
+            )
+            total_entries = (await session.execute(count_stmt)).scalar_one()
 
             return SpendingEntryDetailWithCalcPage(
                 entries=[
@@ -340,12 +405,16 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
             )
 
     async def get_all_entries_for_account_with_details(
-        self, account_id: str, limit: int = 12, offset: int = 0
+        self,
+        account_id: str,
+        limit: int = 12,
+        offset: int = 0,
+        filters: SpendingEntryFilter | None = None,
+        sort: SpendingEntrySort | None = None,
     ) -> SpendingEntryDetailWithCalcPage:
         """Retrieve all entries for an account with joined details (optimized with JOIN)."""
         async with await self._get_session() as session:
-            # Retrieve entries with joined details in a single query
-            stmt = (
+            base = (
                 select(
                     SpendingEntryModel,
                     AccountModel.account_name,
@@ -355,18 +424,24 @@ class PostgresSpendingEntryRepository(SpendingEntryRepositoryInterface):
                 .join(AccountModel, SpendingEntryModel.account_id == AccountModel.id)
                 .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
                 .where(SpendingEntryModel.account_id == account_id)
-                .limit(limit)
-                .offset(offset)
             )
-            result = await session.execute(stmt)
-            rows = result.all()
 
-            # Count total entries for the account
-            total_entries_stmt = select(func.count(SpendingEntryModel.id)).where(
-                SpendingEntryModel.account_id == account_id
+            filter_clauses = self._build_per_account_filter_clauses(filters) if filters else []
+
+            stmt = base.where(*filter_clauses)
+            stmt = (
+                self._apply_sort(stmt, sort) if sort else stmt.order_by(*[col.asc() for col in self._SORT_TIEBREAKERS])
             )
-            total_entries_result = await session.execute(total_entries_stmt)
-            total_entries = total_entries_result.scalar_one()
+            stmt = stmt.limit(limit).offset(offset)
+            rows = (await session.execute(stmt)).all()
+
+            count_stmt = (
+                select(func.count(SpendingEntryModel.id))
+                .join(PeriodModel, SpendingEntryModel.period_id == PeriodModel.id)
+                .where(SpendingEntryModel.account_id == account_id)
+                .where(*filter_clauses)
+            )
+            total_entries = (await session.execute(count_stmt)).scalar_one()
 
             return SpendingEntryDetailWithCalcPage(
                 entries=[

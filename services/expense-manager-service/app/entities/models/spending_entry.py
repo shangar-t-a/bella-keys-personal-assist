@@ -1,8 +1,11 @@
 """Spending Account related entities for the Expense Manager Service."""
 
+from enum import StrEnum
+
 from pydantic import Field, model_validator
 
 from app.entities.models.base import BaseEntity
+from app.entities.models.sort import SortOrder
 
 
 class SpendingEntry(BaseEntity):
@@ -60,3 +63,31 @@ class SpendingEntryDetailWithCalcPage(BaseEntity):
     limit: int = Field(description="Number of entries per page")
     offset: int = Field(description="Offset for pagination")
     total_entries: int = Field(description="Total number of entries available")
+
+
+class SpendingEntrySortField(StrEnum):
+    """Sort fields for sorting spending entries."""
+
+    MONTH = "month"
+    YEAR = "year"
+    ACCOUNT_NAME = "account_name"
+    STARTING_BALANCE = "starting_balance"
+    CURRENT_BALANCE = "current_balance"
+    CURRENT_CREDIT = "current_credit"
+    BALANCE_AFTER_CREDIT = "balance_after_credit"
+    TOTAL_SPENT = "total_spent"
+
+
+class SpendingEntrySort(BaseEntity):
+    """Entity representing sorting options for spending entries."""
+
+    sort_by: SpendingEntrySortField = Field(default=SpendingEntrySortField.YEAR, description="Field to sort by")
+    sort_order: SortOrder = Field(default=SortOrder.ASC, description="Sort order (asc/desc)")
+
+
+class SpendingEntryFilter(BaseEntity):
+    """Entity representing filtering options for spending entries."""
+
+    month: int | None = Field(default=None, description="Filter by month (1-12)")
+    year: int | None = Field(default=None, description="Filter by year")
+    account_name: str | None = Field(default=None, description="Filter by account name")

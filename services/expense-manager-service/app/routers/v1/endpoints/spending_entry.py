@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.routers.v1.mappers.spending_entry import (
     SpendingEntryCreateMapper,
     SpendingEntryMapper,
+    SpendingEntryQueryParamsMapper,
     SpendingEntryWithCalcMapper,
 )
 from app.routers.v1.schemas.errors import HTTPErrorResponse
@@ -13,7 +14,9 @@ from app.routers.v1.schemas.pagination import (
     PaginationResponse,
 )
 from app.routers.v1.schemas.spending_entry import (
+    SpendingEntryFilterParams,
     SpendingEntryRequest,
+    SpendingEntrySortParams,
     SpendingEntryWithCalcPageResponse,
     SpendingEntryWithCalcResponse,
 )
@@ -67,11 +70,17 @@ async def add_entry(
 @router.get("/list", response_model=SpendingEntryWithCalcPageResponse)
 async def get_all_entries(
     pagination: PaginationParams = Depends(),
+    sort: SpendingEntrySortParams = Depends(),
+    filters: SpendingEntryFilterParams = Depends(),
     spending_account_service: SpendingEntryService = Depends(get_spending_entry_service),
 ) -> SpendingEntryWithCalcPageResponse:
     """Retrieve all entries for all spending accounts."""
+    # Map request parameters to use case query params model
+    filters_model = SpendingEntryQueryParamsMapper.to_filters_model(filters=filters)
+    sort_model = SpendingEntryQueryParamsMapper.to_sort_model(sort=sort)
+
     spending_entry_with_calc_page = await spending_account_service.get_all_entries(
-        page=pagination.page, size=pagination.size
+        page=pagination.page, size=pagination.size, filters=filters_model, sort=sort_model
     )
     return SpendingEntryWithCalcPageResponse(
         spending_entries=[
@@ -100,12 +109,18 @@ async def get_all_entries(
 async def get_all_entries_for_account(
     account_id: str,
     pagination: PaginationParams = Depends(),
+    sort: SpendingEntrySortParams = Depends(),
+    filters: SpendingEntryFilterParams = Depends(),
     spending_account_service: SpendingEntryService = Depends(get_spending_entry_service),
 ) -> SpendingEntryWithCalcPageResponse:
     """Retrieve all entries for a given spending account."""
     try:
+        # Map request parameters to use case query params model
+        filters_model = SpendingEntryQueryParamsMapper.to_filters_model(filters=filters)
+        sort_model = SpendingEntryQueryParamsMapper.to_sort_model(sort=sort)
+
         spending_entry_with_calc_page = await spending_account_service.get_all_entries_for_account(
-            account_id=account_id, page=pagination.page, size=pagination.size
+            account_id=account_id, page=pagination.page, size=pagination.size, filters=filters_model, sort=sort_model
         )
     except AccountNotFoundError as error:
         raise HTTPException(

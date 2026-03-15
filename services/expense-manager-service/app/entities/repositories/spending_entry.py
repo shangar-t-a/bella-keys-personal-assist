@@ -6,6 +6,8 @@ from app.entities.models.spending_entry import (
     SpendingEntry,
     SpendingEntryDetailWithCalc,
     SpendingEntryDetailWithCalcPage,
+    SpendingEntryFilter,
+    SpendingEntrySort,
     SpendingEntryWithCalc,
     SpendingEntryWithCalcPage,
 )
@@ -68,13 +70,24 @@ class SpendingEntryRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_all_entries_with_details(self, limit: int = 12, offset: int = 0) -> SpendingEntryDetailWithCalcPage:
+    async def get_all_entries_with_details(
+        self,
+        limit: int = 12,
+        offset: int = 0,
+        filters: SpendingEntryFilter | None = None,
+        sort: SpendingEntrySort | None = None,
+    ) -> SpendingEntryDetailWithCalcPage:
         """Retrieve all entries with joined account and date details (optimized with JOIN)."""
         pass
 
     @abstractmethod
     async def get_all_entries_for_account_with_details(
-        self, account_id: str, limit: int = 12, offset: int = 0
+        self,
+        account_id: str,
+        limit: int = 12,
+        offset: int = 0,
+        filters: SpendingEntryFilter | None = None,
+        sort: SpendingEntrySort | None = None,
     ) -> SpendingEntryDetailWithCalcPage:
         """Retrieve all entries for an account with joined details (optimized with JOIN)."""
         pass

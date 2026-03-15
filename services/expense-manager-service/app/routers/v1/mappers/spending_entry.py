@@ -1,7 +1,13 @@
 """Mappers for spending entry."""
 
+from app.entities.models.spending_entry import (
+    SpendingEntryFilter,
+    SpendingEntrySort,
+)
 from app.routers.v1.schemas.spending_entry import (
+    SpendingEntryFilterParams,
     SpendingEntryRequest,
+    SpendingEntrySortParams,
     SpendingEntryWithCalcResponse,
 )
 from app.use_cases.models.spending_entry import (
@@ -62,4 +68,25 @@ class SpendingEntryWithCalcMapper:
             current_credit=entry.current_credit,
             balance_after_credit=entry.balance_after_credit,
             total_spent=entry.total_spent,
+        )
+
+
+class SpendingEntryQueryParamsMapper:
+    """Mapper for spending account query parameters."""
+
+    @staticmethod
+    def to_filters_model(filters: SpendingEntryFilterParams) -> SpendingEntryFilter:
+        """Map query parameters to domain filter model."""
+        return SpendingEntryFilter(
+            month=filters.month,
+            year=filters.year,
+            account_name=filters.account_name,
+        )
+
+    @staticmethod
+    def to_sort_model(sort: SpendingEntrySortParams) -> SpendingEntrySort:
+        """Map sorting params to domain sort model."""
+        return SpendingEntrySort(
+            sort_by=sort.sort_by,
+            sort_order=sort.sort_order,
         )

@@ -10,6 +10,12 @@ from sqlalchemy.exc import IntegrityError
 from app.entities.errors.spending_entry import (
     SpendingAccountEntryNotFoundError as EntitySpendingAccountEntryNotFoundError,
 )
+from app.entities.models.sort import SortOrder
+from app.entities.models.spending_entry import (
+    SpendingEntryFilter,
+    SpendingEntrySort,
+    SpendingEntrySortField,
+)
 from app.use_cases.account import AccountService
 from app.use_cases.errors.account import (
     AccountNotFoundError,
@@ -746,6 +752,225 @@ class TestGetAllEntriesForAccount:
         assert results.page.size == 12  # Default size
         assert results.page.number == 0  # Default page
         assert len(results.spending_entries) == 12
+
+
+class TestSpendingEntrySortingAndFiltering:
+    async def test__get_all_entries__filter_by_account_name(
+        self,
+        spending_account_service,
+    ):
+        """Test filtering all entries by account name."""
+        await delete_all_entries(spending_account_service)
+        acc1 = await add_account(spending_account_service, account_name="ACCOUNT_ALPHA")
+        acc2 = await add_account(spending_account_service, account_name="ACCOUNT_BETA")
+
+        await create_multiple_entries(spending_account_service, acc1.account_name, 5)
+        await create_multiple_entries(spending_account_service, acc2.account_name, 3)
+
+        # Filter by ACCOUNT_ALPHA
+        filters = SpendingEntryFilter(account_name="ACCOUNT_ALPHA")
+        results = await spending_account_service.get_all_entries(filters=filters)
+
+        assert results.page.total_elements == 5
+        for entry in results.spending_entries:
+            assert entry.account_name == "ACCOUNT_ALPHA"
+
+    async def test__get_all_entries__filter_by_month_and_year(
+        self,
+        spending_account_service,
+    ):
+        """Test filtering all entries by month and year."""
+        await delete_all_entries(spending_account_service)
+        acc = await add_account(spending_account_service)
+
+        # 2024: Jan(1), Feb(2)
+        # 2025: Jan(1)
+        await add_entry(spending_account_service, get_entry_data(month=1, year=2024))
+        await add_entry(spending_account_service, get_entry_data(month=2, year=2024))
+        await add_entry(spending_account_service, get_entry_data(month=1, year=2025))
+
+        # Filter Year 2024
+        filters_year = SpendingEntryFilter(year=2024)
+        res_year = await spending_account_service.get_all_entries(filters=filters_year)
+        assert res_year.page.total_elements == 2
+
+        # Filter Month 1
+        filters_month = SpendingEntryFilter(month=1)
+        res_month = await spending_account_service.get_all_entries(filters=filters_month)
+        assert res_month.page.total_elements == 2
+
+        # Filter Month 1 AND Year 2025
+        filters_both = SpendingEntryFilter(month=1, year=2025)
+        res_both = await spending_account_service.get_all_entries(filters=filters_both)
+        assert res_both.page.total_elements == 1
+
+    async def test__get_all_entries__sort_by_current_balance_desc(
+        self,
+        spending_account_service,
+    ):
+        """Test sorting entries by current balance in descending order."""
+        await delete_all_entries(spending_account_service)
+        acc = await add_account(spending_account_service)
+
+        await add_entry(spending_account_service, get_entry_data(current_balance=100.0, month=1))
+        await add_entry(spending_account_service, get_entry_data(current_balance=500.0, month=2))
+        await add_entry(spending_account_service, get_entry_data(current_balance=300.0, month=3))
+
+        sort = SpendingEntrySort(sort_by=SpendingEntrySortField.CURRENT_BALANCE, sort_order=SortOrder.DESC)
+        results = await spending_account_service.get_all_entries(sort=sort)
+
+        balances = [e.current_balance for e in results.spending_entries]
+        assert balances == [500.0, 300.0, 100.0]
+
+    async def test__get_all_entries__sort_by_account_name_asc(
+        self,
+        spending_account_service,
+    ):
+        """Test sorting entries by account name in ascending order."""
+        await delete_all_entries(spending_account_service)
+        await add_account(spending_account_service, account_name="C_ACCOUNT")
+        await add_account(spending_account_service, account_name="A_ACCOUNT")
+        await add_account(spending_account_service, account_name="B_ACCOUNT")
+
+        await add_entry(spending_account_service, get_entry_data(account_name="C_ACCOUNT"))
+        await add_entry(spending_account_service, get_entry_data(account_name="A_ACCOUNT"))
+        await add_entry(spending_account_service, get_entry_data(account_name="B_ACCOUNT"))
+
+        sort = SpendingEntrySort(sort_by=SpendingEntrySortField.ACCOUNT_NAME, sort_order=SortOrder.ASC)
+        results = await spending_account_service.get_all_entries(sort=sort)
+
+        names = [e.account_name for e in results.spending_entries]
+        assert names == ["A_ACCOUNT", "B_ACCOUNT", "C_ACCOUNT"]
+
+    async def test__get_all_entries_for_account__with_sorting(
+        self,
+        spending_account_service,
+    ):
+        """Test account-specific entries with custom sorting."""
+        await delete_all_entries(spending_account_service)
+        acc = await add_account(spending_account_service, account_name="SORT_TEST_ACC")
+
+        await add_entry(
+            spending_account_service, get_entry_data(account_name="SORT_TEST_ACC", starting_balance=1000, month=1)
+        )
+        await add_entry(
+            spending_account_service, get_entry_data(account_name="SORT_TEST_ACC", starting_balance=3000, month=2)
+        )
+        await add_entry(
+            spending_account_service, get_entry_data(account_name="SORT_TEST_ACC", starting_balance=2000, month=3)
+        )
+
+        sort = SpendingEntrySort(sort_by=SpendingEntrySortField.STARTING_BALANCE, sort_order=SortOrder.ASC)
+        results = await spending_account_service.get_all_entries_for_account(account_id=acc.id, sort=sort)
+
+        starting_balances = [e.starting_balance for e in results.spending_entries]
+        assert starting_balances == [1000.0, 2000.0, 3000.0]
+
+    async def test__get_all_entries__exhaustive_sorting(
+        self,
+        spending_account_service,
+    ):
+        """Verify sorting works for all fields in the Enum."""
+        await delete_all_entries(spending_account_service)
+        acc = await add_account(spending_account_service)
+
+        # Create entries with varied data
+        await add_entry(
+            spending_account_service,
+            get_entry_data(month=1, year=2024, starting_balance=100.0, current_balance=50.0, current_credit=10.0),
+        )
+        await add_entry(
+            spending_account_service,
+            get_entry_data(month=2, year=2024, starting_balance=200.0, current_balance=150.0, current_credit=20.0),
+        )
+
+        for field in SpendingEntrySortField:
+            # Skip fields already heavily tested or redundant
+            sort = SpendingEntrySort(sort_by=field, sort_order=SortOrder.ASC)
+            results = await spending_account_service.get_all_entries(sort=sort)
+            assert len(results.spending_entries) == 2
+
+    async def test__get_all_entries__sort_by_calculated_total_spent(
+        self,
+        spending_account_service,
+    ):
+        """Test sorting by calculated field total_spent."""
+        await delete_all_entries(spending_account_service)
+        acc = await add_account(spending_account_service)
+
+        # total_spent = (start - curr) + credit
+        # A: (1000 - 900) + 50 = 150
+        # B: (1000 - 800) + 10 = 210
+        # C: (1000 - 950) + 20 = 70
+        await add_entry(spending_account_service, get_entry_data(month=1, current_balance=900.0, current_credit=50.0))
+        await add_entry(spending_account_service, get_entry_data(month=2, current_balance=800.0, current_credit=10.0))
+        await add_entry(spending_account_service, get_entry_data(month=3, current_balance=950.0, current_credit=20.0))
+
+        sort = SpendingEntrySort(sort_by=SpendingEntrySortField.TOTAL_SPENT, sort_order=SortOrder.ASC)
+        results = await spending_account_service.get_all_entries(sort=sort)
+
+        spent = [e.total_spent for e in results.spending_entries]
+        assert spent == [70.0, 150.0, 210.0]
+
+    async def test__get_all_entries__filter_by_account_name_exact_match(
+        self,
+        spending_account_service,
+    ):
+        """Test exact account name filtering."""
+        await delete_all_entries(spending_account_service)
+        await add_account(spending_account_service, account_name="SAVINGS_ACCOUNT")
+        await add_account(spending_account_service, account_name="CHECKING_ACCOUNT")
+
+        await add_entry(spending_account_service, get_entry_data(account_name="SAVINGS_ACCOUNT"))
+        await add_entry(spending_account_service, get_entry_data(account_name="CHECKING_ACCOUNT"))
+
+        # Exact match
+        filters1 = SpendingEntryFilter(account_name="SAVINGS_ACCOUNT")
+        res1 = await spending_account_service.get_all_entries(filters=filters1)
+        assert res1.page.total_elements == 1
+        assert res1.spending_entries[0].account_name == "SAVINGS_ACCOUNT"
+
+        # Non-matching partial should return nothing
+        filters2 = SpendingEntryFilter(account_name="SAV")
+        res2 = await spending_account_service.get_all_entries(filters=filters2)
+        assert res2.page.total_elements == 0
+
+    async def test__get_all_entries__filter_unmatched_results(
+        self,
+        spending_account_service,
+    ):
+        """Verify empty results when filters don't match anything."""
+        await delete_all_entries(spending_account_service)
+        await add_account(spending_account_service, account_name="ACC1")
+        await add_entry(spending_account_service, get_entry_data(account_name="ACC1", year=2024))
+
+        # Filter by different year
+        filters = SpendingEntryFilter(year=2025)
+        results = await spending_account_service.get_all_entries(filters=filters)
+        assert results.page.total_elements == 0
+        assert results.spending_entries == []
+
+    async def test__get_all_entries__pagination_metadata_with_filters(
+        self,
+        spending_account_service,
+    ):
+        """Verify that pagination metadata reflects filtered counts."""
+        await delete_all_entries(spending_account_service)
+        acc = await add_account(spending_account_service, account_name="PAGINATION_ACC")
+
+        # Create 10 entries in 2024 and 5 in 2025
+        for m in range(1, 11):
+            await add_entry(spending_account_service, get_entry_data(account_name="PAGINATION_ACC", month=m, year=2024))
+        for m in range(1, 6):
+            await add_entry(spending_account_service, get_entry_data(account_name="PAGINATION_ACC", month=m, year=2025))
+
+        # Filter 2024, size=3
+        filters = SpendingEntryFilter(year=2024)
+        results = await spending_account_service.get_all_entries(page=0, size=3, filters=filters)
+
+        assert results.page.total_elements == 10
+        assert results.page.total_pages == 4  # ceil(10/3)
+        assert len(results.spending_entries) == 3
 
 
 class TestEditSpendingAccountEntry:
