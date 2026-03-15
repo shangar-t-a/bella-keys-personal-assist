@@ -31,29 +31,29 @@ The project handles the following responsibilities at the moment:
 
 ### 2.1. Home Screen
 
-![Home Screen](docs/screens/v3.0/home.png)
+![Home Screen](docs/screens/v4.0/home.png)
 
 ### 2.2. Dashboards
 
-![Dashboards](docs/screens/v3.0/dashboard-list.png)
+![Dashboards](docs/screens/v4.0/dashboard-list.png)
 
 ### 2.3. Spending Account Dashboard
 
-![Spending Account Dashboard](docs/screens/v3.0/dashboard-spending-account-summary.png)
+![Spending Account Dashboard](docs/screens/v4.0/dashboard-spending-account-summary.png)
 
 ### 2.4. Bella Chatbot
 
 #### 2.4.1. Chat Interface
 
-![Bella Chatbot](docs/screens/v3.0/chat-loading.png)
+![Bella Chatbot](docs/screens/v4.0/chat-loading.png)
 
 #### 2.4.2. Chat With Bella (Answer available in Knowledge Base)
 
-![Chat With Bella - Answer Available](docs/screens/v3.0/chat-response-ans-available.png)
+![Chat With Bella - Answer Available](docs/screens/v4.0/chat-response-ans-available.png)
 
 #### 2.4.3. Chat With Bella (Answer NOT available in Knowledge Base)
 
-![Chat With Bella - Answer NOT Available](docs/screens/v3.0/chat-response-ans-not-available.png)
+![Chat With Bella - Answer NOT Available](docs/screens/v4.0/chat-response-ans-not-available.png)
 
 ## 3. Expense Management Service
 
@@ -65,7 +65,7 @@ The project handles the following responsibilities at the moment:
    3. Follows **Clean Architecture** principles.
    4. Containerized with **Docker**.
 2. Frontend
-   1. Built using **Next.js** with **Bolt.diy** and **v0**.
+   1. Built using **React** with **Antigravity**.
    2. Containerized with **Docker**.
 
 ### 3.2. Features Overview

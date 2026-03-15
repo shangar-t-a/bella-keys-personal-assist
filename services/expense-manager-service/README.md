@@ -36,24 +36,31 @@ expense-manager-service/
 │   ├── __init__.py
 │   ├── main.py                                              # FastAPI app entrypoint
 │   ├── entities/                                            # Domain layer
-│   │   ├── errors/                                          # Domain-specific errors
-│   │   ├── models/                                          # Domain models
-│   │   └── repositories/                                    # Repository interfaces
+│   │   ├── errors/                                          # Domain errors, one file per resource
+│   │   ├── models/                                          # Domain models, one file per resource
+│   │   │   ├── base.py                                      # Shared frozen Pydantic base
+│   │   │   ├── sort.py                                      # Generic SortOrder enum (asc/desc)
+│   │   │   └── *.py                                         # account, period, spending_entry models
+│   │   │                                                    #   spending_entry also holds sort, filter,
+│   │   │                                                    #   and JOIN-enriched detail models
+│   │   └── repositories/                                    # Abstract repository interfaces, one file per resource
 │   ├── infrastructures/                                     # Infrastructure layer (external systems)
-│   │   ├── inmemory_db/                                     # In-memory DB implementations (for testing/dev)
-|   |   ├── postgres_db/                                     # PostgreSQL DB implementations (for production)
-|   |   │   ├── alembic/                                     # Alembic migrations (DB schema management)
-|   |   |   |   ├── versions/                                # Alembic migration versions
-|   |   |   |   └── env.py                                   # Alembic env configuration
-|   |   |   ├── alembic.ini                                  # Alembic config file
-│   │   │   └── models/                                      # SQLAlchemy models
-│   │   └── sqlite_db/                                       # SQLite DB implementations (for production)
-│   │       └── models/                                      # SQLAlchemy models
+│   │   ├── inmemory_db/                                     # ⚠️ DEPRECATED - retained for reference, not supported
+│   │   ├── sqlite_db/                                       # ⚠️ DEPRECATED - retained for reference, not supported
+│   │   └── postgres_db/                                     # Sole supported backend
+│   │       ├── alembic/                                     # Alembic migrations
+│   │       ├── alembic.ini                                  # Alembic config
+│   │       ├── models/                                      # SQLAlchemy ORM models (account, period, spending_entry)
+│   │       ├── database.py                                  # Engine, session factory, Base, init_db/drop_db
+│   │       └── *.py                                         # Postgres repository implementations
 │   ├── routers/                                             # Presentation/API layer
 │   │   ├── v1/                                              # API version 1
-│   │   │   ├── endpoints/                                   # FastAPI routers
-│   │   │   ├── mappers/                                     # Mappers between schemas and entities
-│   │   │   ├── schemas/                                     # Pydantic schemas
+│   │   │   ├── endpoints/                                   # FastAPI routers, one file per resource
+│   │   │   ├── mappers/                                     # Schema <-> domain/use-case model converters
+│   │   │   ├── schemas/                                     # Pydantic request/response schemas
+│   │   │   │   ├── base.py                                  # Shared BaseSchema (camelCase aliases)
+│   │   │   │   ├── pagination.py                            # PaginationParams and PaginationResponse
+│   │   │   │   └── *.py                                     # Per-resource schemas incl. sort/filter params
 │   │   │   ├── services.py                                  # Dependency injection
 │   │   │   └── __init__.py
 │   │   └── __init__.py
@@ -63,8 +70,12 @@ expense-manager-service/
 │   │   ├── dev.py                                           # Development settings
 │   │   └── __init__.py
 │   └── use_cases/                                           # Use Cases layer (Business logic)
-│       ├── errors/                                          # Use-case-specific errors
-│       └── models/                                          # Use-case-specific models
+│       ├── *.py                                             # Service classes, one per resource
+│       ├── errors/                                          # Use-case errors, one file per resource
+│       └── models/                                          # Flattened use-case models
+│           ├── base.py                                      # Shared frozen Pydantic base
+│           ├── pagination.py                                # Page - pagination metadata
+│           └── spending_entry.py                            # Spending entry input/output models
 ├── docs/                                                    # Documentation
 ├── tests/                                                   # Test cases
 │   ├── conftest.py                                          # Pytest configurations at root
@@ -86,34 +97,33 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 - **Purpose:** Core business logic, domain models, and error definitions.
 - **Key Files:**
-  - `models/*`: Define immutable business entities (e.g., `AccountName`).
-  - `models/base.py`: Base entity with common fields (e.g., `id`).
-  - `errors/`: Custom exceptions for domain errors (e.g., `AccountNotFoundError`).
-  - `repositories/`: Abstract repository interfaces (e.g., `AccountRepositoryInterface`).
+  - `models/`: One file per resource plus a shared `base.py` (frozen Pydantic base with camelCase aliases) and `sort.py` (generic `asc`/`desc` enum). The `spending_entry` model file also contains JOIN-enriched detail models and domain objects for sort and filter.
+  - `errors/`: Custom domain exceptions, one file per resource.
+  - `repositories/`: Abstract interfaces that all storage adapters must implement, one file per resource.
 
 ### Use Cases Layer (`app/use_cases/`)
 
 - **Purpose:** Application-specific business logic and orchestration.
 - **Key Files:**
-  - Service classes encapsulating business use cases (e.g., `AccountService`).
-  - `models/`: Use-case-specific models if needed.
-  - `errors/`: Use-case-specific errors, distinct from domain errors.
+  - Service files (`account.py`, `period.py`, `spending_entry.py`) - one service class per resource. `SpendingEntryService` handles paginated listing with sort and filter.
+  - `models/` - flattened output models that decouple the router from entity internals. Includes `pagination.py` with the shared `Page` model.
+  - `errors/` - use-case errors, kept separate from domain errors, one file per resource.
 
 ### Infrastructure Layer (`app/infrastructures/`)
 
 - **Purpose:** External system integration, persistence, and adapters.
 - **Key Files:**
-  - `inmemory_db/`: In-memory repository implementations for testing/dev.
-  - `sqlite_db/`: SQLite repository implementations and DB config (e.g., `accounts.py`, `database.py`).
+  - `postgres_db/` **(sole supported backend)** - async SQLAlchemy repository implementations for account, period, and spending entry. The spending entry repository executes a JOIN query to return enriched results; sort and filter are applied at the DB level. `alembic/` holds the migration chain. `models/` holds the ORM models.
+  - `inmemory_db/` and `sqlite_db/` - ⚠️ **Deprecated since February 2026.** Code retained for reference. Selecting either storage type raises a `ValueError` at runtime.
 
 ### Presentation/API Layer (`app/routers/`)
 
 - **Purpose:** API endpoints, request/response schemas, and routing.
 - **Key Files:**
-  - `v1/endpoints/`: FastAPI routers for each resource (e.g., `accounts.py`).
-  - `v1/mappers/`: Convert between schemas and entities. DTO not needed here as Schemas serve that purpose.
-  - `v1/schemas/`: Pydantic schemas for API requests/responses.
-  - `v1/services.py`: Dependency injection for repositories/services.
+  - `v1/endpoints/` - CRUD endpoints for account, period, and spending entry. `GET /spending_account/list` accepts `sort_by`, `sort_order`, `month`, `year`, `account_name`, `page`, and `size` as query parameters.
+  - `v1/schemas/` - Pydantic schemas per resource. `base.py` provides the shared camelCase alias base. `pagination.py` provides reusable `PaginationParams` and `PaginationResponse`. Spending entry schemas include dedicated sort and filter param schemas.
+  - `v1/mappers/` - Converts HTTP schema objects to domain/use-case models. Includes a query-params mapper that translates sort and filter params into domain objects.
+  - `v1/services.py` - Dependency injection. Only `postgresql` is wired; `inmemory` and `sqlite` raise a `ValueError`.
 
 ### Configuration Layer (`app/settings/`)
 
@@ -131,10 +141,10 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 ## 4. Technology Stack & Rationale
 
-- **Python 3.13+**: Backend technology.
+- **Python 3.14+**: Backend technology.
 - **FastAPI**: High-performance, async web framework for building APIs.
 - **Pydantic**: Data validation and settings management.
-- **SQLAlchemy (async)**: Async ORM for database access (SQLite).
+- **SQLAlchemy (async)**: Async ORM for database access (PostgreSQL).
 - **Alembic (async)**: Database migrations.
 - **Uvicorn**: ASGI server for running FastAPI apps.
 - **UV**: Dependency management.
@@ -143,12 +153,15 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 - **Tox**: Testing in isolated environments.
 - **Ruff**: Linting and code quality.
 - **Clean Architecture**: Promotes separation of concerns, testability, and maintainability.
-- **In-memory, PostgreSQL & SQLite Repositories**: Support for both development/testing and production persistence.
+- **PostgreSQL Repository (only)**: Sole supported persistence backend. SQLite and in-memory adapters are retained in the codebase but deprecated as of February 2026.
 
 ## Notes & Best Practices
 
-- **Dependency Rule:** Outer layers (API, Infrastructure) depend on inner layers (Use Cases, Entities), never the
-  reverse.
+- **Dependency Rule:** Outer layers (API, Infrastructure) depend on inner layers (Use Cases, Entities), never the reverse.
+- **Storage type:** `STORAGE_TYPE` must be set to `postgresql` in `.env`. Setting it to `inmemory` or `sqlite` raises a `ValueError` at startup - those adapters are deprecated and no longer wired.
+- **Sort & filter:** `GET /v1/spending_account/list` accepts `sort_by`, `sort_order`, `month`, `year`, and `account_name` as query parameters. Sorting and filtering are applied at the DB level.
+- **Pagination:** Spending entry list endpoints use `page`/`size` query parameters and return a `PaginationResponse` in the body.
+- **File splitting:** Each resource (account, period, spending_entry) has its own file across every layer - models, errors, repositories, use cases, schemas, and endpoints.
 - **Extensibility:** Add new features by extending the appropriate layer, maintaining separation of concerns.
 - **Configuration:** Environment-specific settings are managed in `settings/` and `.env` files.
 - **Testing:** All tests are in `tests/`.
