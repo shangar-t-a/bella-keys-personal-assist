@@ -11,20 +11,20 @@ export interface AccountUpdateRequest {
   accountName: string;
 }
 
-export interface MonthYearRequest {
-  month: string;
+export interface PeriodRequest {
+  month: number;
   year: number;
 }
 
-export interface MonthYearResponse {
+export interface PeriodResponse {
   id: string;
-  month: string;
+  month: number;
   year: number;
 }
 
 export interface SpendingAccountEntryRequest {
   accountName: string;
-  month: string;
+  month: number;
   year: number;
   startingBalance: number;
   currentBalance: number;
@@ -33,7 +33,7 @@ export interface SpendingAccountEntryRequest {
 
 export interface SpendingAccountEntryWithCalculatedFieldsResponse {
   accountName: string;
-  month: string;
+  month: number;
   year: number;
   startingBalance: number;
   currentBalance: number;
@@ -42,6 +42,30 @@ export interface SpendingAccountEntryWithCalculatedFieldsResponse {
   balanceAfterCredit: number;
   totalSpent: number;
 }
+
+export interface PaginationMeta {
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface SpendingEntryWithCalcPageResponse {
+  spendingEntries: SpendingAccountEntryWithCalculatedFieldsResponse[];
+  page: PaginationMeta;
+}
+
+export type SortOrder = 'asc' | 'desc';
+
+export type SpendingEntrySortField = 
+  | 'year' 
+  | 'month' 
+  | 'account_name' 
+  | 'starting_balance' 
+  | 'current_balance' 
+  | 'current_credit' 
+  | 'balance_after_credit' 
+  | 'total_spent';
 
 export interface HTTPValidationError {
   detail?: ValidationError[];
