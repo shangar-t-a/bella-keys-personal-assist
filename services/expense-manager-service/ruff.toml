@@ -7,6 +7,8 @@ include = ["app/**/*.py"]
 # Excludes
 exclude = [
     "**/alembic/versions/**",
+    "app/infrastructures/inmemory_db/**",  # Exclude in-memory DB implementation (Deprecated)
+    "app/infrastructures/sqlite_db/**",  # Exclude SQLite DB implementation (Deprecated)
 ]
 
 # Other Configs

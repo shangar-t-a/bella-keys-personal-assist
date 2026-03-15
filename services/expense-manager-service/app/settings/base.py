@@ -24,7 +24,7 @@ class ExpenseManagerBaseSettings(BaseSettings):
     STORAGE_TYPE: STORAGE_TYPES = "postgresql"
 
     # Database settings
-    DATABASE_URL: SecretStr = ""
+    DATABASE_URL: SecretStr = SecretStr("")
     LOG_DB_QUERIES: bool = False
 
     # Logging settings

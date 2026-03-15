@@ -2,14 +2,12 @@
 
 from fastapi import APIRouter
 
-from app.routers.v1.endpoints.accounts import (
-    account_router,
-    month_year_router,
-)
-from app.routers.v1.endpoints.spending_account import router as spending_account_router
+from app.routers.v1.endpoints.account import account_router
+from app.routers.v1.endpoints.period import period_router
+from app.routers.v1.endpoints.spending_entry import router as spending_account_router
 
 router = APIRouter(prefix="/v1")
 
 router.include_router(account_router)
-router.include_router(month_year_router)
+router.include_router(period_router)
 router.include_router(spending_account_router)

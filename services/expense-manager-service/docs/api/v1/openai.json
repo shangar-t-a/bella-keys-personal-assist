@@ -17,7 +17,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AccountNameRequest"
+                                "$ref": "#/components/schemas/AccountRequest"
                             }
                         }
                     },
@@ -29,7 +29,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AccountNameResponse"
+                                    "$ref": "#/components/schemas/AccountResponse"
                                 }
                             }
                         }
@@ -62,7 +62,7 @@
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/AccountNameResponse"
+                                        "$ref": "#/components/schemas/AccountResponse"
                                     },
                                     "type": "array",
                                     "title": "Response Get All Accounts V1 Account List Get"
@@ -98,7 +98,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AccountNameResponse"
+                                    "$ref": "#/components/schemas/AccountResponse"
                                 }
                             }
                         }
@@ -159,7 +159,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AccountNameResponse"
+                                    "$ref": "#/components/schemas/AccountResponse"
                                 }
                             }
                         }
@@ -236,19 +236,19 @@
                 }
             }
         },
-        "/v1/month_year/get_or_create": {
+        "/v1/period/get_or_create": {
             "post": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Get Or Create Month Year",
-                "description": "Retrieve an existing MonthYear or create a new one with the provided month and year.",
-                "operationId": "get_or_create_month_year_v1_month_year_get_or_create_post",
+                "summary": "Get Or Create Period",
+                "description": "Retrieve an existing Period or create a new one with the provided month and year.",
+                "operationId": "get_or_create_period_v1_period_get_or_create_post",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/MonthYearRequest"
+                                "$ref": "#/components/schemas/PeriodRequest"
                             }
                         }
                     },
@@ -260,7 +260,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MonthYearResponse"
+                                    "$ref": "#/components/schemas/PeriodResponse"
                                 }
                             }
                         }
@@ -278,14 +278,14 @@
                 }
             }
         },
-        "/v1/month_year/list": {
+        "/v1/period/list": {
             "get": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Get All Month Years",
-                "description": "Retrieve all MonthYears.",
-                "operationId": "get_all_month_years_v1_month_year_list_get",
+                "summary": "Get All Period",
+                "description": "Retrieve all Periods.",
+                "operationId": "get_all_period_v1_period_list_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -293,10 +293,10 @@
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/MonthYearResponse"
+                                        "$ref": "#/components/schemas/PeriodResponse"
                                     },
                                     "type": "array",
-                                    "title": "Response Get All Month Years V1 Month Year List Get"
+                                    "title": "Response Get All Period V1 Period List Get"
                                 }
                             }
                         }
@@ -304,22 +304,22 @@
                 }
             }
         },
-        "/v1/month_year/{month_year_id}": {
+        "/v1/period/{period_id}": {
             "get": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Get Month Year By Id",
-                "description": "Retrieve a MonthYear by its ID.",
-                "operationId": "get_month_year_by_id_v1_month_year__month_year_id__get",
+                "summary": "Get Period By Id",
+                "description": "Retrieve a Period by its ID.",
+                "operationId": "get_period_by_id_v1_period__period_id__get",
                 "parameters": [
                     {
-                        "name": "month_year_id",
+                        "name": "period_id",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "title": "Month Year Id"
+                            "title": "Period Id"
                         }
                     }
                 ],
@@ -329,13 +329,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MonthYearResponse"
+                                    "$ref": "#/components/schemas/PeriodResponse"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "MonthYear not found",
+                        "description": "Period not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -358,19 +358,19 @@
             },
             "put": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Update Month Year",
-                "description": "Update an existing MonthYear with the provided data.",
-                "operationId": "update_month_year_v1_month_year__month_year_id__put",
+                "summary": "Update Period",
+                "description": "Update an existing Period with the provided data.",
+                "operationId": "update_period_v1_period__period_id__put",
                 "parameters": [
                     {
-                        "name": "month_year_id",
+                        "name": "period_id",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "title": "Month Year Id"
+                            "title": "Period Id"
                         }
                     }
                 ],
@@ -379,7 +379,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/MonthYearRequest"
+                                "$ref": "#/components/schemas/PeriodRequest"
                             }
                         }
                     }
@@ -390,13 +390,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MonthYearResponse"
+                                    "$ref": "#/components/schemas/PeriodResponse"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "MonthYear not found",
+                        "description": "Period not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -419,19 +419,19 @@
             },
             "delete": {
                 "tags": [
-                    "month_year"
+                    "period"
                 ],
-                "summary": "Delete Month Year",
-                "description": "Delete a MonthYear by its ID.",
-                "operationId": "delete_month_year_v1_month_year__month_year_id__delete",
+                "summary": "Delete Period",
+                "description": "Delete a Period by its ID.",
+                "operationId": "delete_period_v1_period__period_id__delete",
                 "parameters": [
                     {
-                        "name": "month_year_id",
+                        "name": "period_id",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "title": "Month Year Id"
+                            "title": "Period Id"
                         }
                     }
                 ],
@@ -445,7 +445,7 @@
                         }
                     },
                     "404": {
-                        "description": "MonthYear not found",
+                        "description": "Period not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -479,7 +479,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SpendingAccountEntryRequest"
+                                "$ref": "#/components/schemas/SpendingEntryRequest"
                             }
                         }
                     },
@@ -491,7 +491,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
+                                    "$ref": "#/components/schemas/SpendingEntryWithCalcResponse"
                                 }
                             }
                         }
@@ -537,17 +537,118 @@
                 "summary": "Get All Entries",
                 "description": "Retrieve all entries for all spending accounts.",
                 "operationId": "get_all_entries_v1_spending_account_list_get",
+                "parameters": [
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 12,
+                            "title": "Size"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Page"
+                        }
+                    },
+                    {
+                        "name": "sortBy",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/SpendingEntrySortField",
+                            "default": "year"
+                        }
+                    },
+                    {
+                        "name": "sortOrder",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/SortOrder",
+                            "default": "asc"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "maximum": 12,
+                                    "minimum": 1
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Month"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "maximum": 2100,
+                                    "minimum": 2000
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Year"
+                        }
+                    },
+                    {
+                        "name": "accountName",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Accountname"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
-                                    },
-                                    "type": "array",
-                                    "title": "Response Get All Entries V1 Spending Account List Get"
+                                    "$ref": "#/components/schemas/SpendingEntryWithCalcPageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
                                 }
                             }
                         }
@@ -555,14 +656,14 @@
                 }
             }
         },
-        "/v1/spending_account/{account_id}": {
+        "/v1/spending_account/{account_id}/list": {
             "get": {
                 "tags": [
                     "spending_account"
                 ],
                 "summary": "Get All Entries For Account",
                 "description": "Retrieve all entries for a given spending account.",
-                "operationId": "get_all_entries_for_account_v1_spending_account__account_id__get",
+                "operationId": "get_all_entries_for_account_v1_spending_account__account_id__list_get",
                 "parameters": [
                     {
                         "name": "account_id",
@@ -572,6 +673,99 @@
                             "type": "string",
                             "title": "Account Id"
                         }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 12,
+                            "title": "Size"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Page"
+                        }
+                    },
+                    {
+                        "name": "sortBy",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/SpendingEntrySortField",
+                            "default": "year"
+                        }
+                    },
+                    {
+                        "name": "sortOrder",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/SortOrder",
+                            "default": "asc"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "maximum": 12,
+                                    "minimum": 1
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Month"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "maximum": 2100,
+                                    "minimum": 2000
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Year"
+                        }
+                    },
+                    {
+                        "name": "accountName",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Accountname"
+                        }
                     }
                 ],
                 "responses": {
@@ -580,11 +774,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
-                                    },
-                                    "title": "Response Get All Entries For Account V1 Spending Account  Account Id  Get"
+                                    "$ref": "#/components/schemas/SpendingEntryWithCalcPageResponse"
                                 }
                             }
                         }
@@ -636,7 +826,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SpendingAccountEntryRequest"
+                                "$ref": "#/components/schemas/SpendingEntryRequest"
                             }
                         }
                     }
@@ -647,7 +837,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/SpendingAccountEntryWithCalculatedFieldsResponse"
+                                    "$ref": "#/components/schemas/SpendingEntryWithCalcResponse"
                                 }
                             }
                         }
@@ -783,7 +973,7 @@
     },
     "components": {
         "schemas": {
-            "AccountNameRequest": {
+            "AccountRequest": {
                 "properties": {
                     "accountName": {
                         "type": "string",
@@ -800,10 +990,10 @@
                 "required": [
                     "accountName"
                 ],
-                "title": "AccountNameRequest",
+                "title": "AccountRequest",
                 "description": "Schema for account name creation/update requests."
             },
-            "AccountNameResponse": {
+            "AccountResponse": {
                 "properties": {
                     "id": {
                         "type": "string",
@@ -822,7 +1012,7 @@
                     "id",
                     "accountName"
                 ],
-                "title": "AccountNameResponse",
+                "title": "AccountResponse",
                 "description": "Schema for account name responses."
             },
             "AccountUpdateRequest": {
@@ -871,26 +1061,65 @@
                 "type": "object",
                 "title": "HTTPValidationError"
             },
-            "MonthYearRequest": {
+            "PaginationResponse": {
+                "properties": {
+                    "number": {
+                        "type": "integer",
+                        "title": "Number",
+                        "description": "Page number returned in the current page",
+                        "examples": [
+                            0
+                        ]
+                    },
+                    "size": {
+                        "type": "integer",
+                        "title": "Size",
+                        "description": "Number of items returned in the current page",
+                        "examples": [
+                            12
+                        ]
+                    },
+                    "totalElements": {
+                        "type": "integer",
+                        "title": "Totalelements",
+                        "description": "Total number of elements available",
+                        "examples": [
+                            100
+                        ]
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "title": "Totalpages",
+                        "description": "Total number of pages available",
+                        "examples": [
+                            9
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "number",
+                    "size",
+                    "totalElements",
+                    "totalPages"
+                ],
+                "title": "PaginationResponse",
+                "description": "Schema for pagination response metadata."
+            },
+            "PeriodRequest": {
                 "properties": {
                     "month": {
-                        "type": "string",
-                        "enum": [
-                            "January",
-                            "February",
-                            "March",
-                            "April",
-                            "May",
-                            "June",
-                            "July",
-                            "August",
-                            "September",
-                            "October",
-                            "November",
-                            "December"
-                        ],
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
-                        "description": "Name of the month"
+                        "description": "Month as an integer between 1 and 12",
+                        "examples": [
+                            1,
+                            2,
+                            3
+                        ]
                     },
                     "year": {
                         "type": "integer",
@@ -910,10 +1139,10 @@
                     "month",
                     "year"
                 ],
-                "title": "MonthYearRequest",
+                "title": "PeriodRequest",
                 "description": "Schema for month-year creation requests."
             },
-            "MonthYearResponse": {
+            "PeriodResponse": {
                 "properties": {
                     "id": {
                         "type": "string",
@@ -921,23 +1150,16 @@
                         "description": "Unique identifier for the month-year combination"
                     },
                     "month": {
-                        "type": "string",
-                        "enum": [
-                            "January",
-                            "February",
-                            "March",
-                            "April",
-                            "May",
-                            "June",
-                            "July",
-                            "August",
-                            "September",
-                            "October",
-                            "November",
-                            "December"
-                        ],
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
-                        "description": "Name of the month"
+                        "description": "Month as an integer between 1 and 12",
+                        "examples": [
+                            1,
+                            2,
+                            3
+                        ]
                     },
                     "year": {
                         "type": "integer",
@@ -952,10 +1174,19 @@
                     "month",
                     "year"
                 ],
-                "title": "MonthYearResponse",
+                "title": "PeriodResponse",
                 "description": "Schema for month-year responses."
             },
-            "SpendingAccountEntryRequest": {
+            "SortOrder": {
+                "type": "string",
+                "enum": [
+                    "asc",
+                    "desc"
+                ],
+                "title": "SortOrder",
+                "description": "Sort order for sorting."
+            },
+            "SpendingEntryRequest": {
                 "properties": {
                     "accountName": {
                         "type": "string",
@@ -967,12 +1198,14 @@
                         ]
                     },
                     "month": {
-                        "type": "string",
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
                         "description": "Month of the entry",
                         "examples": [
-                            "January",
-                            "February"
+                            1,
+                            2
                         ]
                     },
                     "year": {
@@ -1021,10 +1254,49 @@
                     "currentBalance",
                     "currentCredit"
                 ],
-                "title": "SpendingAccountEntryRequest",
+                "title": "SpendingEntryRequest",
                 "description": "Schema for spending account entry creation/update requests."
             },
-            "SpendingAccountEntryWithCalculatedFieldsResponse": {
+            "SpendingEntrySortField": {
+                "type": "string",
+                "enum": [
+                    "month",
+                    "year",
+                    "account_name",
+                    "starting_balance",
+                    "current_balance",
+                    "current_credit",
+                    "balance_after_credit",
+                    "total_spent"
+                ],
+                "title": "SpendingEntrySortField",
+                "description": "Sort fields for sorting spending entries."
+            },
+            "SpendingEntryWithCalcPageResponse": {
+                "properties": {
+                    "spendingEntries": {
+                        "items": {
+                            "$ref": "#/components/schemas/SpendingEntryWithCalcResponse"
+                        },
+                        "type": "array",
+                        "title": "Spendingentries",
+                        "description": "List of spending account entries with calculated fields"
+                    },
+                    "page": {
+                        "$ref": "#/components/schemas/PaginationResponse",
+                        "description": "Pagination metadata for the current page"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "spendingEntries",
+                    "page"
+                ],
+                "title": "SpendingEntryWithCalcPageResponse",
+                "description": "Schema for paginated responses of spending account entries with calculated fields."
+            },
+            "SpendingEntryWithCalcResponse": {
                 "properties": {
                     "accountName": {
                         "type": "string",
@@ -1036,12 +1308,14 @@
                         ]
                     },
                     "month": {
-                        "type": "string",
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
                         "title": "Month",
                         "description": "Month of the entry",
                         "examples": [
-                            "January",
-                            "February"
+                            1,
+                            2
                         ]
                     },
                     "year": {
@@ -1114,7 +1388,7 @@
                     "balanceAfterCredit",
                     "totalSpent"
                 ],
-                "title": "SpendingAccountEntryWithCalculatedFieldsResponse",
+                "title": "SpendingEntryWithCalcResponse",
                 "description": "Schema for spending account entry responses with calculated fields."
             },
             "ValidationError": {
@@ -1140,6 +1414,13 @@
                     "type": {
                         "type": "string",
                         "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
                     }
                 },
                 "type": "object",

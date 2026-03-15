@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructures.sqlite_db.database import Base
 
 
-class SpendingAccountEntryModel(Base):
+class SpendingEntryModel(Base):
     """SQLite model for spending account entries."""
 
     __tablename__ = "spending_account_entries"
@@ -18,8 +18,8 @@ class SpendingAccountEntryModel(Base):
     account_id: Mapped[str] = mapped_column(
         String, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    date_detail_id: Mapped[str] = mapped_column(
-        String, ForeignKey("month_years.id", ondelete="CASCADE"), nullable=False, index=True
+    period_id: Mapped[str] = mapped_column(
+        String, ForeignKey("period.id", ondelete="CASCADE"), nullable=False, index=True
     )
     starting_balance: Mapped[float] = mapped_column(Float, nullable=False)
     current_balance: Mapped[float] = mapped_column(Float, nullable=False)
@@ -27,4 +27,4 @@ class SpendingAccountEntryModel(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC), onupdate=datetime.now(UTC))
 
-    __table_args__ = (UniqueConstraint("account_id", "date_detail_id", name="uq_account_date_detail"),)
+    __table_args__ = (UniqueConstraint("account_id", "period_id", name="uq_account_date_detail"),)

@@ -2,16 +2,29 @@ import type {
   AccountNameRequest,
   AccountNameResponse,
   AccountUpdateRequest,
-  MonthYearRequest,
-  MonthYearResponse,
+  PeriodRequest,
+  PeriodResponse,
   SpendingAccountEntryRequest,
   SpendingAccountEntryWithCalculatedFieldsResponse,
+  SpendingEntryWithCalcPageResponse,
+  SortOrder,
+  SpendingEntrySortField,
 } from '@/types/api';
+
+export interface SpendingEntryListParams {
+  page?: number;
+  size?: number;
+  sortBy?: SpendingEntrySortField;
+  sortOrder?: SortOrder;
+  month?: number | null;
+  year?: number | null;
+  accountName?: string | null;
+}
 
 /**
  * EMS (Expense Management System) Client
- * Handles all account, month-year, and spending account operations
- * 
+ * Handles all account, period, and spending account operations
+ *
  * Uses relative paths (/api/ems) that are proxied by nginx in production
  * and by Vite dev server in development to the actual backend services.
  */
@@ -23,7 +36,8 @@ class EMSClient {
     this.baseURL = '/api/ems';
   }
 
-  // Account endpoints
+  // ── Account endpoints ──────────────────────────────────────────────────────
+
   async getAllAccounts(): Promise<AccountNameResponse[]> {
     const response = await fetch(`${this.baseURL}/v1/account/list`);
     if (!response.ok) throw new Error('Failed to fetch accounts');
@@ -57,51 +71,73 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to delete account');
   }
 
-  // Month Year endpoints
-  async getAllMonthYears(): Promise<MonthYearResponse[]> {
-    const response = await fetch(`${this.baseURL}/v1/month_year/list`);
-    if (!response.ok) throw new Error('Failed to fetch month years');
+  // ── Period endpoints ────────────────────────────────────────────────────────
+
+  async getAllPeriods(): Promise<PeriodResponse[]> {
+    const response = await fetch(`${this.baseURL}/v1/period/list`);
+    if (!response.ok) throw new Error('Failed to fetch periods');
     return response.json();
   }
 
-  async getOrCreateMonthYear(data: MonthYearRequest): Promise<MonthYearResponse> {
-    const response = await fetch(`${this.baseURL}/v1/month_year/get_or_create`, {
+  async getOrCreatePeriod(data: PeriodRequest): Promise<PeriodResponse> {
+    const response = await fetch(`${this.baseURL}/v1/period/get_or_create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to get or create month year');
+    if (!response.ok) throw new Error('Failed to get or create period');
     return response.json();
   }
 
-  async updateMonthYear(monthYearId: string, data: MonthYearRequest): Promise<MonthYearResponse> {
-    const response = await fetch(`${this.baseURL}/v1/month_year/${monthYearId}`, {
+  async updatePeriod(periodId: string, data: PeriodRequest): Promise<PeriodResponse> {
+    const response = await fetch(`${this.baseURL}/v1/period/${periodId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to update month year');
+    if (!response.ok) throw new Error('Failed to update period');
     return response.json();
   }
 
-  async deleteMonthYear(monthYearId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/month_year/${monthYearId}`, {
+  async deletePeriod(periodId: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}/v1/period/${periodId}`, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to delete month year');
+    if (!response.ok) throw new Error('Failed to delete period');
   }
 
-  // Spending Account endpoints
-  async getAllSpendingAccountEntries(): Promise<SpendingAccountEntryWithCalculatedFieldsResponse[]> {
-    const response = await fetch(`${this.baseURL}/v1/spending_account/list`);
+  // ── Spending Account endpoints ─────────────────────────────────────────────
+
+  async getAllSpendingAccountEntries(
+    params: SpendingEntryListParams = {}
+  ): Promise<SpendingEntryWithCalcPageResponse> {
+    const url = new URL(`${window.location.origin}${this.baseURL}/v1/spending_account/list`);
+    if (params.page !== undefined) url.searchParams.set('page', String(params.page));
+    if (params.size !== undefined) url.searchParams.set('size', String(params.size));
+    if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
+    if (params.sortOrder) url.searchParams.set('sortOrder', params.sortOrder);
+    if (params.month != null) url.searchParams.set('month', String(params.month));
+    if (params.year != null) url.searchParams.set('year', String(params.year));
+    if (params.accountName != null) url.searchParams.set('accountName', params.accountName);
+
+    const response = await fetch(url.toString());
     if (!response.ok) throw new Error('Failed to fetch spending accounts');
     return response.json();
   }
 
   async getAllSpendingAccountEntriesForAccount(
-    accountId: string
-  ): Promise<SpendingAccountEntryWithCalculatedFieldsResponse[]> {
-    const response = await fetch(`${this.baseURL}/v1/spending_account/${accountId}`);
+    accountId: string,
+    params: SpendingEntryListParams = {}
+  ): Promise<SpendingEntryWithCalcPageResponse> {
+    const url = new URL(`${window.location.origin}${this.baseURL}/v1/spending_account/${accountId}/list`);
+    if (params.page !== undefined) url.searchParams.set('page', String(params.page));
+    if (params.size !== undefined) url.searchParams.set('size', String(params.size));
+    if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
+    if (params.sortOrder) url.searchParams.set('sortOrder', params.sortOrder);
+    if (params.month != null) url.searchParams.set('month', String(params.month));
+    if (params.year != null) url.searchParams.set('year', String(params.year));
+
+    const response = await fetch(url.toString());
     if (!response.ok) throw new Error('Failed to fetch spending account entries');
     return response.json();
   }

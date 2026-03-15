@@ -8,19 +8,27 @@ from pytest_asyncio import is_async_test
 
 from app import settings
 from app.infrastructures.postgres_db import database
-from app.infrastructures.postgres_db.accounts import PostgresAccountRepository
-from app.infrastructures.postgres_db.spending_account import PostgresSpendingAccountRepository
+from app.infrastructures.postgres_db.account import PostgresAccountRepository
+from app.infrastructures.postgres_db.period import PostgresPeriodRepository
+from app.infrastructures.postgres_db.spending_entry import PostgresSpendingEntryRepository
 from tests.unit.settings import UnitTestSettings
 
 # --------------------------------------------------- Pytest Hooks --------------------------------------------------- #
 
 
 def pytest_collection_modifyitems(items):
-    """Modify collected test items to add session scope to async tests."""
-    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    """Modify collected test items to add session scope to async tests and apply unit/integration markers."""
     session_scope_marker = pytest.mark.asyncio(loop_scope="session")
-    for async_test in pytest_asyncio_tests:
-        async_test.add_marker(session_scope_marker, append=False)
+    integration_marker = pytest.mark.integration
+    unit_marker = pytest.mark.unit
+    for item in items:
+        node_path = str(item.fspath)
+        if "/integration/" in node_path or "\\integration\\" in node_path:
+            item.add_marker(integration_marker)
+        elif "/unit/" in node_path or "\\unit\\" in node_path:
+            item.add_marker(unit_marker)
+        if is_async_test(item):
+            item.add_marker(session_scope_marker, append=False)
 
 
 # ----------------------------------------------- End of Pytest Hooks ------------------------------------------------ #
@@ -64,10 +72,18 @@ def account_repo(patch_settings, init_and_drop_db):
 
 
 @pytest.fixture(scope="session")
+def period_repo(patch_settings, init_and_drop_db):
+    """Provide an instance of PeriodRepository."""
+    if settings.get_settings().STORAGE_TYPE == "postgresql":
+        return PostgresPeriodRepository()
+    raise NotImplementedError("Invalid STORAGE_TYPE")
+
+
+@pytest.fixture(scope="session")
 def spending_account_repo(patch_settings, init_and_drop_db):
     """Provide an instance of SpendingAccountRepository."""
     if settings.get_settings().STORAGE_TYPE == "postgresql":
-        return PostgresSpendingAccountRepository()
+        return PostgresSpendingEntryRepository()
     raise NotImplementedError("Invalid STORAGE_TYPE")
 
 

@@ -1,4 +1,4 @@
-"""Postgres models for spending accounts."""
+"""Postgres models for spending entry."""
 
 import uuid
 from datetime import (
@@ -18,17 +18,17 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructures.postgres_db.database import Base
 
 
-class SpendingAccountEntryModel(Base):
+class SpendingEntryModel(Base):
     """Postgres model for spending account entries."""
 
-    __tablename__ = "spending_account_entries"
+    __tablename__ = "spending_entry"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid.uuid4().hex)
     account_id: Mapped[str] = mapped_column(
-        String, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True
+        String, ForeignKey("account.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    date_detail_id: Mapped[str] = mapped_column(
-        String, ForeignKey("month_years.id", ondelete="CASCADE"), nullable=False, index=True
+    period_id: Mapped[str] = mapped_column(
+        String, ForeignKey("period.id", ondelete="CASCADE"), nullable=False, index=True
     )
     starting_balance: Mapped[float] = mapped_column(Float, nullable=False)
     current_balance: Mapped[float] = mapped_column(Float, nullable=False)
@@ -38,4 +38,4 @@ class SpendingAccountEntryModel(Base):
         DateTime(timezone=True), default=datetime.now(UTC), onupdate=datetime.now(UTC)
     )
 
-    __table_args__ = (UniqueConstraint("account_id", "date_detail_id", name="uq_account_date_detail"),)
+    __table_args__ = (UniqueConstraint("account_id", "period_id", name="uq_account_period"),)
