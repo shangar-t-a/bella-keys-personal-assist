@@ -30,6 +30,7 @@ def get_app_synthesis_llm_client() -> "GeminiClient | OllamaClient":
         model_name=settings.SYNTHESIS_MODEL_NAME,
         ollama_base_url=settings.OLLAMA_URL,
         temperature=0.1,
+        context_window=settings.SYNTHESIS_MODEL_CTX_LENGTH,
     )
     return synthesis_llm_client
 

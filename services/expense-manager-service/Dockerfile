@@ -1,27 +1,38 @@
-# Official Python image
-FROM python:3.14-slim
+# BUILDER
+FROM python:3.14-slim AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy only necessary files
+COPY --from=ghcr.io/astral-sh/uv:0.11.2 /uv /uvx /bin/
+
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_NO_DEV=1
+
 COPY pyproject.toml uv.lock .python-version README.md ./
 
-# Ensure the app directory exists
-RUN mkdir -p ./app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project
 
-# Copy the __init__.py file
-COPY app/__init__.py ./app
-
-# Install dependencies
-RUN pip install uv
-RUN uv sync --no-cache --no-dev
-
-# Copy application code
 COPY app ./app
 
-# Expose the application port
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
+
+
+# RUNTIME
+FROM python:3.14-slim
+
+WORKDIR /app
+
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+COPY --from=builder /app/.venv ./.venv
+
+COPY app ./app
+
 EXPOSE 8000
 
-# Start the application
-CMD ["uv", "run", "python", "./app/main.py"]
+CMD ["python", "app/main.py"]

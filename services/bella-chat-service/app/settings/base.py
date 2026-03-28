@@ -19,7 +19,7 @@ class BellaChatBaseSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parent.parent.parent.joinpath(".env"),
-        extra="forbid",
+        extra="ignore",
     )
 
     # Environment
@@ -48,6 +48,7 @@ class BellaChatBaseSettings(BaseSettings):
     # AI Settings
     SYNTHESIS_MODEL_PROVIDER: MODEL_PROVIDERS = "ollama"
     SYNTHESIS_MODEL_NAME: str = "qwen2.5vl:7b"
+    SYNTHESIS_MODEL_CTX_LENGTH: int = 32000
     EMBEDDING_MODEL_PROVIDER: MODEL_PROVIDERS = "ollama"
     EMBEDDING_MODEL_NAME: str = "qwen3-embedding:0.6b"
     EMBEDDING_MODEL_DIMENSION: int = 1024
