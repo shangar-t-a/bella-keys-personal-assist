@@ -8,3 +8,8 @@ node_modules
 # App Specific
 .env
 .env.sample
+
+# Electron build outputs
+dist-electron
+release
+electron
