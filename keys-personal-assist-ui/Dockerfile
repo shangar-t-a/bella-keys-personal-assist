@@ -1,15 +1,15 @@
 # Multi-stage build for Personal Assist UI React application
 
 # Stage 1: Build
-FROM node:25.5.0-alpine AS builder
+FROM node:25.8.2-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies with legacy peer deps (for MUI version mismatch)
-RUN npm ci --legacy-peer-deps
+# Install dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .

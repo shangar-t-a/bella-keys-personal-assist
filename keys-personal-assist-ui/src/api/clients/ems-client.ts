@@ -10,6 +10,7 @@ import type {
   SortOrder,
   SpendingEntrySortField,
 } from '@/types/api';
+import { getEmsBase } from '@/api/config';
 
 export interface SpendingEntryListParams {
   page?: number;
@@ -32,8 +33,7 @@ class EMSClient {
   private baseURL: string;
 
   constructor() {
-    // Use relative path - nginx/Vite proxy handles routing to backend
-    this.baseURL = '/api/ems';
+    this.baseURL = getEmsBase();
   }
 
   // ── Account endpoints ──────────────────────────────────────────────────────
@@ -111,16 +111,18 @@ class EMSClient {
   async getAllSpendingAccountEntries(
     params: SpendingEntryListParams = {}
   ): Promise<SpendingEntryWithCalcPageResponse> {
-    const url = new URL(`${window.location.origin}${this.baseURL}/v1/spending_account/list`);
-    if (params.page !== undefined) url.searchParams.set('page', String(params.page));
-    if (params.size !== undefined) url.searchParams.set('size', String(params.size));
-    if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
-    if (params.sortOrder) url.searchParams.set('sortOrder', params.sortOrder);
-    if (params.month != null) url.searchParams.set('month', String(params.month));
-    if (params.year != null) url.searchParams.set('year', String(params.year));
-    if (params.accountName != null) url.searchParams.set('accountName', params.accountName);
+    const qs = new URLSearchParams();
+    if (params.page !== undefined) qs.set('page', String(params.page));
+    if (params.size !== undefined) qs.set('size', String(params.size));
+    if (params.sortBy) qs.set('sortBy', params.sortBy);
+    if (params.sortOrder) qs.set('sortOrder', params.sortOrder);
+    if (params.month != null) qs.set('month', String(params.month));
+    if (params.year != null) qs.set('year', String(params.year));
+    if (params.accountName != null) qs.set('accountName', params.accountName);
+    const queryString = qs.toString();
+    const listUrl = `${this.baseURL}/v1/spending_account/list${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(url.toString());
+    const response = await fetch(listUrl);
     if (!response.ok) throw new Error('Failed to fetch spending accounts');
     return response.json();
   }
@@ -129,15 +131,17 @@ class EMSClient {
     accountId: string,
     params: SpendingEntryListParams = {}
   ): Promise<SpendingEntryWithCalcPageResponse> {
-    const url = new URL(`${window.location.origin}${this.baseURL}/v1/spending_account/${accountId}/list`);
-    if (params.page !== undefined) url.searchParams.set('page', String(params.page));
-    if (params.size !== undefined) url.searchParams.set('size', String(params.size));
-    if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
-    if (params.sortOrder) url.searchParams.set('sortOrder', params.sortOrder);
-    if (params.month != null) url.searchParams.set('month', String(params.month));
-    if (params.year != null) url.searchParams.set('year', String(params.year));
+    const qs = new URLSearchParams();
+    if (params.page !== undefined) qs.set('page', String(params.page));
+    if (params.size !== undefined) qs.set('size', String(params.size));
+    if (params.sortBy) qs.set('sortBy', params.sortBy);
+    if (params.sortOrder) qs.set('sortOrder', params.sortOrder);
+    if (params.month != null) qs.set('month', String(params.month));
+    if (params.year != null) qs.set('year', String(params.year));
+    const queryString = qs.toString();
+    const listUrl = `${this.baseURL}/v1/spending_account/${accountId}/list${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(url.toString());
+    const response = await fetch(listUrl);
     if (!response.ok) throw new Error('Failed to fetch spending account entries');
     return response.json();
   }
