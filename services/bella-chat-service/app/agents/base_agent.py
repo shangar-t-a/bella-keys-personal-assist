@@ -88,10 +88,31 @@ class BaseAgent:
             # message_chunk.content may be None or "" for some chunks
             message, metadata = chunk
 
-            # If the chunk has text content, yield it
+            # Normalize content: Ollama yields str, Gemini yields list[{"type": "text", "text": ...}]
             content = getattr(message, "content", None)
-            if content:
-                yield content
+            if not content:
+                continue
+            if isinstance(content, str):
+                text = content
+            elif isinstance(content, list):
+                try:
+                    text = "".join(part.get("text", "") for part in content if isinstance(part, dict))
+                except Exception as e:
+                    self._logger.warning(
+                        "Failed to extract text from list content chunk: %s. Content: %r",
+                        e,
+                        content,
+                    )
+                    text = str(content)
+            else:
+                self._logger.warning(
+                    "Unexpected stream chunk content type %s - falling back to str(). Content: %r",
+                    type(content).__name__,
+                    content,
+                )
+                text = str(content)
+            if text:
+                yield text
 
     async def run(
         self, user_input: str, conversation_id: UUID | None = None, stream: bool = False

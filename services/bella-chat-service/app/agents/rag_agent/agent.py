@@ -33,6 +33,9 @@ if TYPE_CHECKING:
     from langchain_core.language_models.chat_models import BaseChatModel
 
 
+_logger = GetAppLogger().get_logger()
+
+
 class RAGAgent(BaseAgent):
     """A retrieval-augmented generation (RAG) agent implementation.
 
@@ -52,7 +55,7 @@ class RAGAgent(BaseAgent):
         self.vector_store = get_app_vector_store()
         self._logger = GetAppLogger().get_logger()
 
-    async def _find_relevant_contexts(self, state: State) -> dict:
+    async def _retrieve_relevant_nodes(self, state: State) -> dict:
         """Find relevant contexts from the vector store based on the question.
 
         Args:
@@ -65,7 +68,7 @@ class RAGAgent(BaseAgent):
         relevant_docs = self.vector_store.similarity_search(query=question, k=3)
         self._logger.debug(f"Found {len(relevant_docs)} relevant documents for the question.")
 
-        return {"context": relevant_docs}
+        return {"retrieved_nodes": relevant_docs}
 
     async def _generate_response(self, state: State) -> dict:
         """Generate a response based on user input.
@@ -78,13 +81,20 @@ class RAGAgent(BaseAgent):
         """
         # Frame context from relevant documents
         context = {}
-        for doc, score in state["context"]:
+        sources = set()
+        for doc, score in state["retrieved_nodes"]:
             context[doc.metadata.get("id", str(uuid4()))] = {
                 "page_content": doc.page_content,
                 "score": score,
                 "source": doc.metadata.get("source", "unknown"),
                 "metadata": doc.metadata,
             }
+            if doc.metadata.get("source"):
+                sources.add(doc.metadata.get("source"))
+        _logger.debug(f"Collected {len(sources)} unique sources from relevant documents: {len(context)}")
+
+        # Create numbered sources list
+        sources_list = {f"Source {i + 1}": source for i, source in enumerate(sources)}
 
         # Construct messages for the LLM
         messages = [
@@ -95,13 +105,18 @@ class RAGAgent(BaseAgent):
                 content=GENERATE_RESPONSE_PROMPT_TEMPLATE.format(
                     question=state["messages"][-1].content,
                     context=json.dumps(context, indent=2),
+                    sources=json.dumps(sources_list, indent=2),
                 )
             ),
         ]
         if len(state["messages"]) > 1:
             messages += state["messages"][:-1]
 
-        return {"messages": [await self.model.ainvoke(messages)]}
+        _logger.info("Generating response for your query...")
+        return {
+            "messages": [await self.model.ainvoke(messages)],
+            "sources": sources_list,
+        }
 
     def _build_graph(self):
         """Build the state graph for the agent."""
@@ -109,7 +124,7 @@ class RAGAgent(BaseAgent):
         self.graph = StateGraph(State)
 
         # Add the nodes
-        self.graph.add_node("find_relevant_contexts", self._find_relevant_contexts)
+        self.graph.add_node("find_relevant_contexts", self._retrieve_relevant_nodes)
         self.graph.add_node("generate_response", self._generate_response)
 
         # Add edges
@@ -134,14 +149,23 @@ if __name__ == "__main__":
     # Example usage
     import asyncio
 
+    from langchain_google_genai import ChatGoogleGenerativeAI
     from langchain_ollama import ChatOllama
+
+    provider = "google"
 
     async def _test_agent():
         """Internal test function for the RAGAgent."""
-        chat_model = ChatOllama(model="qwen3:4b", temperature=0.7)
+        if provider == "google":
+            chat_model = ChatGoogleGenerativeAI(model="models/gemini-3.1-flash-lite-preview", temperature=0.1)
+        else:
+            chat_model = ChatOllama(model="qwen3.5:4b", temperature=0.1, num_ctx=32000)
+
         agent = RAGAgent(model=chat_model)
         agent._display_graph()
-        async for chunk in await agent.run(user_input="Hello, tell me about Key's Experience?", stream=True):
-            print(chunk, end="", flush=True)
+
+        response = await agent.run(user_input="Hello, tell me about Key's Experience?", stream=True)
+        async for token in response:
+            print(token, end="", flush=True)
 
     asyncio.run(_test_agent())

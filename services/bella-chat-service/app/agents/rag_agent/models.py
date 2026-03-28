@@ -11,7 +11,8 @@ class State(TypedDict):
     """State representation for the RAG agent."""
 
     messages: Annotated[list, add_messages]
-    context: list
+    retrieved_nodes: list
+    sources: list
 
 
 class RAGAgentInfo(BaseModel):
