@@ -5,7 +5,6 @@ import { ArrowBack as ArrowLeft, Delete as Trash2, Chat as ChatIcon } from '@mui
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { LoadingStatus } from '@/components/LoadingStatus';
-import ModernHeader from '@/components/ModernHeader';
 import { bellaChatClient } from '@/api/clients/bella-chat-client';
 
 interface Message {
@@ -116,12 +115,10 @@ export default function ChatPage() {
         flexDirection: 'column',
         background: (theme) =>
           theme.palette.mode === 'light'
-            ? 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)'
-            : 'linear-gradient(135deg, #1f2937 0%, #064e3b 100%)',
+            ? 'linear-gradient(135deg, #f5f8fa 0%, #e0eef7 100%)'
+            : 'linear-gradient(135deg, #111827 0%, #0b2d47 100%)',
       }}
     >
-      <ModernHeader />
-
       <Container
         maxWidth="md"
         sx={{
@@ -220,7 +217,7 @@ export default function ChatPage() {
         </Paper>
 
         {/* Input Area - fixed at bottom */}
-        <Box sx={{ flexShrink: 0, bgcolor: 'background.default', pt: 2 }}>
+        <Box sx={{ flexShrink: 0, pt: 2 }}>
           <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
           <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 1.5 }}>
             Press Enter to send, Shift+Enter for new line

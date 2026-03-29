@@ -1,78 +1,80 @@
 import { createTheme, type ThemeOptions } from '@mui/material/styles';
 
-// Define color palette matching the original emerald/cyan scheme
+// Palette derived from personal brand CSS variables
+// Light: deep teal primary (#1e5067), medium blue secondary (#108cc6)
+// Dark:  sky blue primary (#108cc6), lighter blue secondary (#29afee)
 const lightPalette = {
   mode: 'light' as const,
   primary: {
-    main: '#10b981', // emerald-500
-    light: '#34d399', // emerald-400
-    dark: '#059669', // emerald-600
+    main: '#1e5067',
+    light: '#235c76',
+    dark: '#153848',
     contrastText: '#ffffff',
   },
   secondary: {
-    main: '#06b6d4', // cyan-500
-    light: '#22d3ee', // cyan-400
-    dark: '#0891b2', // cyan-600
+    main: '#108cc6',
+    light: '#29afee',
+    dark: '#0b628b',
     contrastText: '#ffffff',
   },
   background: {
-    default: '#ffffff',
+    default: '#f5f8fa',
     paper: '#ffffff',
   },
   text: {
-    primary: '#1f2937', // gray-800
-    secondary: '#6b7280', // gray-500
+    primary: '#1a2e3b',
+    secondary: '#4a6578',
   },
   error: {
-    main: '#ef4444', // red-500
+    main: '#ef4444',
   },
   warning: {
-    main: '#f59e0b', // amber-500
+    main: '#f59e0b',
   },
   info: {
-    main: '#3b82f6', // blue-500
+    main: '#108cc6',
   },
   success: {
-    main: '#10b981', // emerald-500
+    main: '#10b981',
   },
-  divider: '#e5e7eb', // gray-200
+  divider: '#dde6ed',
 };
 
 const darkPalette = {
   mode: 'dark' as const,
   primary: {
-    main: '#34d399', // emerald-400 (lighter for dark mode)
-    light: '#6ee7b7', // emerald-300
-    dark: '#10b981', // emerald-500
-    contrastText: '#1f2937',
+    main: '#108cc6',
+    light: '#29afee',
+    dark: '#0b628b',
+    contrastText: '#ffffff',
   },
   secondary: {
-    main: '#22d3ee', // cyan-400
-    light: '#67e8f9', // cyan-300
-    dark: '#06b6d4', // cyan-500
-    contrastText: '#1f2937',
+    main: '#29afee',
+    light: '#67e8f9',
+    dark: '#108cc6',
+    contrastText: '#1a2e3b',
   },
   background: {
-    default: '#1f2937', // gray-800
-    paper: '#374151', // gray-700
+    default: '#111827',
+    paper: '#1e2d3d',
   },
   text: {
-    primary: '#f9fafb', // gray-50
-    secondary: '#9ca3af', // gray-400
+    primary: '#e2eaf2',
+    secondary: '#8aa3b8',
   },
   error: {
-    main: '#f87171', // red-400
+    main: '#f87171',
   },
   warning: {
-    main: '#fbbf24', // amber-400
+    main: '#fbbf24',
   },
   info: {
-    main: '#60a5fa', // blue-400
+    main: '#29afee',
   },
   success: {
-    main: '#34d399', // emerald-400
+    main: '#34d399',
   },
-  divider: '#4b5563', // gray-600
+  divider: '#2d4157',
 };
 
 const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
@@ -173,7 +175,7 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
       styleOverrides: {
         root: {
           boxShadow: 'none',
-          borderBottom: mode === 'light' ? '1px solid #e5e7eb' : '1px solid #4b5563',
+          borderBottom: mode === 'light' ? '1px solid #dde6ed' : '1px solid #2d4157',
         },
       },
     },
