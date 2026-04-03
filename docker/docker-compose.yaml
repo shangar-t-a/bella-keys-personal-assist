@@ -1,8 +1,10 @@
 name: bella-keys-personal-assist
 
-# Backend-only compose for Electron development.
-# The UI is served by the Electron app (npm run dev:electron).
-# Run with: docker-compose -f docker-compose.electron.yaml up -d
+# Profiles:
+#   (none)    — postgres + expense-manager-service (always on)
+#   bella     — bella-chat-service + qdrant + phoenix (tracing)
+#   web       — UI with full nginx config (bella-chat + EMS proxied)
+#   ems-web   — UI with EMS-only nginx config
 
 services:
   postgres:
@@ -23,7 +25,7 @@ services:
       - bella-keys-network
 
   expense-manager-service:
-    build: ./services/expense-manager-service
+    build: ../services/expense-manager-service
     container_name: expense-manager-service
     ports:
       - "8000:8000"
@@ -36,12 +38,14 @@ services:
       - STORAGE_TYPE=${EMS_STORAGE_TYPE}
       - DATABASE_URL=${EMS_DATABASE_URL}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - bella-keys-network
 
   bella-chat-service:
-    build: ./services/bella-chat-service
+    profiles: [bella]
+    build: ../services/bella-chat-service
     container_name: bella-chat-service
     ports:
       - "5000:5000"
@@ -74,27 +78,57 @@ services:
       - bella-keys-network
 
   qdrant:
+    profiles: [bella]
     image: qdrant/qdrant:latest
     container_name: qdrant
     ports:
       - "6333:6333" # REST API
       - "6334:6334" # gRPC API
     volumes:
-      - ./services/.db/qdrant/storage:/qdrant/storage
+      - ../services/.db/qdrant/storage:/qdrant/storage
     networks:
       - bella-keys-network
 
   phoenix:
+    profiles: [bella]
     image: arizephoenix/phoenix:latest
     container_name: phoenix
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - 6006:6006 # PHOENIX_PORT
       - 4317:4317 # PHOENIX_GRPC_PORT
       - 9090:9090 # [Optional] PROMETHEUS PORT IF ENABLED
     environment:
       - PHOENIX_SQL_DATABASE_URL=postgresql://${ARIZE_PG_DB_USER}:${ARIZE_PG_DB_PASSWORD}@${ARIZE_PG_DB_HOST}:5432/${ARIZE_PG_DB_NAME}
+    networks:
+      - bella-keys-network
+
+  # Full UI: proxies both /api/ems and /api/bella-chat
+  keys-personal-assist-ui:
+    profiles: [web]
+    build: ../keys-personal-assist-ui
+    container_name: keys-personal-assist-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - expense-manager-service
+      - bella-chat-service
+    networks:
+      - bella-keys-network
+
+  # EMS-only UI: proxies /api/ems only (no bella-chat block)
+  keys-personal-assist-ems-ui:
+    profiles: [ems-web]
+    build: ../keys-personal-assist-ui
+    container_name: keys-personal-assist-ems-ui
+    ports:
+      - "3000:80"
+    volumes:
+      - ../keys-personal-assist-ui/nginx.ems.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - expense-manager-service
     networks:
       - bella-keys-network
 

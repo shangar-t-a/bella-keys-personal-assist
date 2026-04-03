@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
-
-const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : BrowserRouter;
 import { Toaster } from 'sonner';
 import { Box, CircularProgress } from '@mui/material';
 import { ThemeProvider } from '@/theme/ThemeProvider';
+import AppShell from '@/components/AppShell';
+
+const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : BrowserRouter;
 
 // Lazy load all route components for code splitting
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -28,14 +29,16 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
-          </Routes>
-        </Suspense>
+        <AppShell>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
+            </Routes>
+          </Suspense>
+        </AppShell>
         <Toaster position="top-right" richColors />
       </Router>
     </ThemeProvider>

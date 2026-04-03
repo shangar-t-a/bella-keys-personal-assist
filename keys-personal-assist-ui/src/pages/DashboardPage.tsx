@@ -1,7 +1,6 @@
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Container, Card, CardContent, Button } from '@mui/material';
 import { TrendingUp, ArrowForward as ArrowRight } from '@mui/icons-material';
-import ModernHeader from '@/components/ModernHeader';
 
 export default function DashboardPage() {
   return (
@@ -10,12 +9,10 @@ export default function DashboardPage() {
         minHeight: '100vh',
         background: (theme) =>
           theme.palette.mode === 'light'
-            ? 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)'
-            : 'linear-gradient(135deg, #1f2937 0%, #064e3b 100%)',
+            ? 'linear-gradient(135deg, #f5f8fa 0%, #e0eef7 100%)'
+            : 'linear-gradient(135deg, #111827 0%, #0b2d47 100%)',
       }}
     >
-      <ModernHeader />
-
       <Container maxWidth="lg" sx={{ py: 12 }}>
         {/* Header Section */}
         <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto', mb: 12 }}>
@@ -32,7 +29,7 @@ export default function DashboardPage() {
             <Box
               component="span"
               sx={{
-                background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+                background: 'linear-gradient(135deg, #1e5067 0%, #108cc6 100%)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',

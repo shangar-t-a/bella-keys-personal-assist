@@ -39,7 +39,6 @@ import {
   Payments,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
-import ModernHeader from '@/components/ModernHeader';
 import { emsClient } from '@/api/clients/ems-client';
 import type {
   SpendingAccountEntryWithCalculatedFieldsResponse,
@@ -339,7 +338,6 @@ export default function SpendingAccountSummaryPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <ModernHeader />
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
