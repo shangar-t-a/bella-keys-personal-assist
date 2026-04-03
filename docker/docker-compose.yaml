@@ -68,12 +68,42 @@ services:
       - QDRANT_URL=${QDRANT_URL}
       # Keys Personal Wiki Agent Settings
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
+      # EMS MCP Server Settings
+      - EMS_MCP_SERVER_URL=http://ems-mcp-server:8001/mcp
       # Arize Settings
       - ARIZE_ENABLED=${ARIZE_ENABLED}
       - ARIZE_TRACES_URL=${ARIZE_TRACES_URL}
       - ARIZE_PROJECT_NAME=${ARIZE_PROJECT_NAME}
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_started
+      ems-mcp-server:
+        condition: service_healthy
+    networks:
+      - bella-keys-network
+
+  ems-mcp-server:
+    profiles: [bella]
+    build: ../mcps/ems-mcp-server
+    container_name: ems-mcp-server
+    ports:
+      - "8001:8001"
+    environment:
+      - EMS_BASE_URL=http://expense-manager-service:8000
+      - HOST=0.0.0.0
+      - PORT=8001
+    depends_on:
+      - expense-manager-service
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'python3 -c "import socket,sys;s=socket.socket();s.settimeout(2);e=s.connect_ex((''localhost'',8001));s.close();sys.exit(e)"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - bella-keys-network
 
