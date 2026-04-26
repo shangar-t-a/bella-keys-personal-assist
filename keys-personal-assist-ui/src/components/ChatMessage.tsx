@@ -1,14 +1,17 @@
 import { Box, Paper, Avatar } from '@mui/material';
 import { Chat as MessageCircle, AutoAwesome as Sparkles } from '@mui/icons-material';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { ThinkingSteps } from './ThinkingSteps';
+import type { ThinkingStep } from '@/types/chat';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
   content: string;
   isStreaming?: boolean;
+  thinkingSteps?: ThinkingStep[];
 }
 
-export function ChatMessage({ role, content, isStreaming }: ChatMessageProps) {
+export function ChatMessage({ role, content, isStreaming, thinkingSteps }: ChatMessageProps) {
   const isUser = role === 'user';
 
   return (
@@ -75,6 +78,9 @@ export function ChatMessage({ role, content, isStreaming }: ChatMessageProps) {
           </Box>
         ) : (
           <Box sx={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
+            {thinkingSteps && thinkingSteps.length > 0 && (
+              <ThinkingSteps steps={thinkingSteps} isStreaming={isStreaming ?? false} />
+            )}
             <MarkdownRenderer content={content} />
           </Box>
         )}

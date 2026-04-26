@@ -18,7 +18,6 @@ from langgraph.graph import (
 )
 
 from app.agents.base_agent import BaseAgent
-from app.agents.prompts import ABOUT_BELLA_SYSTEM_PROMPT
 from app.agents.rag_agent.models import State
 from app.agents.rag_agent.prompts import (
     GENERATE_RESPONSE_PROMPT_TEMPLATE,
@@ -54,6 +53,16 @@ class RAGAgent(BaseAgent):
         super().__init__(model=model)
         self.vector_store = get_app_vector_store()
         self._logger = GetAppLogger().get_logger()
+
+    def _compile(self):
+        """Compile the RAG agent without a checkpointer for per-invocation pattern.
+
+        When used as a subgraph/tool, the RAG agent should not have its own
+        checkpointer - it inherits from the parent (orchestrator) for per-invocation
+        persistence. Each call to the RAG tool starts fresh.
+        """
+        if self.graph:
+            self.chain = self.graph.compile(checkpointer=None)
 
     async def _retrieve_relevant_nodes(self, state: State) -> dict:
         """Find relevant contexts from the vector store based on the question.
@@ -98,9 +107,7 @@ class RAGAgent(BaseAgent):
 
         # Construct messages for the LLM
         messages = [
-            SystemMessage(
-                content=ABOUT_BELLA_SYSTEM_PROMPT + "\nAgent Role: RAG Agent\n" + RAG_AGENT_SYSTEM_PROMPT + "\n"
-            ),
+            SystemMessage(content=RAG_AGENT_SYSTEM_PROMPT),
             HumanMessage(
                 content=GENERATE_RESPONSE_PROMPT_TEMPLATE.format(
                     question=state["messages"][-1].content,

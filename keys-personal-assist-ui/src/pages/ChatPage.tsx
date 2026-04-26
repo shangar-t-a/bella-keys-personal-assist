@@ -6,19 +6,15 @@ import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { LoadingStatus } from '@/components/LoadingStatus';
 import { bellaChatClient } from '@/api/clients/bella-chat-client';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  isStreaming?: boolean;
-}
+import { parseSseChunk } from '@/types/chat';
+import type { ChatMessage as ChatMessageType, ThinkingStep } from '@/types/chat';
 
 export default function ChatPage() {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Bella is thinking...');
+  const [conversationId] = useState(() => crypto.randomUUID());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +33,7 @@ export default function ChatPage() {
     if (!cleanedMessage) return;
 
     // Add user message
-    const userMessage: Message = {
+    const userMessage: ChatMessageType = {
       id: Date.now().toString(),
       role: 'user',
       content: cleanedMessage,
@@ -48,21 +44,18 @@ export default function ChatPage() {
     setLoadingStatus('Bella is thinking...');
 
     try {
-      const response = await bellaChatClient.sendMessage(cleanedMessage);
+      const response = await bellaChatClient.sendMessage(cleanedMessage, conversationId);
 
       if (!response.ok) {
         throw new Error('Failed to get response');
       }
 
-      // Handle streaming response
       const reader = response.body?.getReader();
       if (!reader) {
         throw new Error('No response body');
       }
 
-      let assistantMessage = '';
       const assistantId = (Date.now() + 1).toString();
-
       setMessages((prev) => [
         ...prev,
         {
@@ -70,23 +63,110 @@ export default function ChatPage() {
           role: 'assistant',
           content: '',
           isStreaming: true,
+          thinkingSteps: [],
         },
       ]);
 
       const decoder = new TextDecoder();
+      let buffer = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        assistantMessage += chunk;
+        buffer += decoder.decode(value, { stream: true });
 
-        setMessages((prev) =>
-          prev.map((msg) => (msg.id === assistantId ? { ...msg, content: assistantMessage, isStreaming: true } : msg))
-        );
+        // Process complete SSE events (terminated by \n\n)
+        const boundary = buffer.lastIndexOf('\n\n');
+        if (boundary === -1) continue;
+
+        const toProcess = buffer.slice(0, boundary + 2);
+        buffer = buffer.slice(boundary + 2);
+
+        const events = parseSseChunk(toProcess);
+
+        for (const event of events) {
+          if (event.type === 'thinking') {
+            const step: ThinkingStep = {
+              kind: 'thinking',
+              label: event.content,
+            };
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? { ...msg, thinkingSteps: [...(msg.thinkingSteps ?? []), step] }
+                  : msg
+              )
+            );
+          } else if (event.type === 'tool_call') {
+            setLoadingStatus(`Calling ${event.label}…`);
+            const step: ThinkingStep = {
+              kind: 'tool_call',
+              id: event.id,
+              name: event.name,
+              label: event.label,
+              detail: event.args || undefined,
+              isSubAgent: event.is_sub_agent,
+            };
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? { ...msg, thinkingSteps: [...(msg.thinkingSteps ?? []), step] }
+                  : msg
+              )
+            );
+          } else if (event.type === 'tool_result') {
+            const isError =
+              event.content.startsWith('Error') ||
+              /\b(4\d\d|5\d\d)\b/.test(event.content) ||
+              event.content.toLowerCase().includes('error calling tool');
+            const step: ThinkingStep = {
+              kind: 'tool_result',
+              id: event.id,
+              name: event.name,
+              label: event.label,
+              detail: event.content,
+              isSubAgent: event.is_sub_agent,
+              isError,
+            };
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? { ...msg, thinkingSteps: [...(msg.thinkingSteps ?? []), step] }
+                  : msg
+              )
+            );
+          } else if (event.type === 'response') {
+            setIsLoading(false);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? { ...msg, content: msg.content + event.content }
+                  : msg
+              )
+            );
+          } else if (event.type === 'error') {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId
+                  ? { ...msg, content: `Error: ${event.content}`, isStreaming: false }
+                  : msg
+              )
+            );
+          } else if (event.type === 'done') {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantId ? { ...msg, isStreaming: false } : msg
+              )
+            );
+          }
+        }
       }
 
-      setMessages((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, isStreaming: false } : msg)));
+      // Ensure streaming is marked done even if 'done' event wasn't parsed
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === assistantId ? { ...msg, isStreaming: false } : msg))
+      );
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages((prev) => [
@@ -207,7 +287,13 @@ export default function ChatPage() {
             ) : (
               <>
                 {messages.map((msg) => (
-                  <ChatMessage key={msg.id} role={msg.role} content={msg.content} isStreaming={msg.isStreaming} />
+                  <ChatMessage
+                    key={msg.id}
+                    role={msg.role}
+                    content={msg.content}
+                    isStreaming={msg.isStreaming}
+                    thinkingSteps={msg.thinkingSteps}
+                  />
                 ))}
                 {isLoading && <LoadingStatus message={loadingStatus} />}
                 <div ref={messagesEndRef} />
