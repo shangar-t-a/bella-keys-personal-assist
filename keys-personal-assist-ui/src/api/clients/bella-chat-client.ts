@@ -15,17 +15,18 @@ class BellaChatClient {
   }
 
   /**
-   * Send a message and get a streaming response
+   * Send a message and get a streaming SSE response.
    * @param message - The user message to send
-   * @returns Response stream for reading chunks
+   * @param conversationId - UUID that groups messages into a conversation
+   * @returns Raw fetch Response whose body is a text/event-stream
    */
-  async sendMessage(message: string): Promise<Response> {
+  async sendMessage(message: string, conversationId: string): Promise<Response> {
     return fetch(`${this.baseURL}/v1/chat/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, conversation_id: conversationId }),
     });
   }
 }

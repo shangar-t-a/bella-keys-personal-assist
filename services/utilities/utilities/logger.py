@@ -89,12 +89,16 @@ class GetAppLogger:
         """Configure the logger settings."""
         self._logger = logging.getLogger(self._name)
         self._logger.setLevel(self._DEFAULT_ROOT_LOG_LEVEL)
+        # Prevent log records from bubbling up to the root logger (avoids
+        # duplicate output when uvicorn/gunicorn also attaches a root handler).
+        self._logger.propagate = False
 
         # Create formatter and add it to the handlers
         formatter = logging.Formatter(self._LOG_FORMAT)
 
-        # Remove existing handlers to avoid duplicate logs
-        for handler in self._logger.handlers:
+        # Remove existing handlers to avoid duplicate logs (iterate over a
+        # copy so that removing items does not skip any entries).
+        for handler in self._logger.handlers[:]:
             self._logger.removeHandler(handler)
 
         # Create console handler

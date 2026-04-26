@@ -11,7 +11,10 @@ async def list_spending_entries(
     month: Annotated[int | None, "Filter by month (1-12). Omit to include all months."] = None,
     year: Annotated[int | None, "Filter by year (e.g. 2025). Omit to include all years."] = None,
     account_name: Annotated[str | None, "Filter by account name (e.g. 'ICICI'). Omit for all accounts."] = None,
-    sort_by: Annotated[str, "Field to sort by: 'year', 'month', 'currentBalance', etc."] = "year",
+    sort_by: Annotated[
+        str,
+        "Single field to sort by. Must be exactly one of: 'year', 'month', 'account_name', 'starting_balance', 'current_balance', 'current_credit', 'balance_after_credit', 'total_spent'. Do NOT combine multiple fields.",
+    ] = "year",
     sort_order: Annotated[str, "Sort direction: 'asc' or 'desc'."] = "asc",
 ) -> dict[str, Any]:
     """Retrieve paginated spending entries across all accounts.
@@ -48,7 +51,10 @@ async def list_spending_entries_for_account(
     size: Annotated[int, "Number of entries per page (1-100). Defaults to 12."] = 12,
     month: Annotated[int | None, "Filter by month (1-12). Omit to include all months."] = None,
     year: Annotated[int | None, "Filter by year (e.g. 2025). Omit to include all years."] = None,
-    sort_by: Annotated[str, "Field to sort by: 'year', 'month', 'currentBalance', etc."] = "year",
+    sort_by: Annotated[
+        str,
+        "Single field to sort by. Must be exactly one of: 'year', 'month', 'account_name', 'starting_balance', 'current_balance', 'current_credit', 'balance_after_credit', 'total_spent'. Do NOT combine multiple fields.",
+    ] = "year",
     sort_order: Annotated[str, "Sort direction: 'asc' or 'desc'."] = "asc",
 ) -> dict[str, Any]:
     """Retrieve paginated spending entries for a specific account.

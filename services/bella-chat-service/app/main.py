@@ -1,5 +1,6 @@
 """Bella Chat Application."""
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -10,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from openinference.instrumentation.langchain import LangChainInstrumentor
 from phoenix.otel import register
 
+from app.dependencies.agents import create_orchestrator_agent
 from app.dependencies.ai_dependencies import (
     get_app_embedding_client,
     get_app_synthesis_llm_client,
@@ -18,6 +20,11 @@ from app.dependencies.ai_dependencies import (
 )
 from app.routers import app_router
 from app.settings import get_settings
+
+# Suppress noisy schema-conversion warnings from the Gemini tool adapter.
+# LangChain logs a WARNING for every tool schema field it drops (e.g.
+# "additionalProperties"), which floods the console when MCP tools are loaded.
+logging.getLogger("langchain_google_genai").setLevel(logging.ERROR)
 
 
 def setup_middlewares(app: FastAPI, settings) -> None:
@@ -52,7 +59,9 @@ async def lifespan(app: FastAPI):
     # Set application start time
     app.state.start_time = datetime.now()
 
-    yield
+    async with create_orchestrator_agent() as orchestrator_agent:
+        app.state.orchestrator_agent = orchestrator_agent
+        yield
 
 
 def create_ai_dependencies(settings):

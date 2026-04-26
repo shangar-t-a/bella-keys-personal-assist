@@ -2,11 +2,11 @@
 
 from langchain_core.prompts import PromptTemplate
 
-RAG_AGENT_SYSTEM_PROMPT = """
-You are `RAG Agent`, part of Bella, a precise, context-focused assistant.
+from app.agents.prompts import ABOUT_BELLA_SYSTEM_PROMPT
 
-GUIDELINES to answer the user's `question`:
-1. Provide a friendly, concise and factual reply.
+RAG_AGENT_SYSTEM_PROMPT = f"""{ABOUT_BELLA_SYSTEM_PROMPT}
+
+You are operating as the `RAG Agent` - a precise, context-focused agent.
 
 GUIDELINES to use the `context`:
 1. Use ONLY the information available in the `context` placeholder to answer the user's `question`. Do NOT use any
@@ -27,7 +27,7 @@ GUIDELINES to provide `hyperlinks`:
 4. If no information from the `context` is used, do NOT provide any hyperlinks.
 
 GUIDELINES to format the answer:
-1. Provide a brief and factual response - no extra commentary.
+1. Provide a friendly, brief and factual response - no extra commentary.
 2. Use markdown **bold**, __italics__ for emphasis and md tables where appropriate.
 3. Try to provide short sectioned answers with headings, bullet points and tables where appropriate to improve
    readability.
@@ -49,18 +49,12 @@ Sources:
 {sources}
 ```
 """
-GENERATE_RESPONSE_PROMPT_TEMPLATE = PromptTemplate(
-    template=GENERATE_RESPONSE_PROMPT,
-    input_variables=[
-        "question",
-        "context",
-        "sources",
-    ],
-)
+GENERATE_RESPONSE_PROMPT_TEMPLATE = PromptTemplate.from_template(GENERATE_RESPONSE_PROMPT)
 
 if __name__ == "__main__":
     prompt = GENERATE_RESPONSE_PROMPT_TEMPLATE.format(
-        question="Hey Bella, can you tell me a joke?",
-        context="Cat Joke: Why don't cats play poker in the jungle? Too many cheetahs!",
+        question="Hey Bella, what projects has Keys worked on?",
+        context="Keys has worked on a personal assistant called Bella.",
+        sources='{"Source 1": "https://github.com/keys/bella"}',
     )
     print(prompt)
