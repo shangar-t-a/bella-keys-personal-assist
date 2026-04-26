@@ -57,6 +57,11 @@ ChatBot.
    docker-compose up -d
    ```
 
+   **Note:** The service uses an `entrypoint.sh` script that:
+   - Waits for PostgreSQL to be ready (60s timeout)
+   - Runs Alembic database migrations automatically
+   - Starts the FastAPI application
+
 ### Bella ChatBot Application
 
 1. Bella Chat Bot is not ready for containerization yet. To launch the Bella ChatBot service, navigate to the

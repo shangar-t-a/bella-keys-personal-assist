@@ -7,7 +7,6 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.infrastructures.postgres_db.database import init_db
 from app.routers.v1 import router as v1_router
 from app.settings import get_settings
 
@@ -29,9 +28,6 @@ async def lifespan(app: FastAPI):
     """Application lifespan context manager."""
     # Set application start time
     app.state.start_time = datetime.now()
-
-    # Initialize database
-    await init_db()
 
     yield
 

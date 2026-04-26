@@ -32,7 +32,10 @@ ENV PATH="/app/.venv/bin:$PATH" \
 COPY --from=builder /app/.venv ./.venv
 
 COPY app ./app
+COPY entrypoint.sh ./entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8001
 
-CMD ["python", "app/main.py"]
+CMD ["/app/entrypoint.sh"]

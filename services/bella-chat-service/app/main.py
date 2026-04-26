@@ -59,6 +59,8 @@ async def lifespan(app: FastAPI):
     # Set application start time
     app.state.start_time = datetime.now()
 
+    # Initialize orchestrator agent with async resources (Postgres checkpointer, MCP client)
+    # These must remain in lifespan as they are async context managers requiring proper cleanup
     async with create_orchestrator_agent() as orchestrator_agent:
         app.state.orchestrator_agent = orchestrator_agent
         yield

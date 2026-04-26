@@ -28,6 +28,7 @@ services:
       - PORT=${PORT}
       - DEBUG=${DEBUG}
       - DATABASE_URL=${DATABASE_URL}
+      - PG_DB_HOST=${PG_DB_HOST}
     depends_on:
       - postgres
     networks:

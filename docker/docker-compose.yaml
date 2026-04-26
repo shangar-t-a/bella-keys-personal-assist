@@ -37,6 +37,7 @@ services:
       # Database configurations
       - STORAGE_TYPE=${EMS_STORAGE_TYPE}
       - DATABASE_URL=${EMS_DATABASE_URL}
+      - PG_DB_HOST=${EMS_PG_DB_HOST}
     depends_on:
       postgres:
         condition: service_healthy

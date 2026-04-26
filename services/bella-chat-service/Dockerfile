@@ -30,11 +30,17 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Install postgresql-client for pg_isready
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/.venv ./.venv
 
 # optional
 COPY app ./app
+COPY entrypoint.sh ./entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 5000
 
-CMD ["python", "app/main.py"]
+CMD ["/app/entrypoint.sh"]

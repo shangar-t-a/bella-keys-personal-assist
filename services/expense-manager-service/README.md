@@ -51,7 +51,7 @@ expense-manager-service/
 │   │       ├── alembic/                                     # Alembic migrations
 │   │       ├── alembic.ini                                  # Alembic config
 │   │       ├── models/                                      # SQLAlchemy ORM models (account, period, spending_entry)
-│   │       ├── database.py                                  # Engine, session factory, Base, init_db/drop_db
+│   │       ├── database.py                                  # Engine, session factory, Base, init_db/drop_db (for tests)
 │   │       └── *.py                                         # Postgres repository implementations
 │   ├── routers/                                             # Presentation/API layer
 │   │   ├── v1/                                              # API version 1
