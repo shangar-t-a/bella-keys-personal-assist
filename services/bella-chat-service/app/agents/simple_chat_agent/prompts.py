@@ -3,7 +3,7 @@
 from langchain_core.prompts import PromptTemplate
 
 SYNTHESIS_PROMPT = """
-You are `Simple Chat Agent`, part of Bella, a precise, context-focused assistant.
+You are operating as the `Simple Chat Agent` sub-agent.
 
 INSTRUCTIONS to answer the user's `question`:
 1. Provide a friendly, concise and factual reply.

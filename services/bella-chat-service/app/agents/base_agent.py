@@ -9,6 +9,8 @@ from uuid import (
 
 from langgraph.checkpoint.memory import MemorySaver
 
+from utilities.logger import GetAppLogger
+
 if TYPE_CHECKING:
     from langchain_core.language_models.chat_models import BaseChatModel
     from langgraph.graph import StateGraph
@@ -28,6 +30,7 @@ class BaseAgent:
         self.graph: StateGraph = None
         self.chain: CompiledStateGraph = None
         self._memory = MemorySaver()
+        self._logger = GetAppLogger().get_logger()
         self._build_agent()
 
     def _build_agent(self):
@@ -67,26 +70,21 @@ class BaseAgent:
         return result_state["messages"][-1].content
 
     async def stream_response(self, user_input: str, conversation_id: UUID) -> AsyncGenerator[str]:
-        """Stream a response from the agent for the given user input.
-
-        Args:
-            user_input (str): The input message from the user.
-            conversation_id (UUID): The unique identifier for the conversation.
-
-        Yields:
-            AsyncGenerator[str, None]: An asynchronous generator yielding response chunks.
-        """
+        """Stream a response from the agent using LangGraph v2 format."""
         # Start the stream
         async for chunk in self.chain.astream(
             input={
                 "messages": [{"role": "user", "content": user_input}],
             },
             config={"configurable": {"thread_id": str(conversation_id) if conversation_id else str(uuid4())}},
-            stream_mode="messages",  # stream token events
+            stream_mode="messages",
+            version="v2",
         ):
-            # Each chunk is typically (message_chunk, metadata)
-            # message_chunk.content may be None or "" for some chunks
-            message, metadata = chunk
+            # v2 format: chunk is a StreamPart dict with type, ns, data
+            if chunk.get("type") != "messages":
+                continue
+
+            message, metadata = chunk["data"]
 
             # Normalize content: Ollama yields str, Gemini yields list[{"type": "text", "text": ...}]
             content = getattr(message, "content", None)

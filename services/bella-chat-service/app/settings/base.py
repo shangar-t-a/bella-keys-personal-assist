@@ -64,6 +64,35 @@ class BellaChatBaseSettings(BaseSettings):
     ARIZE_ENABLED: bool = True
     ARIZE_TRACES_URL: str = "http://localhost:6006/v1/traces"
     ARIZE_PROJECT_NAME: str = "bella-chat-service"
+    ARIZE_PG_DB_USER: str = "bella_chat_user"
+    ARIZE_PG_DB_PASSWORD: SecretStr = SecretStr("")
+    ARIZE_PG_DB_HOST: str = "localhost"
+    ARIZE_PG_DB_NAME: str = "bella_chat_arize_data"
 
     # Keys Personal Wiki Agent Settings
     QDRANT_COLLECTION_NAME: str = "keys-personal-wiki"
+
+    # EMS MCP Server Settings
+    EMS_MCP_SERVER_URL: str = "http://localhost:8001/mcp"
+
+    # Orchestrator Settings — LangGraph Postgres checkpointer
+    LANGGRAPH_PG_DB_USER: str = "bella_chat_user"
+    LANGGRAPH_PG_DB_PASSWORD: SecretStr = SecretStr("")
+    LANGGRAPH_PG_DB_HOST: str = "localhost"
+    LANGGRAPH_PG_DB_NAME: str = "bella_chat_checkpoints"
+    ORCHESTRATOR_MAX_ITERATIONS: int = 10
+
+    @property
+    def arize_pg_db_dsn(self) -> str:
+        """Construct the Arize Postgres DSN from individual credentials."""
+        password = self.ARIZE_PG_DB_PASSWORD.get_secret_value()
+        return f"postgresql://{self.ARIZE_PG_DB_USER}:{password}@{self.ARIZE_PG_DB_HOST}:5432/{self.ARIZE_PG_DB_NAME}"
+
+    @property
+    def langgraph_pg_db_dsn(self) -> str:
+        """Construct the LangGraph Postgres DSN from individual credentials."""
+        password = self.LANGGRAPH_PG_DB_PASSWORD.get_secret_value()
+        return (
+            f"postgresql://{self.LANGGRAPH_PG_DB_USER}:{password}"
+            f"@{self.LANGGRAPH_PG_DB_HOST}:5432/{self.LANGGRAPH_PG_DB_NAME}"
+        )
