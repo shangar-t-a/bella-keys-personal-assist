@@ -25,6 +25,7 @@ class ExpenseManagerBaseSettings(BaseSettings):
 
     # Database settings
     DATABASE_URL: SecretStr = SecretStr("")
+    PG_DB_HOST: str = "localhost"
     LOG_DB_QUERIES: bool = False
 
     # Logging settings

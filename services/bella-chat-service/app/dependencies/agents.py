@@ -48,7 +48,7 @@ async def create_orchestrator_agent():
     llm_client = get_app_synthesis_llm_client()
     rag_agent = get_rag_agent()
 
-    _logger.info(f"Connecting LangGraph checkpointer to: {settings.langgraph_pg_db_dsn[:50]}...")
+    _logger.info("Connecting LangGraph Postgres checkpointer...")
     async with AsyncPostgresSaver.from_conn_string(settings.langgraph_pg_db_dsn) as checkpointer:
         await checkpointer.setup()  # Idempotent — creates tables on first run
         _logger.info("LangGraph Postgres checkpointer initialised.")
