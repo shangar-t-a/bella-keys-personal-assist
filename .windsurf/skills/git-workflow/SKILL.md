@@ -39,7 +39,7 @@ When ready, create PR by:
 2. Get commits from feature branch after main: `git log main..HEAD`
 3. Analyze commits and create descriptive title
 4. Create PR: `gh pr create --title "<title>" --body "<summary>"`
-   1. Use descriptive title and comprehensive PR summary based on the changes made.
+   1. Use descriptive title and comprehensive PR summary based on the changes made. Title should not have conventional commit format.
 
 The AI should analyze the commits and create a custom descriptive title and comprehensive PR summary based on the changes made.
 
