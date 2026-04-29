@@ -1,0 +1,27 @@
+name: Build Keys Personal Assist UI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image tag (leave empty to use VERSION file)"
+        required: false
+        type: string
+  push:
+    paths:
+      - "keys-personal-assist-ui/VERSION"
+
+env:
+  REGISTRY: ghcr.io
+  REPO_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-docker-build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_path: ./keys-personal-assist-ui
+      image_name: keys-personal-assist-ui
+      tag: ${{ inputs.version != '' && inputs.version || format('{0}', github.sha) }}
