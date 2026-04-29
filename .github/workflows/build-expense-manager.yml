@@ -1,0 +1,43 @@
+name: Build Expense Manager Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image tag (leave empty to use VERSION file)'
+        required: false
+        type: string
+  push:
+    paths:
+      - 'services/expense-manager-service/VERSION'
+
+env:
+  REGISTRY: ghcr.io
+  REPO_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            VERSION=$(cat services/expense-manager-service/VERSION)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        uses: ./.github/workflows/reusable-docker-build.yml
+        with:
+          service_path: ./services/expense-manager-service
+          image_name: expense-manager-service
+          tag: ${{ steps.version.outputs.version }}

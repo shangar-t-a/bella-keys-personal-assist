@@ -1,0 +1,43 @@
+name: Build EMS MCP Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image tag (leave empty to use VERSION file)'
+        required: false
+        type: string
+  push:
+    paths:
+      - 'mcps/ems-mcp-server/VERSION'
+
+env:
+  REGISTRY: ghcr.io
+  REPO_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            VERSION=$(cat mcps/ems-mcp-server/VERSION)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        uses: ./.github/workflows/reusable-docker-build.yml
+        with:
+          service_path: ./mcps/ems-mcp-server
+          image_name: ems-mcp-server
+          tag: ${{ steps.version.outputs.version }}
