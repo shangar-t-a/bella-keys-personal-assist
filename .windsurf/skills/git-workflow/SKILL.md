@@ -20,6 +20,7 @@ Use conventional commit format with signoff from git config user info:
 1. Find and add relevant files: `git add <files>`
 2. Get user info: `git config user.name` and `git config user.email`
 3. Commit with signoff got from user info.
+4. Get confirmation from user before pushing to remote.
 
 Example:
 
