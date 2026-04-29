@@ -35,8 +35,18 @@ feat(auth): add user login endpoint
 
 When ready, create PR by:
 
-1. Get commits from feature branch after main: `git log main..HEAD`
-2. Analyze commits and create descriptive title
-3. Create PR: `gh pr create --title "<title>" --body "<summary>"`
+1. Check if a PR exists, if so, update it instead of creating a new one.
+2. Get commits from feature branch after main: `git log main..HEAD`
+3. Analyze commits and create descriptive title
+4. Create PR: `gh pr create --title "<title>" --body "<summary>"`
+   1. Use descriptive title and comprehensive PR summary based on the changes made.
 
 The AI should analyze the commits and create a custom descriptive title and comprehensive PR summary based on the changes made.
+
+## Updating a PR
+
+When updating a PR, follow the same workflow as creating a PR, but use `gh pr edit` to update the PR.
+
+1. Understand the changes made to the PR.
+2. Get existing PR description: `gh pr view <pr-number> --json body --jq '.body'`
+3. Update the PR description and title using `gh pr edit`.
