@@ -7,22 +7,6 @@ name: bella-keys-personal-assist
 #   ems-web   — UI with EMS-only nginx config
 
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres-database
-    environment:
-      - POSTGRES_USER=${EMS_PG_DB_USER}
-      - POSTGRES_PASSWORD=${EMS_PG_DB_PASSWORD}
-      - POSTGRES_DB=${EMS_PG_DB_NAME}
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - bella-keys-network
 
   expense-manager-service:
     build: ../services/expense-manager-service
@@ -38,9 +22,6 @@ services:
       - STORAGE_TYPE=${EMS_STORAGE_TYPE}
       - DATABASE_URL=${EMS_DATABASE_URL}
       - PG_DB_HOST=${EMS_PG_DB_HOST}
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - bella-keys-network
 
@@ -106,11 +87,7 @@ services:
     depends_on:
       - expense-manager-service
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'python3 -c "import socket,sys;s=socket.socket();s.settimeout(2);e=s.connect_ex((''localhost'',8001));s.close();sys.exit(e)"',
-        ]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/mcp"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -134,9 +111,6 @@ services:
     profiles: [bella]
     image: arizephoenix/phoenix:latest
     container_name: phoenix
-    depends_on:
-      postgres:
-        condition: service_healthy
     ports:
       - 6006:6006 # PHOENIX_PORT
       - 4317:4317 # PHOENIX_GRPC_PORT
