@@ -34,6 +34,7 @@ import {
     Menu,
 } from '@mui/icons-material';
 import { useThemeMode } from '@/theme/ThemeProvider';
+import { getAvailableServices } from '@/config/features';
 
 const DRAWER_WIDTH = 240;
 const MINI_WIDTH = 64;
@@ -57,33 +58,47 @@ interface NavSection {
     items: NavItem[];
 }
 
-const navSections: NavSection[] = [
-    {
-        section: 'Main',
-        items: [{ name: 'Home', href: '/', icon: Home, exact: true }],
-    },
-    {
-        section: 'Finance',
-        items: [
-            {
-                name: 'Dashboard',
-                href: '/dashboard',
-                icon: BarChart3,
-                children: [
-                    {
-                        name: 'Spending Summary',
-                        href: '/dashboard/spending-account-summary',
-                        icon: CreditCard,
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        section: 'AI',
-        items: [{ name: 'Bella Chat', href: '/chat', icon: MessageCircle }],
-    },
-];
+// Get dynamic navigation sections based on available services
+const getNavSections = (): NavSection[] => {
+    const services = getAvailableServices();
+    const sections: NavSection[] = [
+        {
+            section: 'Main',
+            items: [{ name: 'Home', href: '/', icon: Home, exact: true }],
+        },
+    ];
+
+    // Add Finance section if Expense Manager is enabled
+    if (services.expenseManager) {
+        sections.push({
+            section: 'Finance',
+            items: [
+                {
+                    name: 'Dashboard',
+                    href: '/dashboard',
+                    icon: BarChart3,
+                    children: [
+                        {
+                            name: 'Spending Summary',
+                            href: '/dashboard/spending-account-summary',
+                            icon: CreditCard,
+                        },
+                    ],
+                },
+            ],
+        });
+    }
+
+    // Add AI section if Bella Chat is enabled
+    if (services.bellaChat) {
+        sections.push({
+            section: 'AI',
+            items: [{ name: 'Bella Chat', href: '/chat', icon: MessageCircle }],
+        });
+    }
+
+    return sections;
+};
 
 const LINK_STYLE = { textDecoration: 'none', color: 'inherit', display: 'block' } as const;
 
@@ -95,6 +110,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     const { mode, toggleTheme } = useThemeMode();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const navSections = getNavSections();
 
     const isActive = (href: string, exact = false) =>
         exact

@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { Box, CircularProgress } from '@mui/material';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import AppShell from '@/components/AppShell';
+import { getAvailableServices } from '@/config/features';
 
 const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : BrowserRouter;
 
@@ -26,6 +27,8 @@ const LoadingFallback = () => (
 );
 
 function App() {
+  const services = getAvailableServices();
+
   return (
     <ThemeProvider>
       <Router>
@@ -33,9 +36,15 @@ function App() {
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
+              {services.bellaChat && <Route path="/chat" element={<ChatPage />} />}
+              {services.expenseManager && (
+                <>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
+                </>
+              )}
+              {/* Fallback route for disabled features */}
+              <Route path="*" element={<HomePage />} />
             </Routes>
           </Suspense>
         </AppShell>

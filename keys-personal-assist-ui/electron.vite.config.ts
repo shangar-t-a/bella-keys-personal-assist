@@ -29,14 +29,10 @@ export default defineConfig({
                     index: path.resolve(__dirname, 'index.html'),
                 },
                 output: {
-                    manualChunks: {
-                        'vendor-react': ['react', 'react-dom'],
-                        'vendor-router': ['react-router-dom'],
-                        'vendor-mui': ['@mui/material', '@emotion/react', '@emotion/styled'],
-                        'vendor-mui-icons': ['@mui/icons-material'],
-                        'vendor-markdown': ['react-markdown', 'react-syntax-highlighter', 'remark-breaks', 'remark-gfm'],
-                        'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-                        'vendor-utils': ['axios', 'date-fns', 'sonner'],
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            return 'vendor';
+                        }
                     },
                 },
             },

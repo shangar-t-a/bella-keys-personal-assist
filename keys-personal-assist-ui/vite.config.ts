@@ -17,20 +17,10 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Core vendor libraries
-            'vendor-react': ['react', 'react-dom'],
-            'vendor-router': ['react-router-dom'],
-            // MUI core components and styling
-            'vendor-mui': ['@mui/material', '@emotion/react', '@emotion/styled'],
-            // MUI icons (separate chunk due to size)
-            'vendor-mui-icons': ['@mui/icons-material'],
-            // Markdown rendering (only loaded on chat page)
-            'vendor-markdown': ['react-markdown', 'react-syntax-highlighter', 'remark-breaks', 'remark-gfm'],
-            // Form and validation libraries
-            'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-            // Utilities
-            'vendor-utils': ['axios', 'date-fns', 'sonner'],
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
           },
         },
       },
