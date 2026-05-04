@@ -14,6 +14,7 @@ Keys' personal expense manager service built with FastAPI, following Clean Archi
     - [Tests](#tests)
   - [4. Technology Stack \& Rationale](#4-technology-stack--rationale)
   - [Notes \& Best Practices](#notes--best-practices)
+  - [5. Hybrid Architecture \& Networking](#5-hybrid-architecture--networking)
 
 ## 1. Folder Structure (Backend)
 
@@ -165,5 +166,9 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 - **Extensibility:** Add new features by extending the appropriate layer, maintaining separation of concerns.
 - **Configuration:** Environment-specific settings are managed in `settings/` and `.env` files.
 - **Testing:** All tests are in `tests/`.
+
+## 5. Hybrid Architecture & Networking
+
+This service follows the project-wide **Hybrid "Inside-Out" Architecture**. When running in Docker, it does **not** provide its own database. Instead, it is configured to reach out to the host PC (via `host.docker.internal`) to find its PostgreSQL instance. This allows you to manage your data locally while keeping the application logic containerized.
 
 > This structure ensures maintainability, testability, and clear separation of concerns as the service evolves.
