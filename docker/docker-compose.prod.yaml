@@ -1,0 +1,149 @@
+name: bella-keys-personal-assist-prod
+
+# Production-ready Docker Compose for local deployment
+# Uses pre-built images from GitHub Container Registry
+
+services:
+  expense-manager-service:
+    image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/expense-manager-service:latest
+    container_name: expense-manager-service-prod
+    ports:
+      - "8000:8000"
+    environment:
+      # App configurations
+      - HOST=${EMS_HOST}
+      - PORT=${EMS_PORT}
+      - DEBUG=${EMS_DEBUG}
+      # Database configurations
+      - STORAGE_TYPE=${EMS_STORAGE_TYPE}
+      - DATABASE_URL=postgresql+asyncpg://${EMS_PG_DB_USER}:${EMS_PG_DB_PASSWORD}@${EMS_PG_DB_HOST:-host.docker.internal}:5432/${EMS_PG_DB_NAME}
+      - PG_DB_HOST=${EMS_PG_DB_HOST:-host.docker.internal}
+      - PG_DB_USER=${EMS_PG_DB_USER}
+      - PG_DB_PASSWORD=${EMS_PG_DB_PASSWORD}
+      - PG_DB_NAME=${EMS_PG_DB_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - bella-keys-network
+    restart: unless-stopped
+
+  bella-chat-service:
+    profiles: [bella, full]
+    image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/bella-chat-service:latest
+    container_name: bella-chat-service-prod
+    ports:
+      - "5000:5000"
+    environment:
+      # Bella Service Settings
+      - HOST=${BCS_HOST}
+      - PORT=${BCS_PORT}
+      - DEBUG=${BCS_DEBUG}
+      # AI Settings
+      - SYNTHESIS_MODEL_PROVIDER=${SYNTHESIS_MODEL_PROVIDER}
+      - SYNTHESIS_MODEL_NAME=${SYNTHESIS_MODEL_NAME}
+      - SYNTHESIS_MODEL_CTX_LENGTH=${SYNTHESIS_MODEL_CTX_LENGTH}
+      - EMBEDDING_MODEL_PROVIDER=${EMBEDDING_MODEL_PROVIDER}
+      - EMBEDDING_MODEL_NAME=${EMBEDDING_MODEL_NAME}
+      - EMBEDDING_MODEL_DIMENSION=${EMBEDDING_MODEL_DIMENSION}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Ollama Settings
+      - OLLAMA_URL=${OLLAMA_URL}
+      # QDRANT Settings
+      - QDRANT_URL=${QDRANT_URL:-http://host.docker.internal:6333}
+      # Keys Personal Wiki Agent Settings
+      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
+      # EMS MCP Server Settings
+      - EMS_MCP_SERVER_URL=http://ems-mcp-server:8001/mcp
+      # LangGraph Postgres Checkpointer
+      - LANGGRAPH_PG_DB_USER=${LANGGRAPH_PG_DB_USER}
+      - LANGGRAPH_PG_DB_PASSWORD=${LANGGRAPH_PG_DB_PASSWORD}
+      - LANGGRAPH_PG_DB_HOST=${LANGGRAPH_PG_DB_HOST:-host.docker.internal}
+      - LANGGRAPH_PG_DB_NAME=${LANGGRAPH_PG_DB_NAME}
+      - ORCHESTRATOR_MAX_ITERATIONS=${ORCHESTRATOR_MAX_ITERATIONS}
+    depends_on:
+      qdrant:
+        condition: service_started
+      ems-mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - bella-keys-network
+    restart: unless-stopped
+
+  ems-mcp-server:
+    profiles: [bella, full]
+    image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/ems-mcp-server:latest
+    container_name: ems-mcp-server-prod
+    ports:
+      - "8001:8001"
+    environment:
+      - EMS_BASE_URL=http://expense-manager-service:8000
+      - HOST=0.0.0.0
+      - PORT=8001
+    depends_on:
+      expense-manager-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/mcp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - bella-keys-network
+    restart: unless-stopped
+
+  qdrant:
+    profiles: [bella, full]
+    image: qdrant/qdrant:latest
+    container_name: qdrant-prod
+    ports:
+      - "6333:6333" # REST API
+      - "6334:6334" # gRPC API
+    volumes:
+      - ../.db/qdrant/storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - bella-keys-network
+    restart: unless-stopped
+
+  phoenix:
+    profiles: [full]
+    image: arizephoenix/phoenix:latest
+    container_name: phoenix-prod
+    ports:
+      - 6006:6006 # PHOENIX_PORT
+      - 4317:4317 # PHOENIX_GRPC_PORT
+      - 9090:9090 # [Optional] PROMETHEUS PORT IF ENABLED
+    environment:
+      - PHOENIX_SQL_DATABASE_URL=postgresql://${ARIZE_PG_DB_USER}:${ARIZE_PG_DB_PASSWORD}@${ARIZE_PG_DB_HOST:-host.docker.internal}:5432/${ARIZE_PG_DB_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6006/v1/traces"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - bella-keys-network
+    restart: unless-stopped
+
+networks:
+  bella-keys-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

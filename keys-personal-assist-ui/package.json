@@ -24,18 +24,9 @@
     },
     "files": [
       "out/**",
-      "dist/**",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "dist",
-        "to": "dist",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
+    "extraResources": [],
     "mac": {
       "target": "dmg"
     },
@@ -44,7 +35,8 @@
         "nsis",
         "portable"
       ],
-      "forceCodeSigning": false
+      "forceCodeSigning": false,
+      "icon": "resources/icon.png"
     },
     "nsis": {
       "oneClick": false,
