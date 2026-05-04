@@ -3,50 +3,18 @@ name: git-workflow
 description: Git workflow guidelines for branch setup, commits, and PR creation
 ---
 
-## Starting a Feature
+# Git Workflow Skill
 
-Branch naming format: `users/shangar/<description>`
+> [!IMPORTANT]
+> This skill follows the project's single source of truth.
+> **Source of Truth:** [docs/developer/git-workflow.md](../../../docs/developer/git-workflow.md)
 
-Use gh cli to setup:
+## Instructions
 
-1. Checkout main: `git checkout main`
-2. Pull latest: `git pull origin main`
-3. Create branch: `git checkout -b users/shangar/<description>`
+When performing Git operations (Branching, Committing, PRs):
 
-## Committing Changes
+1. **Read the Master Workflow:** Always refer to the rules defined in `docs/developer/git-workflow.md`.
+2. **Conventional Commits:** Ensure all commits have the correct scope and sign-off.
+3. **GH CLI:** Use `gh` for all PR management.
 
-Use conventional commit format with signoff from git config user info:
-
-1. Find and add relevant files: `git add <files>`
-2. Get user info: `git config user.name` and `git config user.email`
-3. Commit with signoff got from user info.
-4. Get confirmation from user before pushing to remote.
-
-Example:
-
-```
-feat(auth): add user login endpoint
-- Implement JWT token generation
-- Add password validation
-- Signed-off-by: Shangar <shangar@example.com>
-```
-
-## Creating a PR
-
-When ready, create PR by:
-
-1. Check if a PR exists, if so, update it instead of creating a new one.
-2. Get commits from feature branch after main: `git log main..HEAD`
-3. Analyze commits and create descriptive title
-4. Create PR: `gh pr create --title "<title>" --body "<summary>"`
-   1. Use descriptive title and comprehensive PR summary based on the changes made. Title should not have conventional commit format.
-
-The AI should analyze the commits and create a custom descriptive title and comprehensive PR summary based on the changes made.
-
-## Updating a PR
-
-When updating a PR, follow the same workflow as creating a PR, but use `gh pr edit` to update the PR.
-
-1. Understand the changes made to the PR.
-2. Get existing PR description: `gh pr view <pr-number> --json body --jq '.body'`
-3. Update the PR description and title using `gh pr edit`.
+This ensures consistency across different AI assistants and manual development.
