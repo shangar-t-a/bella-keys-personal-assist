@@ -8,6 +8,8 @@ on:
         required: false
         type: string
   push:
+    branches:
+      - main
     paths:
       - "services/bella-chat-service/VERSION"
 
