@@ -1,104 +1,55 @@
-# Bella Keys Personal Assistant
+# 🌌 Bella Keys: AI-Powered Personal Intelligence
 
-Bella - Keys' (Shangar's) Personal Management.
+Bella Keys is a premium desktop application that combines professional-grade **Expense Management** with a sophisticated **AI Personal Assistant** (Bella).
 
-- [Bella Keys Personal Assistant](#bella-keys-personal-assistant)
-  - [1. Project Overview](#1-project-overview)
-  - [2. App Screens](#2-app-screens)
-    - [2.1. Home Screen](#21-home-screen)
-    - [2.2. Dashboards](#22-dashboards)
-    - [2.3. Spending Account Dashboard](#23-spending-account-dashboard)
-    - [2.4. Bella Chatbot](#24-bella-chatbot)
-      - [2.4.1. Chat Interface](#241-chat-interface)
-      - [2.4.2. Chat With Bella (Answer available in Knowledge Base)](#242-chat-with-bella-answer-available-in-knowledge-base)
-      - [2.4.3. Chat With Bella (Answer NOT available in Knowledge Base)](#243-chat-with-bella-answer-not-available-in-knowledge-base)
-  - [3. Expense Management Service](#3-expense-management-service)
-    - [3.1. Technologies Used](#31-technologies-used)
-    - [3.2. Features Overview](#32-features-overview)
-  - [4. Bella Chatbot](#4-bella-chatbot)
-    - [4.1. Technologies Used](#41-technologies-used)
-    - [4.2. Features Overview](#42-features-overview)
+Designed for data sovereignty and high performance, it leverages a unique "Inside-Out" architecture where your application logic is containerized while your data stays firmly on your host PC.
 
-## 1. Project Overview
+---
 
-The project handles the following responsibilities at the moment:
+## ✨ Key Features
 
-1. Expense Management Application
-2. Bella Chatbot - A knowledge base chatbot using LLMs
-   1. ETL Pipelines to extract, transform, and load knowledge base from GitHub repository
+### 💰 Professional Expense Management
 
-## 2. App Screens
+* **Deep Financial Tracking:** Manage multiple spending accounts with detailed debit/credit history.
+* **Smart Dashboards:** Monthly summaries and trend analysis.
+* **AI-Ready Data:** Built-in MCP (Model Context Protocol) support so your AI agent can reason about your finances.
 
-### 2.1. Home Screen
+### 🤖 Bella AI Assistant
 
-![Home Screen](docs/screens/v4.0/home.png)
+* **Local-First Intelligence:** Powered by LangGraph and Ollama for private, fast, and local AI reasoning.
+* **Personal Knowledge Base:** RAG-powered chat that understands your own documents and codebases.
+* **Observability:** Built-in tracing with Arize Phoenix to see exactly how your AI agent thinks.
 
-### 2.2. Dashboards
+---
 
-![Dashboards](docs/screens/v4.0/dashboard-list.png)
+## 🏗️ The Hybrid "Inside-Out" Architecture
 
-### 2.3. Spending Account Dashboard
+Bella Keys follows a unique design philosophy:
 
-![Spending Account Dashboard](docs/screens/v4.0/dashboard-spending-account-summary.png)
+1. **Logic in Docker:** All backends (FastAPI, Qdrant) run in Docker for a consistent, zero-config experience.
+2. **Data on Host:** Your primary database (PostgreSQL) and AI models (Ollama) live on your host machine.
+3. **Complete Privacy:** Your data never leaves your system unless you explicitly configure a cloud provider.
 
-### 2.4. Bella Chatbot
+---
 
-#### 2.4.1. Chat Interface
+## 📚 Documentation & Setup
 
-![Bella Chatbot](docs/screens/v4.0/chat-loading.png)
+To ensure a clear separation of concerns, our documentation is split into dedicated guides:
 
-#### 2.4.2. Chat With Bella (Answer available in Knowledge Base)
+* **🚀 [Master Setup Guide](docs/user/master-setup-guide.md):** The definitive end-to-end guide for installing, configuring databases, and running the app.
+* **🛠️ [Developer Workflow](docs/developer/development-workflow.md):** Technical structure, building from source, and contribution standards.
+* **🏛️ [Architecture Deep-Dive](services/expense-manager-service/README.md):** Detailed look at the Clean Architecture and EMS patterns.
 
-![Chat With Bella - Answer Available](docs/screens/v4.0/chat-response-ans-available.png)
+---
 
-#### 2.4.3. Chat With Bella (Answer NOT available in Knowledge Base)
+## 📂 Project Modules
 
-![Chat With Bella - Answer NOT Available](docs/screens/v4.0/chat-response-ans-not-available.png)
+* **[Desktop UI](keys-personal-assist-ui/README.md):** The Electron/React frontend.
+* **[Expense Manager](services/expense-manager-service/README.md):** Financial tracking backend.
+* **[Bella Chat Service](services/bella-chat-service/README.md):** AI orchestration engine.
+* **[ETL Pipelines](services/etl-pipelines/README.md):** Knowledge base ingestion.
+* **[MCP Servers](mcps/ems-mcp-server/README.md):** Model Context Protocol integrations.
 
-## 3. Expense Management Service
+---
 
-### 3.1. Technologies Used
-
-1. Backend
-   1. Built using **FastAPI**.
-   2. Uses **PostgreSQL** for data persistence.
-   3. Follows **Clean Architecture** principles.
-   4. Containerized with **Docker**.
-2. Frontend
-   1. Built using **React** with **Antigravity**.
-   2. Containerized with **Docker**.
-
-### 3.2. Features Overview
-
-- **Spending Account Expense Tracking**: Add, view, and manage expenses. Track monthly spending and credits. Gain preliminary insights into spending patterns.
-- **Fully loaded FastAPI and Clean Architecture Codebase**: A robust starting point for building scalable and maintainable backend services using FastAPI and Clean Architecture principles. For more details, refer to the [Architecture Documentation](services/expense-manager-service/README.md).
-
-## 4. Bella Chatbot
-
-### 4.1. Technologies Used
-
-1. Backend
-   1. Built using **FastAPI**.
-   2. Uses **LangChain** for abstractions.
-   3. Supports both local and cloud-based LLMs. Tested with **Ollama** (local) and **Gemini** (Cloud - WIP).
-   4. Custom abstractions for llms, embeddings, and vector stores.
-      1. LLMs supported: Ollama, Gemini
-      2. Embeddings supported: Ollama, HuggingFace
-      3. Vector Stores supported: Qdrant
-2. Tools: ETL Pipelines
-   1. GitHub ETL Pipelines
-      1. ETL for `keys-personal-assist` repo to extract knowledge base for Bella.
-   2. Utilities
-      1. Custom Logger
-      2. Time Profiler
-
-### 4.2. Features Overview
-
-- **Knowledge Base Chatbot**: Chat with Bella using a knowledge base extracted from `keys-personal-assist` GitHub
-  repository. Get relevant sources used to answer your questions.
-- **LLM Integration**: Supports both local (Ollama) and cloud-based (Gemini) LLMs for generating responses.
-- **Custom Abstractions**: Easily extendable abstractions for LLMs, and Embeddings. Vector Store is currently limited
-  to Qdrant.
-- **ETL Pipelines**: Extract, Transform, Load (ETL) pipelines to build and update the knowledge base from the GitHub
-  repository. Supports extracting information from private repositories as well.
-- **Utilities**: Custom logging and time profiling utilities to monitor and debug the application.
+> *Bella Keys: Professional Management. Personal Intelligence. Private by Design.*

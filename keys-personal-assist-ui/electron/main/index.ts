@@ -4,8 +4,8 @@ import path from 'path'
 function createWindow(): void {
     const isDev = !!process.env['ELECTRON_RENDERER_URL']
     const iconPath = isDev
-        ? path.join(__dirname, '../../public/favicon.ico')
-        : path.join(__dirname, '../renderer/favicon.ico')
+        ? path.join(__dirname, '../../public/icon.png')
+        : path.join(__dirname, '../renderer/icon.png')
     const icon = nativeImage.createFromPath(iconPath)
 
     const mainWindow = new BrowserWindow({

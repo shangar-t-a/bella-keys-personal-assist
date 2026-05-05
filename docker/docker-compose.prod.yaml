@@ -1,16 +1,12 @@
-name: bella-keys-personal-assist
+name: bella-keys-personal-assist-prod
 
-# Profiles:
-#   (none)    — postgres + expense-manager-service (always on)
-#   bella     — bella-chat-service + qdrant + phoenix (tracing)
-#   web       — UI with full nginx config (bella-chat + EMS proxied)
-#   ems-web   — UI with EMS-only nginx config
+# Production-ready Docker Compose for local deployment
+# Uses pre-built images from GitHub Container Registry
 
 services:
-
   expense-manager-service:
-    build: ../services/expense-manager-service
-    container_name: expense-manager-service
+    image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/expense-manager-service:latest
+    container_name: expense-manager-service-prod
     ports:
       - "8000:8000"
     environment:
@@ -20,15 +16,25 @@ services:
       - DEBUG=${EMS_DEBUG}
       # Database configurations
       - STORAGE_TYPE=${EMS_STORAGE_TYPE}
-      - DATABASE_URL=${EMS_DATABASE_URL}
-      - PG_DB_HOST=${EMS_PG_DB_HOST}
+      - DATABASE_URL=postgresql+asyncpg://${EMS_PG_DB_USER}:${EMS_PG_DB_PASSWORD}@${EMS_PG_DB_HOST:-host.docker.internal}:5432/${EMS_PG_DB_NAME}
+      - PG_DB_HOST=${EMS_PG_DB_HOST:-host.docker.internal}
+      - PG_DB_USER=${EMS_PG_DB_USER}
+      - PG_DB_PASSWORD=${EMS_PG_DB_PASSWORD}
+      - PG_DB_NAME=${EMS_PG_DB_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - bella-keys-network
+    restart: unless-stopped
 
   bella-chat-service:
-    profiles: [bella]
-    build: ../services/bella-chat-service
-    container_name: bella-chat-service
+    profiles: [bella, full]
+    image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/bella-chat-service:latest
+    container_name: bella-chat-service-prod
     ports:
       - "5000:5000"
     environment:
@@ -47,23 +53,15 @@ services:
       # Ollama Settings
       - OLLAMA_URL=${OLLAMA_URL}
       # QDRANT Settings
-      - QDRANT_URL=${QDRANT_URL}
+      - QDRANT_URL=${QDRANT_URL:-http://host.docker.internal:6333}
       # Keys Personal Wiki Agent Settings
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
       # EMS MCP Server Settings
       - EMS_MCP_SERVER_URL=http://ems-mcp-server:8001/mcp
-      # Arize Settings
-      - ARIZE_ENABLED=${ARIZE_ENABLED}
-      - ARIZE_TRACES_URL=${ARIZE_TRACES_URL}
-      - ARIZE_PROJECT_NAME=${ARIZE_PROJECT_NAME}
-      - ARIZE_PG_DB_USER=${ARIZE_PG_DB_USER}
-      - ARIZE_PG_DB_PASSWORD=${ARIZE_PG_DB_PASSWORD}
-      - ARIZE_PG_DB_HOST=${ARIZE_PG_DB_HOST}
-      - ARIZE_PG_DB_NAME=${ARIZE_PG_DB_NAME}
       # LangGraph Postgres Checkpointer
       - LANGGRAPH_PG_DB_USER=${LANGGRAPH_PG_DB_USER}
       - LANGGRAPH_PG_DB_PASSWORD=${LANGGRAPH_PG_DB_PASSWORD}
-      - LANGGRAPH_PG_DB_HOST=${LANGGRAPH_PG_DB_HOST}
+      - LANGGRAPH_PG_DB_HOST=${LANGGRAPH_PG_DB_HOST:-host.docker.internal}
       - LANGGRAPH_PG_DB_NAME=${LANGGRAPH_PG_DB_NAME}
       - ORCHESTRATOR_MAX_ITERATIONS=${ORCHESTRATOR_MAX_ITERATIONS}
     depends_on:
@@ -71,13 +69,20 @@ services:
         condition: service_started
       ems-mcp-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - bella-keys-network
+    restart: unless-stopped
 
   ems-mcp-server:
-    profiles: [bella]
-    build: ../mcps/ems-mcp-server
-    container_name: ems-mcp-server
+    profiles: [bella, full]
+    image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/ems-mcp-server:latest
+    container_name: ems-mcp-server-prod
     ports:
       - "8001:8001"
     environment:
@@ -85,7 +90,8 @@ services:
       - HOST=0.0.0.0
       - PORT=8001
     depends_on:
-      - expense-manager-service
+      expense-manager-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/mcp"]
       interval: 10s
@@ -94,59 +100,50 @@ services:
       start_period: 15s
     networks:
       - bella-keys-network
+    restart: unless-stopped
 
   qdrant:
-    profiles: [bella]
+    profiles: [bella, full]
     image: qdrant/qdrant:latest
-    container_name: qdrant
+    container_name: qdrant-prod
     ports:
       - "6333:6333" # REST API
       - "6334:6334" # gRPC API
     volumes:
-      - ../services/.db/qdrant/storage:/qdrant/storage
+      - ../.db/qdrant/storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - bella-keys-network
+    restart: unless-stopped
 
   phoenix:
-    profiles: [bella]
+    profiles: [full]
     image: arizephoenix/phoenix:latest
-    container_name: phoenix
+    container_name: phoenix-prod
     ports:
       - 6006:6006 # PHOENIX_PORT
       - 4317:4317 # PHOENIX_GRPC_PORT
       - 9090:9090 # [Optional] PROMETHEUS PORT IF ENABLED
     environment:
-      - PHOENIX_SQL_DATABASE_URL=postgresql://${ARIZE_PG_DB_USER}:${ARIZE_PG_DB_PASSWORD}@${ARIZE_PG_DB_HOST}:5432/${ARIZE_PG_DB_NAME}
+      - PHOENIX_SQL_DATABASE_URL=postgresql://${ARIZE_PG_DB_USER}:${ARIZE_PG_DB_PASSWORD}@${ARIZE_PG_DB_HOST:-host.docker.internal}:5432/${ARIZE_PG_DB_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6006/v1/traces"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - bella-keys-network
-
-  # Full UI: proxies both /api/ems and /api/bella-chat
-  keys-personal-assist-ui:
-    profiles: [web]
-    build: ../keys-personal-assist-ui
-    container_name: keys-personal-assist-ui
-    ports:
-      - "3000:80"
-    depends_on:
-      - expense-manager-service
-      - bella-chat-service
-    networks:
-      - bella-keys-network
-
-  # EMS-only UI: proxies /api/ems only (no bella-chat block)
-  keys-personal-assist-ems-ui:
-    profiles: [ems-web]
-    build: ../keys-personal-assist-ui
-    container_name: keys-personal-assist-ems-ui
-    ports:
-      - "3000:80"
-    volumes:
-      - ../keys-personal-assist-ui/nginx.ems.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - expense-manager-service
-    networks:
-      - bella-keys-network
+    restart: unless-stopped
 
 networks:
   bella-keys-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

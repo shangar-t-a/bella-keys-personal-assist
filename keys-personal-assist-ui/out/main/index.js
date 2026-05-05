@@ -6,7 +6,7 @@ const __dirname = import.meta.dirname;
 const require2 = __cjs_mod__.createRequire(import.meta.url);
 function createWindow() {
   const isDev = !!process.env["ELECTRON_RENDERER_URL"];
-  const iconPath = isDev ? path.join(__dirname, "../../public/favicon.ico") : path.join(__dirname, "../renderer/favicon.ico");
+  const iconPath = isDev ? path.join(__dirname, "../../public/icon.png") : path.join(__dirname, "../renderer/icon.png");
   const icon = nativeImage.createFromPath(iconPath);
   const mainWindow = new BrowserWindow({
     width: 1280,
