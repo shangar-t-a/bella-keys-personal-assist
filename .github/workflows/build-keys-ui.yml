@@ -8,6 +8,8 @@ on:
         required: false
         type: string
   push:
+    branches:
+      - main
     paths:
       - "keys-personal-assist-ui/VERSION"
 
