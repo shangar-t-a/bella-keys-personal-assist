@@ -4,13 +4,16 @@ from enum import StrEnum
 from functools import lru_cache
 
 from app.entities.repositories.account import AccountRepositoryInterface
+from app.entities.repositories.monthly_planner import MonthlyPlannerRepositoryInterface
 from app.entities.repositories.period import PeriodRepositoryInterface
 from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
 from app.infrastructures.postgres_db.account import PostgresAccountRepository
+from app.infrastructures.postgres_db.monthly_planner import PostgresMonthlyPlannerRepository
 from app.infrastructures.postgres_db.period import PostgresPeriodRepository
 from app.infrastructures.postgres_db.spending_entry import PostgresSpendingEntryRepository
 from app.settings import get_settings
 from app.use_cases.account import AccountService
+from app.use_cases.monthly_planner import MonthlyPlannerService
 from app.use_cases.period import PeriodService
 from app.use_cases.spending_entry import SpendingEntryService
 
@@ -59,6 +62,18 @@ def get_spending_entry_repository() -> SpendingEntryRepositoryInterface:
     raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: [{StorageType.POSTGRES}]")
 
 
+def get_monthly_planner_repository() -> MonthlyPlannerRepositoryInterface:
+    """Get the appropriate monthly planner repository based on settings."""
+    settings = get_settings()
+    storage_type = StorageType(settings.STORAGE_TYPE)
+
+    if storage_type in (StorageType.INMEMORY, StorageType.SQLITE):
+        raise ValueError(f"Storage type {storage_type} is deprecated and not supported as of February 2026.")
+    if storage_type == StorageType.POSTGRES:
+        return PostgresMonthlyPlannerRepository()
+    raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: [{StorageType.POSTGRES}]")
+
+
 @lru_cache
 def get_account_service() -> AccountService:
     """Get the Accounts Service."""
@@ -83,4 +98,15 @@ def get_spending_entry_service() -> SpendingEntryService:
         account_repository=account_repository,
         period_repository=period_repository,
         spending_account_repository=spending_account_repository,
+    )
+
+
+@lru_cache
+def get_monthly_planner_service() -> MonthlyPlannerService:
+    """Get the Monthly Planner Service."""
+    monthly_planner_repository = get_monthly_planner_repository()
+    period_repository = get_period_repository()
+    return MonthlyPlannerService(
+        monthly_planner_repository=monthly_planner_repository,
+        period_repository=period_repository,
     )
