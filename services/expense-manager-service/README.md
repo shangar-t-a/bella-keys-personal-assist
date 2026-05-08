@@ -41,7 +41,7 @@ expense-manager-service/
 │   │   ├── models/                                          # Domain models, one file per resource
 │   │   │   ├── base.py                                      # Shared frozen Pydantic base
 │   │   │   ├── sort.py                                      # Generic SortOrder enum (asc/desc)
-│   │   │   └── *.py                                         # account, period, spending_entry models
+│   │   │   ├── *.py                                         # account, period, spending_entry, monthly_planner models
 │   │   │                                                    #   spending_entry also holds sort, filter,
 │   │   │                                                    #   and JOIN-enriched detail models
 │   │   └── repositories/                                    # Abstract repository interfaces, one file per resource
@@ -51,7 +51,7 @@ expense-manager-service/
 │   │   └── postgres_db/                                     # Sole supported backend
 │   │       ├── alembic/                                     # Alembic migrations
 │   │       ├── alembic.ini                                  # Alembic config
-│   │       ├── models/                                      # SQLAlchemy ORM models (account, period, spending_entry)
+│   │       ├── models/                                      # SQLAlchemy ORM models (account, period, spending_entry, monthly_planner)
 │   │       ├── database.py                                  # Engine, session factory, Base, init_db/drop_db (for tests)
 │   │       └── *.py                                         # Postgres repository implementations
 │   ├── routers/                                             # Presentation/API layer
@@ -71,7 +71,7 @@ expense-manager-service/
 │   │   ├── dev.py                                           # Development settings
 │   │   └── __init__.py
 │   └── use_cases/                                           # Use Cases layer (Business logic)
-│       ├── *.py                                             # Service classes, one per resource
+│       ├── *.py                                             # Service classes, one per resource (account, period, spending_entry, monthly_planner)
 │       ├── errors/                                          # Use-case errors, one file per resource
 │       └── models/                                          # Flattened use-case models
 │           ├── base.py                                      # Shared frozen Pydantic base
@@ -106,7 +106,7 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 - **Purpose:** Application-specific business logic and orchestration.
 - **Key Files:**
-  - Service files (`account.py`, `period.py`, `spending_entry.py`) - one service class per resource. `SpendingEntryService` handles paginated listing with sort and filter.
+  - Service files (`account.py`, `period.py`, `spending_entry.py`, `monthly_planner.py`) - one service class per resource. `SpendingEntryService` handles paginated listing with sort and filter. `MonthlyPlannerService` handles summaries, expenses, and categories.
   - `models/` - flattened output models that decouple the router from entity internals. Includes `pagination.py` with the shared `Page` model.
   - `errors/` - use-case errors, kept separate from domain errors, one file per resource.
 
@@ -114,14 +114,14 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 - **Purpose:** External system integration, persistence, and adapters.
 - **Key Files:**
-  - `postgres_db/` **(sole supported backend)** - async SQLAlchemy repository implementations for account, period, and spending entry. The spending entry repository executes a JOIN query to return enriched results; sort and filter are applied at the DB level. `alembic/` holds the migration chain. `models/` holds the ORM models.
+  - `postgres_db/` **(sole supported backend)** - async SQLAlchemy repository implementations for account, period, spending entry, and monthly planner. The spending entry repository executes a JOIN query to return enriched results; sort and filter are applied at the DB level. `alembic/` holds the migration chain. `models/` holds the ORM models.
   - `inmemory_db/` and `sqlite_db/` - ⚠️ **Deprecated since February 2026.** Code retained for reference. Selecting either storage type raises a `ValueError` at runtime.
 
 ### Presentation/API Layer (`app/routers/`)
 
 - **Purpose:** API endpoints, request/response schemas, and routing.
 - **Key Files:**
-  - `v1/endpoints/` - CRUD endpoints for account, period, and spending entry. `GET /spending_account/list` accepts `sort_by`, `sort_order`, `month`, `year`, `account_name`, `page`, and `size` as query parameters.
+  - `v1/endpoints/` - CRUD endpoints for account, period, spending entry, and monthly planner. `GET /spending_account/list` accepts query parameters for sorting, filtering, and pagination. `monthly_planner` endpoints manage the expense manager dashboard features (e.g. `GET /v1/monthly-planner/summary/{year}/{month}`).
   - `v1/schemas/` - Pydantic schemas per resource. `base.py` provides the shared camelCase alias base. `pagination.py` provides reusable `PaginationParams` and `PaginationResponse`. Spending entry schemas include dedicated sort and filter param schemas.
   - `v1/mappers/` - Converts HTTP schema objects to domain/use-case models. Includes a query-params mapper that translates sort and filter params into domain objects.
   - `v1/services.py` - Dependency injection. Only `postgresql` is wired; `inmemory` and `sqlite` raise a `ValueError`.
@@ -162,7 +162,7 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 - **Storage type:** `STORAGE_TYPE` must be set to `postgresql` in `.env`. Setting it to `inmemory` or `sqlite` raises a `ValueError` at startup - those adapters are deprecated and no longer wired.
 - **Sort & filter:** `GET /v1/spending_account/list` accepts `sort_by`, `sort_order`, `month`, `year`, and `account_name` as query parameters. Sorting and filtering are applied at the DB level.
 - **Pagination:** Spending entry list endpoints use `page`/`size` query parameters and return a `PaginationResponse` in the body.
-- **File splitting:** Each resource (account, period, spending_entry) has its own file across every layer - models, errors, repositories, use cases, schemas, and endpoints.
+- **File splitting:** Each resource (account, period, spending_entry, monthly_planner) has its own file across every layer - models, errors, repositories, use cases, schemas, and endpoints.
 - **Extensibility:** Add new features by extending the appropriate layer, maintaining separation of concerns.
 - **Configuration:** Environment-specific settings are managed in `settings/` and `.env` files.
 - **Testing:** All tests are in `tests/`.
