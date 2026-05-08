@@ -85,7 +85,6 @@ class PostgresMonthlyPlannerRepository(MonthlyPlannerRepositoryInterface):
             model, month, year = row
             return MonthlySummaryDetail(
                 id=model.id,
-                period_id=model.period_id,
                 salary=model.salary,
                 month=month,
                 year=year,
@@ -114,7 +113,6 @@ class PostgresMonthlyPlannerRepository(MonthlyPlannerRepositoryInterface):
 
             return MonthlySummaryDetail(
                 id=model.id,
-                period_id=model.period_id,
                 salary=model.salary,
                 month=period.month,
                 year=period.year,
@@ -134,7 +132,6 @@ class PostgresMonthlyPlannerRepository(MonthlyPlannerRepositoryInterface):
             return [
                 MonthlyExpenseItemDetail(
                     id=r.MonthlyExpenseItemModel.id,
-                    period_id=r.MonthlyExpenseItemModel.period_id,
                     name=r.MonthlyExpenseItemModel.name,
                     amount=r.MonthlyExpenseItemModel.amount,
                     status=r.MonthlyExpenseItemModel.status,
@@ -168,7 +165,6 @@ class PostgresMonthlyPlannerRepository(MonthlyPlannerRepositoryInterface):
 
             return MonthlyExpenseItemDetail(
                 id=new_item.id,
-                period_id=new_item.period_id,
                 name=new_item.name,
                 amount=new_item.amount,
                 status=new_item.status,
@@ -200,7 +196,6 @@ class PostgresMonthlyPlannerRepository(MonthlyPlannerRepositoryInterface):
 
             return MonthlyExpenseItemDetail(
                 id=model.id,
-                period_id=model.period_id,
                 name=model.name,
                 amount=model.amount,
                 status=model.status,

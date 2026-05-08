@@ -47,7 +47,6 @@ class MonthlyPlannerService:
             # Return a default summary if not found
             return MonthlySummaryDetail(
                 id="",
-                period_id=period.id,
                 salary=0.0,
                 month=month,
                 year=year
