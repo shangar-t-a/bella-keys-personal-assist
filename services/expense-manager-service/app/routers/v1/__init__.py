@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.routers.v1.endpoints.account import account_router
+from app.routers.v1.endpoints.monthly_planner import router as monthly_planner_router
 from app.routers.v1.endpoints.period import period_router
 from app.routers.v1.endpoints.spending_entry import router as spending_account_router
 
@@ -11,3 +12,4 @@ router = APIRouter(prefix="/v1")
 router.include_router(account_router)
 router.include_router(period_router)
 router.include_router(spending_account_router)
+router.include_router(monthly_planner_router)

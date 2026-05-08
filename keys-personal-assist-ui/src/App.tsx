@@ -13,6 +13,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 const ChatPage = lazy(() => import('@/pages/ChatPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const SpendingAccountSummaryPage = lazy(() => import('@/pages/SpendingAccountSummaryPage'));
+const MonthlyPlannerPage = lazy(() => import('@/pages/MonthlyPlannerPage'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -41,6 +42,7 @@ function App() {
                 <>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
+                  <Route path="/dashboard/monthly-planner" element={<MonthlyPlannerPage />} />
                 </>
               )}
               {/* Fallback route for disabled features */}

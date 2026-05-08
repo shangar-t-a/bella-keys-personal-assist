@@ -1,6 +1,6 @@
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Container, Card, CardContent, Button } from '@mui/material';
-import { TrendingUp, ArrowForward as ArrowRight } from '@mui/icons-material';
+import { Box, Typography, Container, Card, CardContent, Button, Grid } from '@mui/material';
+import { TrendingUp, ArrowForward as ArrowRight, BarChart as BarChart3 } from '@mui/icons-material';
 
 export default function DashboardPage() {
   return (
@@ -44,86 +44,133 @@ export default function DashboardPage() {
         </Box>
 
         {/* Dashboard Grid */}
-        <Box sx={{ maxWidth: '700px', mx: 'auto' }}>
+        <Grid container spacing={4} sx={{ maxWidth: '1000px', mx: 'auto' }}>
           {/* Spending Account Dashboard */}
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: 3,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: 8,
-              },
-            }}
-          >
-            <CardContent sx={{ p: 4 }}>
-              {/* Icon and Title */}
-              <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: 3,
-                  }}
-                >
-                  <TrendingUp sx={{ color: 'white', fontSize: 28 }} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="h5"
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card
+              sx={{
+                height: '100%',
+                borderRadius: 3,
+                boxShadow: 3,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 8,
+                },
+              }}
+            >
+              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', gap: 3, mb: 4, flexGrow: 1 }}>
+                  <Box
                     sx={{
-                      fontWeight: 700,
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      mb: 1,
+                      width: 56,
+                      height: 56,
+                      borderRadius: 3,
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: 3,
                     }}
                   >
-                    Spending Account Summary
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                    Track your expenses, view spending patterns, and manage your budget with detailed analytics.
-                  </Typography>
+                    <TrendingUp sx={{ color: 'white', fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 1 }}>
+                      Spending Summary
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                      Track your daily expenses, view spending patterns, and manage your account balances.
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
+                <Button
+                  component={RouterLink}
+                  to="/dashboard/spending-account-summary"
+                  variant="contained"
+                  fullWidth
+                  endIcon={<ArrowRight />}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    },
+                  }}
+                >
+                  Open Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Action Button */}
-              <Button
-                component={RouterLink}
-                to="/dashboard/spending-account-summary"
-                variant="contained"
-                fullWidth
-                endIcon={<ArrowRight />}
-                sx={{
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: 4,
-                  },
-                  transition: 'all 0.2s ease',
-                  '& .MuiButton-endIcon': {
-                    transition: 'transform 0.3s ease',
-                  },
-                  '&:hover .MuiButton-endIcon': {
-                    transform: 'translateX(4px)',
-                  },
-                }}
-              >
-                Open Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        </Box>
+          {/* Monthly Planner Dashboard */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card
+              sx={{
+                height: '100%',
+                borderRadius: 3,
+                boxShadow: 3,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 8,
+                },
+              }}
+            >
+              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', gap: 3, mb: 4, flexGrow: 1 }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 3,
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: 3,
+                    }}
+                  >
+                    <BarChart3 sx={{ color: 'white', fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 1 }}>
+                      Monthly Planner
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                      Plan your monthly budget, track recurring expenses, and visualize your financial allocation.
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button
+                  component={RouterLink}
+                  to="/dashboard/monthly-planner"
+                  variant="contained"
+                  fullWidth
+                  endIcon={<ArrowRight />}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    },
+                  }}
+                >
+                  Open Planner
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </Container>
     </Box>
   );

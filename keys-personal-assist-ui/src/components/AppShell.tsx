@@ -22,6 +22,7 @@ import {
 import {
     AutoAwesome as Sparkles,
     BarChart as BarChart3,
+    CalendarMonth,
     Chat as MessageCircle,
     ChevronLeft,
     ChevronRight,
@@ -82,6 +83,11 @@ const getNavSections = (): NavSection[] => {
                             name: 'Spending Summary',
                             href: '/dashboard/spending-account-summary',
                             icon: CreditCard,
+                        },
+                        {
+                            name: 'Monthly Planner',
+                            href: '/dashboard/monthly-planner',
+                            icon: CalendarMonth,
                         },
                     ],
                 },

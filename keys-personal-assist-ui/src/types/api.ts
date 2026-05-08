@@ -76,3 +76,38 @@ export interface ValidationError {
   msg: string;
   type: string;
 }
+export interface MonthlyCategory {
+  id: string;
+  name: string;
+  category_l1: 'spending' | 'saving';
+}
+
+export interface MonthlySummary {
+  id: string;
+  period_id: string;
+  salary: number;
+  month: number;
+  year: number;
+}
+
+export interface MonthlyExpenseItem {
+  id: string;
+  period_id: string;
+  name: string;
+  amount: number;
+  status: 'pending' | 'settled';
+  category_l1: 'spending' | 'saving';
+  category_l2: string;
+  is_recurring: boolean;
+  month: number;
+  year: number;
+}
+
+export interface MonthlyExpenseItemRequest {
+  name: string;
+  amount: number;
+  category_l1: 'spending' | 'saving';
+  category_l2: string;
+  is_recurring: boolean;
+  status?: 'pending' | 'settled';
+}

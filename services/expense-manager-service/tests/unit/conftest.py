@@ -11,6 +11,7 @@ from app.infrastructures.postgres_db import database
 from app.infrastructures.postgres_db.account import PostgresAccountRepository
 from app.infrastructures.postgres_db.period import PostgresPeriodRepository
 from app.infrastructures.postgres_db.spending_entry import PostgresSpendingEntryRepository
+from app.infrastructures.postgres_db.monthly_planner import PostgresMonthlyPlannerRepository
 from tests.unit.settings import UnitTestSettings
 
 # --------------------------------------------------- Pytest Hooks --------------------------------------------------- #
@@ -84,6 +85,14 @@ def spending_account_repo(patch_settings, init_and_drop_db):
     """Provide an instance of SpendingAccountRepository."""
     if settings.get_settings().STORAGE_TYPE == "postgresql":
         return PostgresSpendingEntryRepository()
+    raise NotImplementedError("Invalid STORAGE_TYPE")
+
+
+@pytest.fixture(scope="session")
+def monthly_planner_repo(patch_settings, init_and_drop_db):
+    """Provide an instance of MonthlyPlannerRepository."""
+    if settings.get_settings().STORAGE_TYPE == "postgresql":
+        return PostgresMonthlyPlannerRepository()
     raise NotImplementedError("Invalid STORAGE_TYPE")
 
 

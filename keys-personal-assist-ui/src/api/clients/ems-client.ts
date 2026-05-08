@@ -9,6 +9,10 @@ import type {
   SpendingEntryWithCalcPageResponse,
   SortOrder,
   SpendingEntrySortField,
+  MonthlyCategory,
+  MonthlySummary,
+  MonthlyExpenseItem,
+  MonthlyExpenseItemRequest,
 } from '@/types/api';
 import { getEmsBase } from '@/api/config';
 
@@ -176,6 +180,95 @@ class EMSClient {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete spending account entry');
+  }
+
+  // ── Monthly Planner endpoints ─────────────────────────────────────────────
+
+  async listMonthlyCategories(): Promise<MonthlyCategory[]> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/categories`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    return response.json();
+  }
+
+  async addMonthlyCategory(data: { name: string; category_l1: string }): Promise<MonthlyCategory> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to add category');
+    return response.json();
+  }
+
+  async deleteMonthlyCategory(categoryId: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/categories/${categoryId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete category');
+  }
+
+  async getMonthlySummary(year: number, month: number): Promise<MonthlySummary> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/summary/${year}/${month}`);
+    if (!response.ok) throw new Error('Failed to fetch summary');
+    return response.json();
+  }
+
+  async updateMonthlySalary(year: number, month: number, salary: number): Promise<MonthlySummary> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/summary/${year}/${month}/salary`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salary }),
+    });
+    if (!response.ok) throw new Error('Failed to update salary');
+    return response.json();
+  }
+
+  async listMonthlyExpenses(year: number, month: number): Promise<MonthlyExpenseItem[]> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}`);
+    if (!response.ok) throw new Error('Failed to fetch expenses');
+    return response.json();
+  }
+
+  async addMonthlyExpense(year: number, month: number, data: MonthlyExpenseItemRequest): Promise<MonthlyExpenseItem> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to add expense');
+    return response.json();
+  }
+
+  async updateMonthlyExpense(expenseId: string, data: MonthlyExpenseItemRequest): Promise<MonthlyExpenseItem> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${expenseId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update expense');
+    return response.json();
+  }
+
+  async deleteMonthlyExpense(expenseId: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${expenseId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete expense');
+  }
+
+  async resetMonthlyStatuses(year: number, month: number): Promise<void> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}/reset`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to reset statuses');
+  }
+
+  async syncMonthlyFromPrevious(year: number, month: number): Promise<MonthlyExpenseItem[]> {
+    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}/sync`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to sync from previous month');
+    return response.json();
   }
 }
 
