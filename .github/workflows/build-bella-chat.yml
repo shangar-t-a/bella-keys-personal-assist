@@ -18,7 +18,22 @@ env:
   REPO_OWNER: ${{ github.repository_owner }}
 
 jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Read VERSION file
+        id: version
+        run: |
+          VERSION=$(cat services/bella-chat-service/VERSION)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
   build:
+    needs: get-version
     uses: ./.github/workflows/reusable-docker-build.yml
     permissions:
       contents: read
@@ -26,4 +41,4 @@ jobs:
     with:
       service_path: ./services/bella-chat-service
       image_name: bella-chat-service
-      tag: ${{ inputs.version }}
+      tag: ${{ inputs.version != '' && inputs.version || needs.get-version.outputs.version }}
