@@ -47,13 +47,17 @@ jobs:
         id: resolve-tag
         run: |
           if [ -n "${{ inputs.tag }}" ]; then
-            echo "resolved_tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+            TAG="${{ inputs.tag }}"
+            echo "🔖 Using provided tag: $TAG"
           elif [ -f "${{ inputs.service_path }}/VERSION" ]; then
-            echo "resolved_tag=$(cat ${{ inputs.service_path }}/VERSION)" >> $GITHUB_OUTPUT
+            TAG=$(cat ${{ inputs.service_path }}/VERSION)
+            echo "🔖 Using VERSION file: $TAG"
           else
-            echo "resolved_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            TAG="${{ github.sha }}"
+            echo "🔖 Using git SHA: $TAG"
           fi
-
+          echo "resolved_tag=$TAG" >> $GITHUB_OUTPUT
+          echo "📤 Image: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ inputs.image_name }}:$TAG"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7

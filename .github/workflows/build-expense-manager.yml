@@ -30,6 +30,7 @@ jobs:
         id: version
         run: |
           VERSION=$(cat services/expense-manager-service/VERSION)
+          echo "📦 Building version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   build:
