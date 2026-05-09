@@ -35,10 +35,10 @@ RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/l
 COPY --from=builder /app/.venv ./.venv
 
 COPY app ./app
-COPY entrypoint.sh ./entrypoint.sh
+COPY entrypoint.sh /app/
 
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

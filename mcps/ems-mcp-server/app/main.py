@@ -13,7 +13,7 @@ from app.tools.spending_entries import list_spending_entries, list_spending_entr
 mcp = FastMCP(
     name="ems-mcp-server",
     instructions=(
-        "Tools for reading data from the Expense Manager Service (EMS). "
+        "Tools for reading data from Expense Manager Service (EMS). "
         "Use list_accounts / list_periods to discover available data. "
         "Use list_spending_entries or list_spending_entries_for_account to fetch "
         "balance and spending data, optionally filtered by month, year, or account name."

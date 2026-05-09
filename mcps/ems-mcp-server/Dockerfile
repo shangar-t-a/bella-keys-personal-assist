@@ -34,10 +34,10 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/.venv ./.venv
 
 COPY app ./app
-COPY entrypoint.sh ./entrypoint.sh
+COPY entrypoint.sh /app/
 
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8001
 
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
