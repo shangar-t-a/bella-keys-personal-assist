@@ -1,112 +1,75 @@
-# Bella Keys Scripts
+# Scripts Index
 
-This directory contains scripts for building and running the Bella Keys Electron desktop application with optional service selection.
+Quick reference for all build and run scripts.
 
-## Available Scripts
+## Documentation
 
-### Build Scripts
+For detailed documentation, see:
 
-#### `build-electron.sh` (Linux/macOS)
+- [Build & Run Guide](../docs/build/README.md) - Overview and quick start
+- [Scripts Reference](../docs/build/scripts-reference.md) - Complete script catalog
+- [Electron App](../docs/build/electron-app.md) - Desktop app build/run
+- [Local Development](../docs/build/local-development.md) - Docker development
+- [Troubleshooting](../docs/build/troubleshooting.md) - Common issues
 
-Build the Electron app with interactive service selection.
+## Directory Structure
 
-```bash
-# From repository root
-bash scripts/build-electron.sh
 ```
-
-#### `build-electron.bat` (Windows)
-
-Windows batch script for building the Electron app.
-
-```cmd
-# From repository root
-scripts\build-electron.bat
+scripts/
+├── database/          # Database initialization
+│   └── init-db.sql    # PostgreSQL init script
+├── electron/          # Build desktop app (developers only)
+│   ├── build.sh       # Build Electron app (Linux/macOS)
+│   └── build.bat      # Build Electron app (Windows)
+├── services/          # Run backend services
+│   ├── run-services-installed-app.sh     # Run services for installed app
+│   ├── run-services-installed-app.bat    # Windows version
+│   ├── run-ems-web.sh     # EMS + Web UI (development)
+│   ├── run-bella-web.sh   # Bella Chat + Web UI (development)
+│   └── run-*.sh           # Other service combinations
+└── README.md          # This file
 ```
-
-### Run Scripts
-
-#### `run-desktop-app.sh` (Linux/macOS)
-
-Run the desktop app with services from GitHub Container Registry.
-
-```bash
-# From repository root
-bash scripts/run-desktop-app.sh
-```
-
-#### `run-desktop-app.bat` (Windows)
-
-Windows batch script for running the desktop app.
-
-```cmd
-# From repository root
-scripts\run-desktop-app.bat
-```
-
-## Service Profiles
-
-### Minimal
-
-- **Services**: Expense Manager only
-- **Resources**: ~2GB RAM
-- **Ports**: 5432, 8000
-
-### Standard (Recommended)
-
-- **Services**: Expense Manager + Bella Chat
-- **Resources**: ~4GB RAM
-- **Ports**: 5432, 6333, 8000, 8001, 5000
-
-### Full
-
-- **Services**: All services + Monitoring
-- **Resources**: ~6GB RAM
-- **Ports**: 5432, 6333, 6334, 8000, 8001, 5000, 6006, 4317, 9090
 
 ## Quick Start
 
-1. **Build the app**:
+### Build Desktop App
 
-   - Linux/macOS: `bash scripts/build-electron.sh`
-   - Windows: `scripts\build-electron.bat`
+```bash
+# Linux/macOS
+bash scripts/electron/build.sh
 
-2. **Run the app**:
+# Windows
+scripts\electron\build.bat
+```
 
-   - Linux/macOS: `bash scripts/run-desktop-app.sh`
-   - Windows: `scripts\run-desktop-app.bat`
+### Run Services (For Installed App)
+
+If you installed the desktop app, start backend services:
+
+```bash
+# Linux/macOS
+bash scripts/services/run-services-installed-app.sh
+
+# Windows
+scripts\services\run-services-installed-app.bat
+```
+
+### Run Services (Development)
+
+For development with specific service combinations:
+
+```bash
+# EMS + Web UI
+bash scripts/services/run-ems-web.sh
+
+# Bella Chat + Web UI
+bash scripts/services/run-bella-web.sh
+
+# See scripts/services/ for all options
+```
 
 ## Prerequisites
 
-- Node.js 18+
-- Docker Desktop
+- Node.js 18+ (for Electron builds)
+- Docker Desktop (for running services)
 - Git
-
-## Configuration
-
-Edit `docker/.env` to configure:
-
-- Database settings
-- AI model settings
-- Port configurations
-- API keys
-
-## Troubleshooting
-
-### Docker Issues
-
-- Ensure Docker Desktop is running
-- Check port availability
-- Verify Docker daemon status
-
-### Build Issues
-
-- Clear node_modules: `rm -rf node_modules && npm install`
-- Check Node.js version: `node --version`
-- Verify dependencies: `npm ls`
-
-### Service Issues
-
-- Check service logs: `docker compose logs`
-- Verify environment variables
-- Test service health endpoints

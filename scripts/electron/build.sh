@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Script configuration
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UI_DIR="$REPO_ROOT/keys-personal-assist-ui"
 BUILD_DIR="$REPO_ROOT/build"
 
@@ -278,7 +278,7 @@ main() {
     echo -e "${BLUE}Build artifacts located in: $BUILD_DIR${NC}"
     echo
     echo -e "${YELLOW}Next steps:${NC}"
-    echo "1. Run the app with: bash scripts/run-desktop-app.sh"
+    echo "1. Run the app with: bash scripts/services/run-services-installed-app.sh"
     echo "2. Check service-info.json for required services"
     echo
 }

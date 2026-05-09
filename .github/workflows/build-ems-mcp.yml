@@ -13,28 +13,8 @@ on:
     paths:
       - "mcps/ems-mcp-server/VERSION"
 
-env:
-  REGISTRY: ghcr.io
-  REPO_OWNER: ${{ github.repository_owner }}
-
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Read VERSION file
-        id: version
-        run: |
-          VERSION=$(cat mcps/ems-mcp-server/VERSION)
-          echo "📦 Building version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
   build:
-    needs: get-version
     uses: ./.github/workflows/reusable-docker-build.yml
     permissions:
       contents: read
@@ -42,4 +22,6 @@ jobs:
     with:
       service_path: ./mcps/ems-mcp-server
       image_name: ems-mcp-server
-      tag: ${{ inputs.version != '' && inputs.version || needs.get-version.outputs.version }}
+      tag: ${{ inputs.version }}
+      push: ${{ github.event_name != 'pull_request' }}
+      image_description: "EMS MCP Server - Model Context Protocol server for expense management"

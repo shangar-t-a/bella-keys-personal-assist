@@ -13,28 +13,8 @@ on:
     paths:
       - "services/expense-manager-service/VERSION"
 
-env:
-  REGISTRY: ghcr.io
-  REPO_OWNER: ${{ github.repository_owner }}
-
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Read VERSION file
-        id: version
-        run: |
-          VERSION=$(cat services/expense-manager-service/VERSION)
-          echo "📦 Building version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
   build:
-    needs: get-version
     uses: ./.github/workflows/reusable-docker-build.yml
     permissions:
       contents: read
@@ -42,4 +22,6 @@ jobs:
     with:
       service_path: ./services/expense-manager-service
       image_name: expense-manager-service
-      tag: ${{ inputs.version != '' && inputs.version || needs.get-version.outputs.version }}
+      tag: ${{ inputs.version }}
+      push: ${{ github.event_name != 'pull_request' }}
+      image_description: "Expense Manager Service - Backend API for expense tracking"
