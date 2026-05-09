@@ -11,7 +11,7 @@ until pg_isready -h "$PG_DB_HOST" -p 5432; do
     echo "Timeout: PostgreSQL did not become ready within ${timeout}s"
     exit 1
   fi
-  echo "PostgreSQL not ready yet, waiting... (${elapsed}/${timeout}s)"
+  echo "PostgreSQL not ready yet, waiting... (${elapsed}/s)"
   sleep 2
   elapsed=$((elapsed + 2))
 done

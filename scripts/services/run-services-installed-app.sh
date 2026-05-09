@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run Bella Keys desktop app with services from GitHub Container Registry
-# Run from repo root: bash scripts/run-desktop-app.sh
+# Run from repo root: bash scripts/services/run-services-installed-app.sh
 
 set -euo pipefail
 
@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Script configuration
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UI_DIR="$REPO_ROOT/keys-personal-assist-ui"
 BUILD_DIR="$REPO_ROOT/build"
 DOCKER_DIR="$REPO_ROOT/docker"
@@ -264,7 +264,7 @@ launch_electron_app() {
     
     if [ "$app_launched" = false ]; then
         echo -e "${RED}❌ Packaged Electron app not found in build directory.${NC}"
-        echo "Please run bash scripts/build-electron.sh first to build for production."
+        echo "Please run bash scripts/electron/build.sh first to build for production."
         exit 1
     fi
 }

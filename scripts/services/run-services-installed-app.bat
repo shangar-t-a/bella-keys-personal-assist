@@ -5,7 +5,7 @@ REM Run from repo root: scripts\run-desktop-app.bat
 setlocal enabledelayedexpansion
 
 REM Script configuration
-set "REPO_ROOT=%~dp0.."
+set "REPO_ROOT=%~dp0..\.."
 set "UI_DIR=%REPO_ROOT%\keys-personal-assist-ui"
 set "BUILD_DIR=%REPO_ROOT%\build"
 set "DOCKER_DIR=%REPO_ROOT%\docker"

@@ -5,7 +5,7 @@ REM Run from repo root: scripts\build-electron.bat
 setlocal enabledelayedexpansion
 
 REM Script configuration
-set "REPO_ROOT=%~dp0.."
+set "REPO_ROOT=%~dp0..\.."
 set "UI_DIR=%REPO_ROOT%\keys-personal-assist-ui"
 set "BUILD_DIR=%REPO_ROOT%\build"
 
@@ -244,7 +244,7 @@ echo * Build completed successfully! *
 echo Build artifacts located in: %BUILD_DIR%
 echo.
 echo Next steps:
-echo 1. Run the app with: scripts\run-desktop-app.bat
+echo 1. Run the app with: scripts\services\run-services-installed-app.bat
 echo 2. Check service-info.json for required services
 echo.
 
