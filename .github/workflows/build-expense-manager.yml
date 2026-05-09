@@ -19,6 +19,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
     with:
       service_path: ./services/expense-manager-service
       image_name: expense-manager-service

@@ -19,6 +19,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
     with:
       service_path: ./mcps/ems-mcp-server
       image_name: ems-mcp-server
