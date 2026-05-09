@@ -8,6 +8,8 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from app import __version__ as _app_version
+
 ENV_TYPES = Literal["dev", "prod", "test"]
 STORAGE_TYPES = Literal["inmemory", "sqlite", "postgresql"]
 
@@ -33,7 +35,7 @@ class ExpenseManagerBaseSettings(BaseSettings):
 
     # App Settings
     APP_NAME: str = "Expense Manager Service"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = _app_version
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     DEBUG: bool = False
