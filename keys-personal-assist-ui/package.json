@@ -3,7 +3,7 @@
   "description": "Bella Keys Personal Assistant - A comprehensive expense management and AI chat application built with Electron and React",
   "author": "Shangar Arivazhagan (Keys) <shangar202000@gmail.com>",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
