@@ -19,6 +19,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
     with:
       service_path: ./services/bella-chat-service
       image_name: bella-chat-service
