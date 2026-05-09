@@ -12,8 +12,8 @@ on:
         required: true
         type: string
       tag:
-        description: "Image tag"
-        required: true
+        description: "Image tag (optional, will read VERSION file if not provided)"
+        required: false
         type: string
 
 env:
@@ -43,17 +43,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve Docker Tag
+        id: resolve-tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "resolved_tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          elif [ -f "${{ inputs.service_path }}/VERSION" ]; then
+            echo "resolved_tag=$(cat ${{ inputs.service_path }}/VERSION)" >> $GITHUB_OUTPUT
+          else
+            echo "resolved_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
           context: ${{ inputs.service_path }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ inputs.image_name }}:${{ inputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ inputs.image_name }}:${{ steps.resolve-tag.outputs.resolved_tag }}
             ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ inputs.image_name }}:latest
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ inputs.tag }}
+            org.opencontainers.image.version=${{ steps.resolve-tag.outputs.resolved_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

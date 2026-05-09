@@ -26,4 +26,4 @@ jobs:
     with:
       service_path: ./services/expense-manager-service
       image_name: expense-manager-service
-      tag: ${{ inputs.version != '' && inputs.version || format('{0}', github.sha) }}
+      tag: ${{ inputs.version }}

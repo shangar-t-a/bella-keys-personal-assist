@@ -26,4 +26,4 @@ jobs:
     with:
       service_path: ./keys-personal-assist-ui
       image_name: keys-personal-assist-ui
-      tag: ${{ inputs.version != '' && inputs.version || format('{0}', github.sha) }}
+      tag: ${{ inputs.version }}
