@@ -25,7 +25,7 @@ Use the **Conventional Commit** format with a mandatory **Sign-off**.
     Signed-off-by: Name <email@example.com>
     ```
 
-4. **Confirm with user** before pushing to remote.
+4. **Confirm with user** and push to remote.
 
 ## 3. Creating/Updating a PR
 
