@@ -14,4 +14,5 @@ docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile bella up -d -
 
 echo "Launching Electron app..."
 cd "$UI_DIR"
+node "$REPO_ROOT/scripts/electron/setup-electron.js"
 npm run dev:electron

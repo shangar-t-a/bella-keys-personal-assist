@@ -110,14 +110,7 @@ echo * Building UI components...
 cd /d "%UI_DIR%"
 
 REM Install dependencies if needed
-if not exist "node_modules" (
-    echo Installing dependencies...
-    call npm install
-    if %errorlevel% neq 0 (
-        echo ERROR: npm install failed
-        exit /b 1
-    )
-)
+call node "%REPO_ROOT%\scripts\electron\setup-electron.js"
 
 REM Clean previous build artifacts
 echo Cleaning previous build artifacts...
@@ -155,6 +148,13 @@ echo.
 
 REM Package app
 echo * Packaging Electron app...
+
+REM Set up winCodeSign cache to avoid symbolic link extraction errors on Windows
+call node "%REPO_ROOT%\scripts\electron\setup-wincodesign.js"
+if %errorlevel% neq 0 (
+    echo ERROR: winCodeSign cache preparation failed
+    exit /b 1
+)
 
 REM Set environment variables to disable code signing
 set CSC_LINK=

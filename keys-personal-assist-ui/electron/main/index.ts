@@ -1,6 +1,8 @@
 import { app, BrowserWindow, shell, nativeImage } from 'electron'
 import path from 'path'
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): void {
     const isDev = !!process.env['ELECTRON_RENDERER_URL']
     const iconPath = isDev
@@ -8,7 +10,7 @@ function createWindow(): void {
         : path.join(__dirname, '../renderer/icon.png')
     const icon = nativeImage.createFromPath(iconPath)
 
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
         minWidth: 900,
@@ -25,7 +27,7 @@ function createWindow(): void {
     })
 
     mainWindow.on('ready-to-show', () => {
-        mainWindow.show()
+        mainWindow?.show()
     })
 
     // Open external links in the system browser, not inside the app
@@ -41,6 +43,10 @@ function createWindow(): void {
         // Prod: load the built renderer index.html
         mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
     }
+
+    mainWindow.on('closed', () => {
+        mainWindow = null
+    })
 }
 
 app.whenReady().then(() => {
