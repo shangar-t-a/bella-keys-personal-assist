@@ -1,5 +1,5 @@
 # BUILDER
-FROM python:3.14-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 
 # RUNTIME
-FROM python:3.14-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 

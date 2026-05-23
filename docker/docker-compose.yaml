@@ -20,7 +20,7 @@ services:
       - DEBUG=${EMS_DEBUG}
       # Database configurations
       - STORAGE_TYPE=${EMS_STORAGE_TYPE}
-      - DATABASE_URL=${EMS_DATABASE_URL}
+      - DATABASE_URL=${EMS_PG_DATABASE_URL}
       - PG_DB_HOST=${EMS_PG_DB_HOST}
     networks:
       - bella-keys-network

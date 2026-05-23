@@ -143,11 +143,7 @@ build_ui() {
     
     cd "$UI_DIR"
     
-    # Install dependencies if needed
-    if [ ! -d "node_modules" ]; then
-        echo "Installing dependencies..."
-        npm ci
-    fi
+    node "$REPO_ROOT/scripts/electron/setup-electron.js"
     
     # Build for production
     echo "Building Electron app..."
