@@ -37,6 +37,7 @@ import {
   SwapHoriz,
   ArrowUpward,
   ArrowDownward,
+  Block,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -74,6 +75,12 @@ export default function SavingsFundSegregatorPage() {
   const [txDestId, setTxDestId] = useState<string>('');
   const [txAmount, setTxAmount] = useState<string>('');
   const [txDescription, setTxDescription] = useState<string>('');
+  const [txDate, setTxDate] = useState<string>('');
+
+  // Cancellation States
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<SavingsBucketTransactionResponse | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   // ── Data Fetching ────────────────────────────────────────────────────────────
   const fetchAccounts = async () => {
@@ -202,6 +209,7 @@ export default function SavingsFundSegregatorPage() {
     setTxType(type);
     setTxAmount('');
     setTxDescription('');
+    setTxDate('');
 
     // Pre-populate default source/destinations based on type
     const rootBucket = buckets.find(b => b.name === 'Savings');
@@ -253,12 +261,33 @@ export default function SavingsFundSegregatorPage() {
         amount: amountVal,
         transactionType: txType,
         description: txDescription,
+        transactionDate: txDate ? new Date(txDate).toISOString() : null,
       });
       toast.success('Transaction logged successfully');
       setIsTxModalOpen(false);
       fetchDetails();
     } catch (e: any) {
       toast.error(e.message || 'Failed to process transaction');
+    }
+  };
+
+  const handleOpenCancelModal = (tx: SavingsBucketTransactionResponse) => {
+    setSelectedTx(tx);
+    setCancelReason('');
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!selectedTx || !cancelReason.trim()) return;
+    try {
+      await emsClient.cancelSavingsBucketTransaction(selectedTx.id, { reason: cancelReason });
+      toast.success('Transaction cancelled and balances reversed successfully');
+      setIsCancelModalOpen(false);
+      setCancelReason('');
+      setSelectedTx(null);
+      fetchDetails();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to cancel transaction');
     }
   };
 
@@ -546,19 +575,20 @@ export default function SavingsFundSegregatorPage() {
                     <TableCell sx={{ fontWeight: 700 }}>Destination envelope</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">Amount</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Comment / Description</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                      <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                         No transactions logged yet
                       </TableCell>
                     </TableRow>
                   ) : (
                     transactions.map((t) => {
                       let typeLabel = t.transactionType.toUpperCase();
-                      let typeColor: 'success' | 'error' | 'warning' | 'primary' | 'info' = 'primary';
+                      let typeColor: 'success' | 'error' | 'warning' | 'primary' | 'info' | 'default' = 'primary';
                       let amountPrefix = '';
                       let amountColor = 'text.primary';
 
@@ -578,9 +608,13 @@ export default function SavingsFundSegregatorPage() {
                         amountColor = 'text.secondary';
                       }
 
+                      if (t.isCancelled) {
+                        typeColor = 'default';
+                      }
+
                       return (
                         <TableRow key={t.id} hover>
-                          <TableCell sx={{ fontWeight: 500 }}>
+                          <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>
                             {new Date(t.transactionDate).toLocaleDateString('en-IN', {
                               day: '2-digit',
                               month: 'short',
@@ -590,15 +624,37 @@ export default function SavingsFundSegregatorPage() {
                             })}
                           </TableCell>
                           <TableCell>
-                            <Chip label={typeLabel} size="small" color={typeColor} variant="outlined" sx={{ fontWeight: 700 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip label={typeLabel} size="small" color={typeColor} variant="outlined" sx={{ fontWeight: 700 }} />
+                              {t.isCancelled && (
+                                <Chip label="CANCELLED" size="small" color="error" variant="filled" sx={{ fontWeight: 700, fontSize: '0.65rem', height: 20 }} />
+                              )}
+                            </Box>
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{getBucketNameById(t.sourceBucketId)}</TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{getBucketNameById(t.destinationBucketId)}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, color: amountColor }}>
+                          <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>{getBucketNameById(t.sourceBucketId)}</TableCell>
+                          <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>{getBucketNameById(t.destinationBucketId)}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, color: t.isCancelled ? 'text.disabled' : amountColor, textDecoration: t.isCancelled ? 'line-through' : 'none' }}>
                             {amountPrefix}{formatCurrency(t.amount)}
                           </TableCell>
-                          <TableCell sx={{ color: 'text.secondary', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {t.description}
+                          <TableCell sx={{ color: t.isCancelled ? 'text.disabled' : 'text.secondary', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ textDecoration: t.isCancelled ? 'line-through' : 'none' }}>{t.description}</span>
+                            {t.isCancelled && (
+                              <Typography variant="caption" display="block" color="error" sx={{ fontWeight: 600 }}>
+                                Reason: {t.cancellationReason}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {!t.isCancelled && (
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleOpenCancelModal(t)}
+                                title="Cancel Transaction"
+                              >
+                                <Block fontSize="small" />
+                              </IconButton>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -747,6 +803,16 @@ export default function SavingsFundSegregatorPage() {
 
               <TextField
                 fullWidth
+                label="Transaction Date"
+                type="date"
+                value={txDate}
+                onChange={(e) => setTxDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                helperText="Optional. Leave blank to use current date."
+              />
+
+              <TextField
+                fullWidth
                 label="Audit Comment / Description"
                 value={txDescription}
                 onChange={(e) => setTxDescription(e.target.value)}
@@ -761,6 +827,34 @@ export default function SavingsFundSegregatorPage() {
             <Button onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveTx} variant="contained">
               Submit Transaction
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* ── Cancel Transaction Dialog ── */}
+        <Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700 }}>Cancel Transaction</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Are you sure you want to cancel this transaction? This will reverse the balance adjustments in the respective envelopes.
+              </Typography>
+              <TextField
+                fullWidth
+                label="Cancellation Reason"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="e.g. Entered incorrect amount"
+                multiline
+                rows={2}
+                helperText="Required. Provide a reason for this cancellation."
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setIsCancelModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancelReason.trim()}>
+              Confirm Cancellation
             </Button>
           </DialogActions>
         </Dialog>
