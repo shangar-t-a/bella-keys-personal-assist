@@ -516,3 +516,116 @@ class TestSavingsBucketImmutability:
                 assert "edit_transaction" not in attr.lower()
                 assert "update_transaction" not in attr.lower()
 
+
+class TestSavingsBucketTransactionCancellation:
+    async def test__cancel_transaction__success(self, account_service, savings_bucket_service):
+        """Test successfully cancelling an allocation transaction and reversing balances."""
+        account_id = await create_test_account(account_service)
+        buckets = await savings_bucket_service.get_buckets_for_account(account_id)
+        savings = next(b for b in buckets if b.name == "Savings")
+        lic = next(b for b in buckets if b.name == "LIC")
+
+        # 1. Deposit ₹10,000 to Savings
+        await savings_bucket_service.add_transaction(
+            account_id=account_id,
+            source_bucket_id=None,
+            destination_bucket_id=savings.id,
+            amount=10000.0,
+            transaction_type="deposit",
+            description="Seed"
+        )
+
+        # 2. Allocate ₹4000 to LIC
+        tx = await savings_bucket_service.add_transaction(
+            account_id=account_id,
+            source_bucket_id=savings.id,
+            destination_bucket_id=lic.id,
+            amount=4000.0,
+            transaction_type="allocate",
+            description="LIC funding"
+        )
+
+        # Confirm balances before cancellation
+        buckets_before = await savings_bucket_service.get_buckets_for_account(account_id)
+        s_before = next(b for b in buckets_before if b.name == "Savings")
+        l_before = next(b for b in buckets_before if b.name == "LIC")
+        assert s_before.allocated_amount == 6000.0
+        assert l_before.allocated_amount == 4000.0
+
+        # 3. Cancel allocation transaction
+        cancelled_tx = await savings_bucket_service.cancel_transaction(transaction_id=tx.id, reason="Wrong amount")
+
+        assert cancelled_tx.is_cancelled is True
+        assert cancelled_tx.cancellation_reason == "Wrong amount"
+
+        # Check balances are reversed
+        buckets_after = await savings_bucket_service.get_buckets_for_account(account_id)
+        s_after = next(b for b in buckets_after if b.name == "Savings")
+        l_after = next(b for b in buckets_after if b.name == "LIC")
+        assert s_after.allocated_amount == 10000.0
+        assert l_after.allocated_amount == 0.0
+
+    async def test__cancel_transaction__insufficient_funds(self, account_service, savings_bucket_service):
+        """Test that cancelling a transaction fails if destination bucket doesn't have enough funds."""
+        account_id = await create_test_account(account_service)
+        buckets = await savings_bucket_service.get_buckets_for_account(account_id)
+        savings = next(b for b in buckets if b.name == "Savings")
+        lic = next(b for b in buckets if b.name == "LIC")
+
+        # 1. Deposit ₹10,000 to Savings
+        await savings_bucket_service.add_transaction(
+            account_id=account_id,
+            source_bucket_id=None,
+            destination_bucket_id=savings.id,
+            amount=10000.0,
+            transaction_type="deposit",
+            description="Seed"
+        )
+
+        # 2. Allocate ₹4000 to LIC
+        tx = await savings_bucket_service.add_transaction(
+            account_id=account_id,
+            source_bucket_id=savings.id,
+            destination_bucket_id=lic.id,
+            amount=4000.0,
+            transaction_type="allocate",
+            description="LIC funding"
+        )
+
+        # 3. Withdraw ₹2000 from LIC (simulating spending)
+        await savings_bucket_service.add_transaction(
+            account_id=account_id,
+            source_bucket_id=lic.id,
+            destination_bucket_id=None,
+            amount=2000.0,
+            transaction_type="withdraw",
+            description="LIC premium payment"
+        )
+
+        # 4. Attempt to cancel the original ₹4000 allocation.
+        # This requires deducting ₹4000 from LIC, but it only has ₹2000.
+        with pytest.raises(SavingsBucketInsufficientFundsError):
+            await savings_bucket_service.cancel_transaction(transaction_id=tx.id, reason="Cancel funding")
+
+    async def test__cancel_transaction__already_cancelled(self, account_service, savings_bucket_service):
+        """Test that cancelling a transaction twice raises an error."""
+        account_id = await create_test_account(account_service)
+        buckets = await savings_bucket_service.get_buckets_for_account(account_id)
+        savings = next(b for b in buckets if b.name == "Savings")
+
+        tx = await savings_bucket_service.add_transaction(
+            account_id=account_id,
+            source_bucket_id=None,
+            destination_bucket_id=savings.id,
+            amount=500.0,
+            transaction_type="deposit",
+            description="Seed"
+        )
+
+        # Cancel once
+        await savings_bucket_service.cancel_transaction(transaction_id=tx.id, reason="Reason")
+
+        # Cancel again
+        with pytest.raises(ValueError, match="Transaction is already cancelled."):
+            await savings_bucket_service.cancel_transaction(transaction_id=tx.id, reason="Reason")
+
