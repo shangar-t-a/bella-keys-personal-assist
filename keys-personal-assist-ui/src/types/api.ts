@@ -111,3 +111,50 @@ export interface MonthlyExpenseItemRequest {
   is_recurring: boolean;
   status?: 'pending' | 'settled';
 }
+
+// ── Savings Buckets (V2 Fund Segregation) ───────────────────────────────────
+
+export interface SavingsBucketResponse {
+  id: string;
+  accountId: string;
+  name: string;
+  allocatedAmount: number;
+  targetAmount: number | null;
+}
+
+export interface SavingsBucketCreateRequest {
+  name: string;
+  targetAmount?: number | null;
+}
+
+export interface SavingsBucketUpdateRequest {
+  name: string;
+  targetAmount?: number | null;
+}
+
+export interface SavingsBucketTransactionCreateRequest {
+  sourceBucketId?: string | null;
+  destinationBucketId?: string | null;
+  amount: number;
+  transactionType: string; // 'deposit', 'withdraw', 'allocate', 'release', 'transfer'
+  description: string;
+  transactionDate?: string | null; // ISO DateTime
+}
+
+export interface SavingsBucketTransactionResponse {
+  id: string;
+  accountId: string;
+  sourceBucketId: string | null;
+  destinationBucketId: string | null;
+  amount: number;
+  transactionType: string;
+  description: string;
+  transactionDate: string; // ISO DateTime
+}
+
+export interface SavingsBucketTransactionsPageResponse {
+  transactions: SavingsBucketTransactionResponse[];
+  totalElements: number;
+  limit: number;
+  offset: number;
+}

@@ -33,6 +33,7 @@ import {
     Home,
     LightMode as Sun,
     Menu,
+    AccountBalanceWallet,
 } from '@mui/icons-material';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { getAvailableServices } from '@/config/features';
@@ -83,6 +84,11 @@ const getNavSections = (): NavSection[] => {
                             name: 'Spending Summary',
                             href: '/dashboard/spending-account-summary',
                             icon: CreditCard,
+                        },
+                        {
+                            name: 'Savings Segregator',
+                            href: '/dashboard/savings-fund-segregator',
+                            icon: AccountBalanceWallet,
                         },
                         {
                             name: 'Monthly Planner',

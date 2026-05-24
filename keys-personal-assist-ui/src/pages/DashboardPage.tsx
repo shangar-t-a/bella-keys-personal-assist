@@ -1,6 +1,6 @@
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Container, Card, CardContent, Button, Grid } from '@mui/material';
-import { TrendingUp, ArrowForward as ArrowRight, BarChart as BarChart3 } from '@mui/icons-material';
+import { TrendingUp, ArrowForward as ArrowRight, BarChart as BarChart3, AccountBalanceWallet } from '@mui/icons-material';
 
 export default function DashboardPage() {
   return (
@@ -44,9 +44,9 @@ export default function DashboardPage() {
         </Box>
 
         {/* Dashboard Grid */}
-        <Grid container spacing={4} sx={{ maxWidth: '1000px', mx: 'auto' }}>
+        <Grid container spacing={4} sx={{ maxWidth: '1200px', mx: 'auto' }}>
           {/* Spending Account Dashboard */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
                 height: '100%',
@@ -108,8 +108,71 @@ export default function DashboardPage() {
             </Card>
           </Grid>
 
+          {/* Savings Fund Segregator Dashboard */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card
+              sx={{
+                height: '100%',
+                borderRadius: 3,
+                boxShadow: 3,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 8,
+                },
+              }}
+            >
+              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', gap: 3, mb: 4, flexGrow: 1 }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 3,
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: 3,
+                    }}
+                  >
+                    <AccountBalanceWallet sx={{ color: 'white', fontSize: 28 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 1 }}>
+                      Savings Segregator
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                      Segregate and track allocations in your savings accounts for goals, bills, and insurance.
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button
+                  component={RouterLink}
+                  to="/dashboard/savings-fund-segregator"
+                  variant="contained"
+                  fullWidth
+                  endIcon={<ArrowRight />}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                    },
+                  }}
+                >
+                  Manage Funds
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
           {/* Monthly Planner Dashboard */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
                 height: '100%',
