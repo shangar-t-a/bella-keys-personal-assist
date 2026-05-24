@@ -56,6 +56,14 @@ class SavingsBucketTransactionResponse(BaseSchema):
     transaction_type: str = Field(..., description="Type of transaction")
     description: str = Field(..., description="Comment detailing the transaction")
     transaction_date: datetime = Field(..., description="Date and time of the transaction")
+    is_cancelled: bool = Field(False, description="Whether the transaction has been cancelled")
+    cancellation_reason: str | None = Field(None, description="Reason for cancellation if applicable")
+
+
+class SavingsBucketTransactionCancelRequest(BaseSchema):
+    """Schema for cancelling a savings bucket transaction."""
+
+    reason: str = Field(..., description="Reason for cancelling the transaction", min_length=1)
 
 
 class SavingsBucketTransactionsPageResponse(BaseSchema):

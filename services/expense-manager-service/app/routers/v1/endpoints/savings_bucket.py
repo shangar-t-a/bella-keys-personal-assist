@@ -10,6 +10,7 @@ from app.routers.v1.schemas.savings_bucket import (
     SavingsBucketTransactionResponse,
     SavingsBucketTransactionsPageResponse,
     SavingsBucketUpdateRequest,
+    SavingsBucketTransactionCancelRequest,
 )
 from app.routers.v1.services import get_savings_bucket_service
 from app.use_cases.errors.savings_bucket import (
@@ -130,6 +131,8 @@ async def create_transaction(
             transaction_type=tx.transaction_type,
             description=tx.description,
             transaction_date=tx.transaction_date,
+            is_cancelled=tx.is_cancelled,
+            cancellation_reason=tx.cancellation_reason,
         )
     except SavingsBucketNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message) from error
@@ -160,6 +163,8 @@ async def get_transactions(
                 transaction_type=t.transaction_type,
                 description=t.description,
                 transaction_date=t.transaction_date,
+                is_cancelled=t.is_cancelled,
+                cancellation_reason=t.cancellation_reason,
             )
             for t in txs
         ],
@@ -167,3 +172,35 @@ async def get_transactions(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post(
+    "/transaction/{transaction_id}/cancel",
+    response_model=SavingsBucketTransactionResponse,
+)
+async def cancel_transaction(
+    transaction_id: str,
+    request: SavingsBucketTransactionCancelRequest,
+    service: SavingsBucketService = Depends(get_savings_bucket_service),
+) -> SavingsBucketTransactionResponse:
+    """Cancel a transaction and reverse its balance changes atomically."""
+    try:
+        tx = await service.cancel_transaction(transaction_id=transaction_id, reason=request.reason)
+        return SavingsBucketTransactionResponse(
+            id=tx.id,
+            account_id=tx.account_id,
+            source_bucket_id=tx.source_bucket_id,
+            destination_bucket_id=tx.destination_bucket_id,
+            amount=tx.amount,
+            transaction_type=tx.transaction_type,
+            description=tx.description,
+            transaction_date=tx.transaction_date,
+            is_cancelled=tx.is_cancelled,
+            cancellation_reason=tx.cancellation_reason,
+        )
+    except SavingsBucketNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message) from error
+    except SavingsBucketInsufficientFundsError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.message) from error
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
