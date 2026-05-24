@@ -346,6 +346,22 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to fetch savings bucket transactions');
     return response.json();
   }
+
+  async cancelSavingsBucketTransaction(
+    transactionId: string,
+    data: { reason: string }
+  ): Promise<SavingsBucketTransactionResponse> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/transaction/${transactionId}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to cancel transaction');
+    }
+    return response.json();
+  }
 }
 
 // Export singleton instance

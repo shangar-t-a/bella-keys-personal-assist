@@ -150,6 +150,8 @@ export interface SavingsBucketTransactionResponse {
   transactionType: string;
   description: string;
   transactionDate: string; // ISO DateTime
+  isCancelled: boolean;
+  cancellationReason: string | null;
 }
 
 export interface SavingsBucketTransactionsPageResponse {
