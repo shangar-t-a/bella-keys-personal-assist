@@ -10,7 +10,7 @@ For active development, services can be run directly on the host machine.
 ```bash
 cd services/expense-manager-service
 uv sync
-uv run uvicorn app.main:app --reload --port 8000
+uv run app/main.py
 ```
 
 ### Desktop UI (React/Vite Dev Mode)
