@@ -140,6 +140,22 @@ The backend follows Clean Architecture principles, with each layer mapped to spe
 
 - **`tests/`**: Unit and integration tests for all layers.
 
+#### Running Tests
+
+Before running tests, you must initialize the test database and user in your local PostgreSQL instance on the host PC (since it follows the hybrid "inside-out" architecture):
+
+1. Connect to your local PostgreSQL server as the superuser (`postgres`).
+2. Run the following SQL commands to create the test user and database:
+   ```sql
+   CREATE USER ems_test_user WITH ENCRYPTED PASSWORD 'test123';
+   CREATE DATABASE expense_manager_test OWNER ems_test_user;
+   ```
+3. Run the tests using `uv`:
+   ```bash
+   uv run pytest
+   ```
+
+
 ## 4. Technology Stack & Rationale
 
 - **Python 3.14+**: Backend technology.

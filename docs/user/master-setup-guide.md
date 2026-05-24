@@ -12,9 +12,9 @@ Before running the app, you must initialize your local PostgreSQL instance with 
 
 Run the initialization script against your host PostgreSQL instance:
 
-* **Script Location:** [docker/scripts/init-db.sql](../../docker/scripts/init-db.sql)
+* **Script Location:** [scripts/database/init-db.sql](../../scripts/database/init-db.sql)
 
-You can run this via `psql -f` or by copying the contents into your preferred SQL GUI (pgAdmin, DBeaver, etc.). This script creates the `expense_manager`, `bella_chat_arize_data`, and `bella_chat_checkpoints` databases.
+You can run this via `psql -f` or by copying the contents into your preferred SQL GUI (pgAdmin, DBeaver, etc.). This script creates the `expense_manager` (including `expense_manager_test` for running tests), `bella_chat_arize_data`, and `bella_chat_checkpoints` databases.
 
 ### Step 2: Configure Environment
 

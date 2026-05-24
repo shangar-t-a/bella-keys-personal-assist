@@ -7,6 +7,13 @@ CREATE USER ems_user WITH ENCRYPTED PASSWORD 'ems_password';
 GRANT ALL PRIVILEGES ON DATABASE expense_manager TO ems_user;
 ALTER DATABASE expense_manager OWNER TO ems_user;
 
+-- 1b. Expense Manager Service Tests (EMS Tests)
+CREATE DATABASE expense_manager_test;
+CREATE USER ems_test_user WITH ENCRYPTED PASSWORD 'test123';
+GRANT ALL PRIVILEGES ON DATABASE expense_manager_test TO ems_test_user;
+ALTER DATABASE expense_manager_test OWNER TO ems_test_user;
+
+
 -- 2. Bella Chat - Arize/Phoenix Observability
 CREATE DATABASE bella_chat_arize_data;
 CREATE USER arize_user WITH ENCRYPTED PASSWORD 'arize_password';

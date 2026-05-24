@@ -7,6 +7,7 @@ from .monthly_planner import (
     MonthlySummaryModel,
 )
 from .period import PeriodModel
+from .savings_bucket import SavingsBucketModel, SavingsBucketTransactionModel
 from .spending_entry import SpendingEntryModel
 
 __all__ = [
@@ -16,4 +17,6 @@ __all__ = [
     "MonthlyCategoryModel",
     "MonthlyExpenseItemModel",
     "MonthlySummaryModel",
+    "SavingsBucketModel",
+    "SavingsBucketTransactionModel",
 ]

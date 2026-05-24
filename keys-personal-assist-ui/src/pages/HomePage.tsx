@@ -6,7 +6,7 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    navigate('/dashboard');
+    navigate('/dashboard/spending-account-summary');
   };
 
   return (

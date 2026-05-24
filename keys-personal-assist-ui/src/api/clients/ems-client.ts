@@ -13,6 +13,12 @@ import type {
   MonthlySummary,
   MonthlyExpenseItem,
   MonthlyExpenseItemRequest,
+  SavingsBucketResponse,
+  SavingsBucketCreateRequest,
+  SavingsBucketUpdateRequest,
+  SavingsBucketTransactionCreateRequest,
+  SavingsBucketTransactionResponse,
+  SavingsBucketTransactionsPageResponse,
 } from '@/types/api';
 import { getEmsBase } from '@/api/config';
 
@@ -268,6 +274,92 @@ class EMSClient {
       method: 'POST',
     });
     if (!response.ok) throw new Error('Failed to sync from previous month');
+    return response.json();
+  }
+
+  // ── Savings Buckets (V2 Fund Segregation) ───────────────────────────────────
+
+  async getSavingsBuckets(accountId: string): Promise<SavingsBucketResponse[]> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/list/${accountId}`);
+    if (!response.ok) throw new Error('Failed to fetch savings buckets');
+    return response.json();
+  }
+
+  async createSavingsBucket(accountId: string, data: SavingsBucketCreateRequest): Promise<SavingsBucketResponse> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/${accountId}/bucket`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to create savings bucket');
+    }
+    return response.json();
+  }
+
+  async updateSavingsBucket(bucketId: string, data: SavingsBucketUpdateRequest): Promise<SavingsBucketResponse> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/bucket/${bucketId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to update savings bucket');
+    }
+    return response.json();
+  }
+
+  async deleteSavingsBucket(bucketId: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/bucket/${bucketId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to delete savings bucket');
+    }
+  }
+
+  async createSavingsBucketTransaction(
+    accountId: string,
+    data: SavingsBucketTransactionCreateRequest
+  ): Promise<SavingsBucketTransactionResponse> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/${accountId}/transaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to create savings bucket transaction');
+    }
+    return response.json();
+  }
+
+  async getSavingsBucketTransactions(
+    accountId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<SavingsBucketTransactionsPageResponse> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/${accountId}/transactions?limit=${limit}&offset=${offset}`);
+    if (!response.ok) throw new Error('Failed to fetch savings bucket transactions');
+    return response.json();
+  }
+
+  async cancelSavingsBucketTransaction(
+    transactionId: string,
+    data: { reason: string }
+  ): Promise<SavingsBucketTransactionResponse> {
+    const response = await fetch(`${this.baseURL}/v1/savings_buckets/transaction/${transactionId}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to cancel transaction');
+    }
     return response.json();
   }
 }

@@ -33,6 +33,7 @@ import {
     Home,
     LightMode as Sun,
     Menu,
+    AccountBalanceWallet,
 } from '@mui/icons-material';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { getAvailableServices } from '@/config/features';
@@ -85,11 +86,16 @@ const getNavSections = (): NavSection[] => {
                             icon: CreditCard,
                         },
                         {
-                            name: 'Monthly Planner',
-                            href: '/dashboard/monthly-planner',
-                            icon: CalendarMonth,
+                            name: 'Savings Segregator',
+                            href: '/dashboard/savings-fund-segregator',
+                            icon: AccountBalanceWallet,
                         },
                     ],
+                },
+                {
+                    name: 'Monthly Planner',
+                    href: '/dashboard/monthly-planner',
+                    icon: CalendarMonth,
                 },
             ],
         });
@@ -237,8 +243,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
                             <List disablePadding dense>
                                 {section.items.map((item) => {
                                     const Icon = item.icon;
-                                    const active = isActive(item.href, item.exact);
                                     const hasChildren = !!item.children?.length;
+                                    const active = hasChildren
+                                        ? item.children!.some(child => isActive(child.href, true))
+                                        : isActive(item.href, item.exact);
                                     const childExpanded = expandedItems[item.name];
 
                                     const activeStyle = active
