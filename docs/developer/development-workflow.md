@@ -9,7 +9,7 @@ For active development, services can be run directly on the host machine.
 ### Expense Manager Service (FastAPI)
 ```bash
 cd services/expense-manager-service
-uv pip install -r pyproject.toml
+uv sync
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
