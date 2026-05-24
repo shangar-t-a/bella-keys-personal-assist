@@ -195,3 +195,79 @@ class SavingsBucketService:
     async def get_transactions_count_for_account(self, account_id: str) -> int:
         """Get total transaction count."""
         return await self.savings_bucket_repository.get_transactions_count_for_account(account_id=account_id)
+
+    async def cancel_transaction(self, transaction_id: str, reason: str) -> SavingsBucketTransaction:
+        """Cancel a transaction, reversing its balance changes atomically in the database."""
+        tx = await self.savings_bucket_repository.get_transaction_by_id(transaction_id=transaction_id)
+        if tx is None:
+            raise SavingsBucketNotFoundError(bucket_id=f"Transaction with ID '{transaction_id}'")
+
+        if tx.is_cancelled:
+            raise ValueError("Transaction is already cancelled.")
+
+        cleaned_reason = reason.strip()
+        if not cleaned_reason:
+            raise ValueError("Cancellation reason is required.")
+
+        # 1. Check destination bucket balance deduction validity
+        if tx.destination_bucket_id:
+            dest_bucket = await self.savings_bucket_repository.get_bucket_by_id(bucket_id=tx.destination_bucket_id)
+            if dest_bucket is None:
+                # Fallback to root "Savings" bucket if destination bucket has been deleted
+                savings_bucket = await self.savings_bucket_repository.get_bucket_by_name_and_account(
+                    account_id=tx.account_id, name="Savings"
+                )
+                if savings_bucket is None:
+                    raise SavingsBucketNotFoundError(bucket_id="Root 'Savings' bucket")
+                if savings_bucket.allocated_amount < tx.amount:
+                    raise SavingsBucketInsufficientFundsError(
+                        name="Savings (refunded from deleted bucket)",
+                        current_balance=savings_bucket.allocated_amount,
+                        requested_amount=tx.amount,
+                    )
+            else:
+                if dest_bucket.allocated_amount < tx.amount:
+                    raise SavingsBucketInsufficientFundsError(
+                        name=dest_bucket.name,
+                        current_balance=dest_bucket.allocated_amount,
+                        requested_amount=tx.amount,
+                    )
+
+        # 2. Update destination bucket balance (subtract amount)
+        if tx.destination_bucket_id:
+            dest_bucket = await self.savings_bucket_repository.get_bucket_by_id(bucket_id=tx.destination_bucket_id)
+            if dest_bucket is None:
+                savings_bucket = await self.savings_bucket_repository.get_bucket_by_name_and_account(
+                    account_id=tx.account_id, name="Savings"
+                )
+                new_savings_balance = savings_bucket.allocated_amount - tx.amount
+                await self.savings_bucket_repository.update_bucket_balance(
+                    bucket_id=savings_bucket.id, allocated_amount=new_savings_balance
+                )
+            else:
+                new_dest_balance = dest_bucket.allocated_amount - tx.amount
+                await self.savings_bucket_repository.update_bucket_balance(
+                    bucket_id=tx.destination_bucket_id, allocated_amount=new_dest_balance
+                )
+
+        # 3. Update source bucket balance (add amount)
+        if tx.source_bucket_id:
+            src_bucket = await self.savings_bucket_repository.get_bucket_by_id(bucket_id=tx.source_bucket_id)
+            if src_bucket is None:
+                savings_bucket = await self.savings_bucket_repository.get_bucket_by_name_and_account(
+                    account_id=tx.account_id, name="Savings"
+                )
+                if savings_bucket is None:
+                    raise SavingsBucketNotFoundError(bucket_id="Root 'Savings' bucket")
+                new_savings_balance = savings_bucket.allocated_amount + tx.amount
+                await self.savings_bucket_repository.update_bucket_balance(
+                    bucket_id=savings_bucket.id, allocated_amount=new_savings_balance
+                )
+            else:
+                new_src_balance = src_bucket.allocated_amount + tx.amount
+                await self.savings_bucket_repository.update_bucket_balance(
+                    bucket_id=tx.source_bucket_id, allocated_amount=new_src_balance
+                )
+
+        # 4. Mark transaction as cancelled
+        return await self.savings_bucket_repository.cancel_transaction(transaction_id=transaction_id, reason=cleaned_reason)
