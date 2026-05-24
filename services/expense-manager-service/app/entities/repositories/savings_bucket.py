@@ -59,3 +59,13 @@ class SavingsBucketRepositoryInterface(ABC):
     async def get_transactions_count_for_account(self, account_id: str) -> int:
         """Get the total count of transactions for an account."""
         pass
+
+    @abstractmethod
+    async def get_transaction_by_id(self, transaction_id: str) -> SavingsBucketTransaction | None:
+        """Retrieve a specific transaction by its ID."""
+        pass
+
+    @abstractmethod
+    async def cancel_transaction(self, transaction_id: str, reason: str) -> SavingsBucketTransaction:
+        """Mark a transaction as cancelled in the database."""
+        pass

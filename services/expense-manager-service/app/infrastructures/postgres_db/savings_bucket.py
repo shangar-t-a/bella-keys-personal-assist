@@ -162,6 +162,8 @@ class PostgresSavingsBucketRepository(SavingsBucketRepositoryInterface):
                 transaction_type=transaction.transaction_type,
                 description=transaction.description,
                 transaction_date=transaction.transaction_date,
+                is_cancelled=transaction.is_cancelled,
+                cancellation_reason=transaction.cancellation_reason,
             )
             session.add(db_tx)
             await session.commit()
@@ -175,6 +177,8 @@ class PostgresSavingsBucketRepository(SavingsBucketRepositoryInterface):
                 transaction_type=db_tx.transaction_type,
                 description=db_tx.description,
                 transaction_date=db_tx.transaction_date,
+                is_cancelled=db_tx.is_cancelled,
+                cancellation_reason=db_tx.cancellation_reason,
             )
 
     async def get_transactions_for_account(
@@ -204,6 +208,8 @@ class PostgresSavingsBucketRepository(SavingsBucketRepositoryInterface):
                     transaction_type=t.transaction_type,
                     description=t.description,
                     transaction_date=t.transaction_date,
+                    is_cancelled=t.is_cancelled,
+                    cancellation_reason=t.cancellation_reason,
                 )
                 for t in txs
             ]
@@ -216,3 +222,49 @@ class PostgresSavingsBucketRepository(SavingsBucketRepositoryInterface):
             )
             result = await session.execute(stmt)
             return result.scalar_one()
+
+    async def get_transaction_by_id(self, transaction_id: str) -> SavingsBucketTransaction | None:
+        """Retrieve a specific transaction by its ID."""
+        async with await self._get_session() as session:
+            stmt = select(SavingsBucketTransactionModel).where(SavingsBucketTransactionModel.id == transaction_id)
+            result = await session.execute(stmt)
+            t = result.scalar_one_or_none()
+            if t is None:
+                return None
+            return SavingsBucketTransaction(
+                id=t.id,
+                account_id=t.account_id,
+                source_bucket_id=t.source_bucket_id,
+                destination_bucket_id=t.destination_bucket_id,
+                amount=t.amount,
+                transaction_type=t.transaction_type,
+                description=t.description,
+                transaction_date=t.transaction_date,
+                is_cancelled=t.is_cancelled,
+                cancellation_reason=t.cancellation_reason,
+            )
+
+    async def cancel_transaction(self, transaction_id: str, reason: str) -> SavingsBucketTransaction:
+        """Mark a transaction as cancelled in the database."""
+        async with await self._get_session() as session:
+            stmt = select(SavingsBucketTransactionModel).where(SavingsBucketTransactionModel.id == transaction_id)
+            result = await session.execute(stmt)
+            db_tx = result.scalar_one_or_none()
+            if db_tx is None:
+                raise ValueError(f"Transaction with ID '{transaction_id}' not found.")
+            db_tx.is_cancelled = True
+            db_tx.cancellation_reason = reason
+            await session.commit()
+            await session.refresh(db_tx)
+            return SavingsBucketTransaction(
+                id=db_tx.id,
+                account_id=db_tx.account_id,
+                source_bucket_id=db_tx.source_bucket_id,
+                destination_bucket_id=db_tx.destination_bucket_id,
+                amount=db_tx.amount,
+                transaction_type=db_tx.transaction_type,
+                description=db_tx.description,
+                transaction_date=db_tx.transaction_date,
+                is_cancelled=db_tx.is_cancelled,
+                cancellation_reason=db_tx.cancellation_reason,
+            )
