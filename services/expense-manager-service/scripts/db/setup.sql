@@ -12,3 +12,10 @@ GRANT ALL PRIVILEGES ON DATABASE expense_manager TO ems_user;
 
 -- Make user the owner of the database
 ALTER DATABASE expense_manager OWNER TO ems_user;
+
+-- Create the test database and test user for running tests
+CREATE DATABASE expense_manager_test;
+CREATE USER ems_test_user WITH ENCRYPTED PASSWORD 'test123';
+GRANT ALL PRIVILEGES ON DATABASE expense_manager_test TO ems_test_user;
+ALTER DATABASE expense_manager_test OWNER TO ems_test_user;
+
