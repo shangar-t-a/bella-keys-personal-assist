@@ -16,9 +16,25 @@ The Spending Entries and Ledger module tracks transaction inputs, manages accoun
 * **Balance After Credit:** Calculated as `current_balance + current_credit`.
 * **Total Spent:** Calculated as `starting_balance - current_balance`.
 
-## Database-Level Pagination, Sorting, and Filtering
+---
+
+## DB-Level Pagination, Sorting, and Filtering
 
 To ensure optimal performance and avoid loading massive datasets into memory, sorting, filtering, and pagination are executed directly in PostgreSQL.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor UI as Desktop UI
+    participant API as Spending API
+    participant DB as PostgreSQL Database
+
+    UI->>API: GET /spending_account/list?page=0&size=12&sort_by=year&account_name=Main
+    API->>DB: Query with filters, ORDER BY, LIMIT 12 OFFSET 0
+    DB-->>API: Return matched entries & total count
+    API->>API: Calculate page metadata (total elements, pages)
+    API-->>UI: Return PaginationResponse
+```
 
 ### Pagination
 List requests accept `page` (0-indexed) and `size` parameters. The service translates these into SQL `LIMIT` and `OFFSET` queries.
@@ -27,7 +43,4 @@ List requests accept `page` (0-indexed) and `size` parameters. The service trans
 Transactions can be sorted by fields such as `month`, `year`, or `account_name` in either ascending (`asc`) or descending (`desc`) order.
 
 ### Filtering
-Queries support filtering by:
-* Account name
-* Specific month
-* Specific year
+Queries support filtering by account name, specific month, and specific year.
