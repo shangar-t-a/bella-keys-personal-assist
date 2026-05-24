@@ -1,48 +1,73 @@
-# 🛠️ Developer Development Workflow
+# Developer Development Workflow
 
-This guide details how to build, modify, and extend the Bella Keys ecosystem.
+This document details the development environment setup, build procedures, architecture rules, and release pipeline.
 
-## 1. Repository Overview
+## 1. Running Services Locally
 
-* `keys-personal-assist-ui/`: Electron + React (Vite).
-* `services/`: Python backends (FastAPI, LangGraph).
-* `mcps/`: Model Context Protocol servers.
-* `docker/`: Multi-environment orchestration.
-* `scripts/`: Build and run automation.
+For active development, services can be run directly on the host machine.
 
-## 2. Building from Source
+### Expense Manager Service (FastAPI)
+```bash
+cd services/expense-manager-service
+uv pip install -r pyproject.toml
+uv run uvicorn app.main:app --reload --port 8000
+```
 
-### Building the Desktop UI
-
+### Desktop UI (React/Vite Dev Mode)
 ```bash
 cd keys-personal-assist-ui
 npm install --legacy-peer-deps
-npm run build:electron
+npm run dev
 ```
+The interface is available at `http://localhost:3000`. API requests to `/api/ems` and `/api/bella-chat` are proxied to the local backends.
 
-### Building Production Artifacts
+---
 
-Use the consolidated build script to generate the installer and portable binaries:
+## 2. Packaging and Electron Builds
 
-```powershell
-.\scripts\build-electron.bat
-```
+To build production installer binaries:
+
+* **Windows:**
+  ```powershell
+  .\scripts\build-electron.bat
+  ```
+* **Linux/macOS:**
+  ```bash
+  bash scripts/electron/build.sh
+  ```
+
+Output binaries are stored in the `dist/` directory.
+
+---
 
 ## 3. Architecture Standards
 
-### The "Inside-Out" Rule
+### Stateless Containers
+All containerized services must remain stateless.
+1. Do not use Docker-managed named volumes for application data.
+2. Direct all database and system connections to the host PC via `host.docker.internal`.
+3. Bind mounts are permitted only for local engine caches (e.g., Qdrant).
 
-All Dockerized services must remain stateless.
-
-1. **Never** use Docker-managed named volumes for persistent data.
-2. **Always** use `host.docker.internal` for external service discovery.
-3. **Bind Mounts** are only permitted for containerized engines requiring local persistence (e.g., Qdrant storage).
-
-### Health Check Standard
-
-All containers must support `curl` for health monitoring. Use the following pattern in compose files:
-
+### Health Checks
+All services must expose a `/health` endpoint. Configure the container health check in `docker-compose.yaml` using `curl`:
 ```yaml
 healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:PORT/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
 ```
+
+---
+
+## 4. Continuous Integration and Release Pipeline
+
+The project utilizes GitHub Actions for building and publishing Docker images to the GitHub Container Registry (GHCR).
+
+### Build Triggers
+To prevent registry clutter and control costs:
+* Builds do not trigger on standard source code commits.
+* Builds only trigger on `push` to `main` when a service `VERSION` file is modified (e.g., `services/expense-manager-service/VERSION`).
+
+### Security Scanning
+The build pipeline scans all generated images for high and critical vulnerabilities using Trivy before publishing.
