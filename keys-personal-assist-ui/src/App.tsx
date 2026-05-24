@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Box, CircularProgress } from '@mui/material';
 import { ThemeProvider } from '@/theme/ThemeProvider';
@@ -11,7 +11,6 @@ const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : Browse
 // Lazy load all route components for code splitting
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const ChatPage = lazy(() => import('@/pages/ChatPage'));
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const SpendingAccountSummaryPage = lazy(() => import('@/pages/SpendingAccountSummaryPage'));
 const MonthlyPlannerPage = lazy(() => import('@/pages/MonthlyPlannerPage'));
 const SavingsFundSegregatorPage = lazy(() => import('@/pages/SavingsFundSegregatorPage'));
@@ -41,7 +40,7 @@ function App() {
               {services.bellaChat && <Route path="/chat" element={<ChatPage />} />}
               {services.expenseManager && (
                 <>
-                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/dashboard" element={<Navigate to="/dashboard/spending-account-summary" replace />} />
                   <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
                   <Route path="/dashboard/monthly-planner" element={<MonthlyPlannerPage />} />
                   <Route path="/dashboard/savings-fund-segregator" element={<SavingsFundSegregatorPage />} />
