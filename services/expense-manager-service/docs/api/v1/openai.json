@@ -1444,6 +1444,362 @@
         }
       }
     },
+    "/v1/savings_buckets/list/{account_id}": {
+      "get": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Get Buckets",
+        "description": "Retrieve all savings buckets for a given account. Auto-seeds defaults if empty.",
+        "operationId": "get_buckets_v1_savings_buckets_list__account_id__get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavingsBucketResponse"
+                  },
+                  "title": "Response Get Buckets V1 Savings Buckets List  Account Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/savings_buckets/{account_id}/bucket": {
+      "post": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Create Bucket",
+        "description": "Create a new savings bucket for an account.",
+        "operationId": "create_bucket_v1_savings_buckets__account_id__bucket_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsBucketCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsBucketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/savings_buckets/bucket/{bucket_id}": {
+      "put": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Update Bucket",
+        "description": "Update an existing savings bucket's details.",
+        "operationId": "update_bucket_v1_savings_buckets_bucket__bucket_id__put",
+        "parameters": [
+          {
+            "name": "bucket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsBucketUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsBucketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Delete Bucket",
+        "description": "Delete a savings bucket, safely returning any remaining funds to root Savings.",
+        "operationId": "delete_bucket_v1_savings_buckets_bucket__bucket_id__delete",
+        "parameters": [
+          {
+            "name": "bucket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/savings_buckets/{account_id}/transaction": {
+      "post": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Create Transaction",
+        "description": "Create a transaction to deposit, withdraw, allocate, release or transfer savings funds.",
+        "operationId": "create_transaction_v1_savings_buckets__account_id__transaction_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsBucketTransactionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsBucketTransactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/savings_buckets/{account_id}/transactions": {
+      "get": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Get Transactions",
+        "description": "Retrieve transaction history for a given savings account.",
+        "operationId": "get_transactions_v1_savings_buckets__account_id__transactions_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsBucketTransactionsPageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/savings_buckets/transaction/{transaction_id}/cancel": {
+      "post": {
+        "tags": [
+          "savings_buckets"
+        ],
+        "summary": "Cancel Transaction",
+        "description": "Cancel a transaction and reverse its balance changes atomically.",
+        "operationId": "cancel_transaction_v1_savings_buckets_transaction__transaction_id__cancel_post",
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Transaction Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsBucketTransactionCancelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsBucketTransactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -1868,6 +2224,322 @@
         ],
         "title": "PeriodResponse",
         "description": "Schema for month-year responses."
+      },
+      "SavingsBucketCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "description": "Name of the savings bucket"
+          },
+          "targetAmount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targetamount",
+            "description": "Optional savings target amount"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SavingsBucketCreateRequest",
+        "description": "Schema for creating a savings bucket."
+      },
+      "SavingsBucketResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique identifier of the bucket"
+          },
+          "accountId": {
+            "type": "string",
+            "title": "Accountid",
+            "description": "Parent account ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the bucket"
+          },
+          "allocatedAmount": {
+            "type": "number",
+            "title": "Allocatedamount",
+            "description": "Current allocated amount in the bucket"
+          },
+          "targetAmount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targetamount",
+            "description": "Optional target savings amount"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "accountId",
+          "name",
+          "allocatedAmount"
+        ],
+        "title": "SavingsBucketResponse",
+        "description": "Schema for savings bucket responses."
+      },
+      "SavingsBucketTransactionCancelRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reason",
+            "description": "Reason for cancelling the transaction"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "SavingsBucketTransactionCancelRequest",
+        "description": "Schema for cancelling a savings bucket transaction."
+      },
+      "SavingsBucketTransactionCreateRequest": {
+        "properties": {
+          "sourceBucketId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcebucketid",
+            "description": "ID of the source bucket"
+          },
+          "destinationBucketId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinationbucketid",
+            "description": "ID of the destination bucket"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Amount",
+            "description": "Amount to transfer/allocate/withdraw"
+          },
+          "transactionType": {
+            "type": "string",
+            "title": "Transactiontype",
+            "description": "Type of transaction: deposit, withdraw, allocate, release, transfer"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Description",
+            "description": "Comment detailing the transaction"
+          },
+          "transactionDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactiondate",
+            "description": "Custom transaction date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "amount",
+          "transactionType",
+          "description"
+        ],
+        "title": "SavingsBucketTransactionCreateRequest",
+        "description": "Schema for creating a savings bucket transaction log."
+      },
+      "SavingsBucketTransactionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique identifier of the transaction"
+          },
+          "accountId": {
+            "type": "string",
+            "title": "Accountid",
+            "description": "Parent account ID"
+          },
+          "sourceBucketId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcebucketid",
+            "description": "ID of the source bucket"
+          },
+          "destinationBucketId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinationbucketid",
+            "description": "ID of the destination bucket"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Amount of the transaction"
+          },
+          "transactionType": {
+            "type": "string",
+            "title": "Transactiontype",
+            "description": "Type of transaction"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Comment detailing the transaction"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Transactiondate",
+            "description": "Date and time of the transaction"
+          },
+          "isCancelled": {
+            "type": "boolean",
+            "title": "Iscancelled",
+            "description": "Whether the transaction has been cancelled",
+            "default": false
+          },
+          "cancellationReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellationreason",
+            "description": "Reason for cancellation if applicable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "accountId",
+          "amount",
+          "transactionType",
+          "description",
+          "transactionDate"
+        ],
+        "title": "SavingsBucketTransactionResponse",
+        "description": "Schema for savings bucket transaction responses."
+      },
+      "SavingsBucketTransactionsPageResponse": {
+        "properties": {
+          "transactions": {
+            "items": {
+              "$ref": "#/components/schemas/SavingsBucketTransactionResponse"
+            },
+            "type": "array",
+            "title": "Transactions",
+            "description": "List of transactions"
+          },
+          "totalElements": {
+            "type": "integer",
+            "title": "Totalelements",
+            "description": "Total number of elements"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Page limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Page offset"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "transactions",
+          "totalElements",
+          "limit",
+          "offset"
+        ],
+        "title": "SavingsBucketTransactionsPageResponse",
+        "description": "Schema for paginated savings bucket transaction responses."
+      },
+      "SavingsBucketUpdateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "description": "Name of the savings bucket"
+          },
+          "targetAmount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targetamount",
+            "description": "Optional savings target amount"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SavingsBucketUpdateRequest",
+        "description": "Schema for updating a savings bucket."
       },
       "SortOrder": {
         "type": "string",
