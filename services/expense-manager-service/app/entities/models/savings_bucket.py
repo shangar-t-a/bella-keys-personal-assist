@@ -26,3 +26,5 @@ class SavingsBucketTransaction(BaseEntity):
     transaction_type: str = Field(description="Type of transaction (deposit, withdraw, allocate, release, transfer)")
     description: str = Field(description="Audit comment for this transaction")
     transaction_date: datetime = Field(default_factory=datetime.utcnow, description="Date and time of the transaction")
+    is_cancelled: bool = Field(default=False, description="Whether the transaction has been cancelled")
+    cancellation_reason: str | None = Field(default=None, description="Reason for cancellation if applicable")
