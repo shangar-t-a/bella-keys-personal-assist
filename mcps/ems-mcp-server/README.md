@@ -1,24 +1,38 @@
 # EMS MCP Server
 
-Exposes Expense Manager Service read operations as MCP tools over streamable-HTTP.
+This Model Context Protocol (MCP) server exposes Expense Manager Service (EMS) read operations as tools over streamable-HTTP.
 
-## Tools
+## Core Tools
 
-- `list_accounts` / `get_account`
-- `list_periods` / `get_period`
-- `list_spending_entries` / `list_spending_entries_for_account`
+* `list_accounts` / `get_account`
+* `list_periods` / `get_period`
+* `list_spending_entries` / `list_spending_entries_for_account`
 
-## Run
+## Configuration
 
-```bash
-uv sync
-uv run app/main.py
-```
+Configure the server via environment variables or a `.env` file:
 
-## Debugging with MCP Inspector
+* `HOST`: The host to bind the server to (default: `0.0.0.0`).
+* `PORT`: The port to run the server on (default: `8001`).
+* `EMS_BASE_URL`: The URL of the running Expense Manager Service (default: `http://localhost:8000`).
+
+## Running the Server
+
+1. Install dependencies:
+   ```bash
+   uv sync
+   ```
+2. Start the server:
+   ```bash
+   uv run app/main.py
+   ```
+
+## Testing and Debugging
+
+Use the MCP Inspector to verify tool behaviors:
 
 ```bash
 npx @modelcontextprotocol/inspector
 ```
 
-Open `http://localhost:6274` to inspect the MCP tools exposed by the EMS MCP Server. You can also use the inspector to send requests to the tools and see their responses.
+Access the inspector in your browser at `http://localhost:6274` to execute and debug tools.
