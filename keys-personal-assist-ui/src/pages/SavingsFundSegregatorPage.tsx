@@ -68,6 +68,8 @@ export default function SavingsFundSegregatorPage() {
   const [bucketEditId, setBucketEditId] = useState<string | null>(null);
   const [bucketName, setBucketName] = useState('');
   const [bucketTarget, setBucketTarget] = useState<string>('');
+  const [isDeleteBucketModalOpen, setIsDeleteBucketModalOpen] = useState(false);
+  const [bucketToDeleteId, setBucketToDeleteId] = useState<string | null>(null);
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<string>('allocate'); // 'deposit', 'withdraw', 'allocate', 'release', 'transfer'
@@ -193,15 +195,21 @@ export default function SavingsFundSegregatorPage() {
     }
   };
 
-  const handleDeleteBucket = async (bucketId: string) => {
-    if (window.confirm('Are you sure you want to delete this bucket? Any remaining balance will be automatically refunded back to your main Savings pool.')) {
-      try {
-        await emsClient.deleteSavingsBucket(bucketId);
-        toast.success('Bucket deleted, balance refunded to Savings');
-        fetchDetails();
-      } catch (e: any) {
-        toast.error(e.message || 'Failed to delete bucket');
-      }
+  const handleDeleteBucket = (bucketId: string) => {
+    setBucketToDeleteId(bucketId);
+    setIsDeleteBucketModalOpen(true);
+  };
+
+  const handleConfirmDeleteBucket = async () => {
+    if (!bucketToDeleteId) return;
+    try {
+      await emsClient.deleteSavingsBucket(bucketToDeleteId);
+      toast.success('Bucket deleted, balance refunded to Savings');
+      setIsDeleteBucketModalOpen(false);
+      setBucketToDeleteId(null);
+      fetchDetails();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete bucket');
     }
   };
 
@@ -855,6 +863,22 @@ export default function SavingsFundSegregatorPage() {
             <Button onClick={() => setIsCancelModalOpen(false)}>Cancel</Button>
             <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancelReason.trim()}>
               Confirm Cancellation
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* ── Delete Bucket Confirmation Dialog ── */}
+        <Dialog open={isDeleteBucketModalOpen} onClose={() => setIsDeleteBucketModalOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700 }}>Delete Envelope</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to delete this envelope? Any remaining balance will be automatically refunded back to your main Savings pool.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setIsDeleteBucketModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleConfirmDeleteBucket} variant="contained" color="error">
+              Delete Envelope
             </Button>
           </DialogActions>
         </Dialog>
