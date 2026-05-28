@@ -28,7 +28,7 @@ import {
   Tooltip as MuiTooltip,
 } from '@mui/material';
 import { Grid } from '@mui/material';
-import AccountManagementModal from '@/components/AccountManagementModal';
+import { useNavigate } from 'react-router-dom';
 import {
   Add as Plus,
   Edit,
@@ -56,6 +56,7 @@ import { formatCurrency } from '@/utils/formatters';
 const COLORS = ['#3b82f6', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#6366f1', '#ef4444'];
 
 export default function SavingsFundSegregatorPage() {
+  const navigate = useNavigate();
   // ── States ──────────────────────────────────────────────────────────────────
   const [accounts, setAccounts] = useState<AccountNameResponse[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
@@ -87,7 +88,7 @@ export default function SavingsFundSegregatorPage() {
   const [selectedTx, setSelectedTx] = useState<SavingsBucketTransactionResponse | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
 
   // ── Data Fetching ────────────────────────────────────────────────────────────
   const fetchAccounts = async (keepSelection = false) => {
@@ -329,7 +330,7 @@ export default function SavingsFundSegregatorPage() {
               variant="h3"
               sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 1, background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
             >
-              Savings Fund Segregator
+              Savings Envelopes
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Partition and track allocations in your savings accounts for medical, LIC, targets, and goals.
@@ -357,7 +358,7 @@ export default function SavingsFundSegregatorPage() {
             <MuiTooltip title="Manage Accounts">
               <IconButton
                 size="small"
-                onClick={() => setIsAccountModalOpen(true)}
+                onClick={() => navigate('/settings?tab=accounts')}
                 color="primary"
               >
                 <Settings fontSize="small" />
@@ -602,8 +603,8 @@ export default function SavingsFundSegregatorPage() {
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Source envelope</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Destination envelope</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Source Envelope</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Destination Envelope</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">Amount</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Comment / Description</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="center">Actions</TableCell>
@@ -906,16 +907,7 @@ export default function SavingsFundSegregatorPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Account Management Modal */}
-        <AccountManagementModal
-          open={isAccountModalOpen}
-          onClose={(changes) => {
-            setIsAccountModalOpen(false);
-            if (changes) {
-              fetchAccounts(true);
-            }
-          }}
-        />
+
       </Container>
     </Box>
   );

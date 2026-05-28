@@ -14,6 +14,7 @@ const ChatPage = lazy(() => import('@/pages/ChatPage'));
 const SpendingAccountSummaryPage = lazy(() => import('@/pages/SpendingAccountSummaryPage'));
 const MonthlyPlannerPage = lazy(() => import('@/pages/MonthlyPlannerPage'));
 const SavingsFundSegregatorPage = lazy(() => import('@/pages/SavingsFundSegregatorPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -40,10 +41,11 @@ function App() {
               {services.bellaChat && <Route path="/chat" element={<ChatPage />} />}
               {services.expenseManager && (
                 <>
-                  <Route path="/dashboard" element={<Navigate to="/dashboard/spending-account-summary" replace />} />
-                  <Route path="/dashboard/spending-account-summary" element={<SpendingAccountSummaryPage />} />
-                  <Route path="/dashboard/monthly-planner" element={<MonthlyPlannerPage />} />
-                  <Route path="/dashboard/savings-fund-segregator" element={<SavingsFundSegregatorPage />} />
+                  <Route path="/dashboard" element={<Navigate to="/dashboard/accounts" replace />} />
+                  <Route path="/dashboard/accounts" element={<SpendingAccountSummaryPage />} />
+                  <Route path="/budget" element={<MonthlyPlannerPage />} />
+                  <Route path="/dashboard/envelopes" element={<SavingsFundSegregatorPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
                 </>
               )}
               {/* Fallback route for disabled features */}

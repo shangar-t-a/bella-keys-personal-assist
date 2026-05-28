@@ -24,7 +24,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Chip,
   OutlinedInput,
   Tooltip,
 } from '@mui/material';
@@ -40,9 +39,9 @@ import {
   Payments,
   Settings,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { emsClient } from '@/api/clients/ems-client';
-import AccountManagementModal from '@/components/AccountManagementModal';
 import type {
   SpendingAccountEntryWithCalculatedFieldsResponse,
   SpendingEntryWithCalcPageResponse,
@@ -70,16 +69,6 @@ export const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const SORT_FIELD_LABELS: Record<SpendingEntrySortField, string> = {
-  year: 'Year',
-  month: 'Month',
-  account_name: 'Account',
-  starting_balance: 'Starting Balance',
-  current_balance: 'Current Balance',
-  current_credit: 'Current Credit',
-  balance_after_credit: 'Balance After Credit',
-  total_spent: 'Total Spent',
-};
 
 const DEFAULT_FORM: FormData = {
   accountName: '',
@@ -171,6 +160,7 @@ function EntryFormFields({ formData, accounts, onChange, onAddAccountClick }: En
 // ── Page component ────────────────────────────────────────────────────────────
 
 export default function SpendingAccountSummaryPage() {
+  const navigate = useNavigate();
   // ── Server data ─────────────────────────────────────────────────────────────
   const [entries, setEntries] = useState<SpendingAccountEntry[]>([]);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
@@ -197,26 +187,19 @@ export default function SpendingAccountSummaryPage() {
   const [selectedEntry, setSelectedEntry] = useState<SpendingAccountEntry | null>(null);
   const [formData, setFormData] = useState<FormData>(DEFAULT_FORM);
 
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isQuickAddAccountOpen, setIsQuickAddAccountOpen] = useState(false);
   const [quickAddAccountName, setQuickAddAccountName] = useState('');
   const [quickAddLoading, setQuickAddLoading] = useState(false);
 
   // ── Derived values for metric cards ─────────────────────────────────────────
   const now = new Date();
-  const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // 1-12
-  const prevMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
 
   // Aggregate the currently loaded page (after server filtering)
+  const totalStartingBalance = entries.reduce((s, e) => s + e.startingBalance, 0);
   const totalSpent = entries.reduce((s, e) => s + e.totalSpent, 0);
+  const totalCurrentBalance = entries.reduce((s, e) => s + e.currentBalance, 0);
+  const totalCurrentCredit = entries.reduce((s, e) => s + e.currentCredit, 0);
   const totalBalanceAfterCredit = entries.reduce((s, e) => s + e.balanceAfterCredit, 0);
-
-  // Prev-month rows in the current result set (server-filtered)
-  const prevMonthEntries = entries.filter(
-    (e) => e.month === prevMonth && e.year === prevMonthYear,
-  );
-  const prevMonthBalance = prevMonthEntries.reduce((s, e) => s + e.currentBalance, 0);
-  const prevMonthCredit = prevMonthEntries.reduce((s, e) => s + e.currentCredit, 0);
 
   // ── Data fetching ────────────────────────────────────────────────────────────
   const fetchAccounts = async () => {
@@ -370,8 +353,6 @@ export default function SpendingAccountSummaryPage() {
     ? filterAccount
     : 'All Accounts';
 
-  const prevMonthLabel = `${MONTH_NAMES[prevMonth - 1]} ${prevMonthYear}`;
-
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -382,7 +363,7 @@ export default function SpendingAccountSummaryPage() {
               variant="h4"
               sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 0.5 }}
             >
-              Spending Account Summary
+              Account Balances
             </Typography>
             <Typography variant="body1" color="text.secondary">
               {contextLabel} · {paginationMeta.totalElements} entries
@@ -392,81 +373,81 @@ export default function SpendingAccountSummaryPage() {
 
         {/* ── Metric Cards ─────────────────────────────────────────────────────── */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Card 1 — Balance last month */}
+          {/* Card 1 — Starting Balance */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <AccountBalance fontSize="small" color="success" />
                   <Typography variant="body2" color="text.secondary">
-                    Balance · {prevMonthLabel}
+                    Starting Balance · filtered
                   </Typography>
                 </Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>
-                  {formatCurrency(prevMonthBalance)}
+                  {formatCurrency(totalStartingBalance)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Money left in account after spending
+                  Initial money in accounts
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Card 2 — Credit last month */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <CreditCard fontSize="small" color="warning" />
-                  <Typography variant="body2" color="text.secondary">
-                    Credit Used · {prevMonthLabel}
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                  {formatCurrency(prevMonthCredit)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Outstanding credit card spend
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Card 3 — Total spent across current page */}
+          {/* Card 2 — Total Spent */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <TrendingDown fontSize="small" color="error" />
                   <Typography variant="body2" color="text.secondary">
-                    Total Spent · filtered view
+                    Total Spent · filtered
                   </Typography>
                 </Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'error.main' }}>
                   {formatCurrency(totalSpent)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Starting − current balance
+                  Starting − cash balance
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Card 4 — Net balance after credit */}
+          {/* Card 3 — Current Cash */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Payments fontSize="small" color="info" />
                   <Typography variant="body2" color="text.secondary">
-                    Net Balance · filtered view
+                    Current Cash · filtered
                   </Typography>
                 </Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.main' }}>
-                  {formatCurrency(totalBalanceAfterCredit)}
+                  {formatCurrency(totalCurrentBalance)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Balance minus outstanding credit
+                  Checking and cash balances
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Card 4 — Credit Card Debt & Net Balance */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <CreditCard fontSize="small" color="warning" />
+                  <Typography variant="body2" color="text.secondary">
+                    Credit Card Debt · filtered
+                  </Typography>
+                </Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                  {formatCurrency(totalCurrentCredit)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  Net Balance: {formatCurrency(totalBalanceAfterCredit)}
                 </Typography>
               </CardContent>
             </Card>
@@ -478,7 +459,7 @@ export default function SpendingAccountSummaryPage() {
           <CardContent>
             <Grid container spacing={2} alignItems="center">
               {/* Account filter */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <FormControl fullWidth size="small">
                     <InputLabel shrink>Account</InputLabel>
@@ -498,7 +479,7 @@ export default function SpendingAccountSummaryPage() {
                   <Tooltip title="Manage Accounts">
                     <IconButton
                       size="small"
-                      onClick={() => setIsAccountModalOpen(true)}
+                      onClick={() => navigate('/settings?tab=accounts')}
                       color="primary"
                     >
                       <Settings fontSize="small" />
@@ -508,7 +489,7 @@ export default function SpendingAccountSummaryPage() {
               </Grid>
 
               {/* Month filter */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel shrink>Month</InputLabel>
                   <Select
@@ -529,7 +510,7 @@ export default function SpendingAccountSummaryPage() {
               </Grid>
 
               {/* Year filter */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel shrink>Year</InputLabel>
                   <Select
@@ -547,35 +528,8 @@ export default function SpendingAccountSummaryPage() {
                 </FormControl>
               </Grid>
 
-              {/* Sort by */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Sort By</InputLabel>
-                  <Select
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={(e) => { setSortBy(e.target.value as SpendingEntrySortField); setPage(0); }}
-                  >
-                    {(Object.keys(SORT_FIELD_LABELS) as SpendingEntrySortField[]).map((f) => (
-                      <MenuItem key={f} value={f}>{SORT_FIELD_LABELS[f]}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Sort order toggle */}
-              <Grid size={{ xs: 6, sm: 3, md: 1 }}>
-                <Chip
-                  label={sortOrder.toUpperCase()}
-                  onClick={() => { setSortOrder((p) => (p === 'asc' ? 'desc' : 'asc')); setPage(0); }}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ width: '100%', cursor: 'pointer', fontWeight: 700 }}
-                />
-              </Grid>
-
               {/* Actions */}
-              <Grid size={{ xs: 6, sm: 3, md: 2 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Button
                     variant="outlined"
@@ -702,17 +656,7 @@ export default function SpendingAccountSummaryPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Account Management Modal */}
-        <AccountManagementModal
-          open={isAccountModalOpen}
-          onClose={(changes) => {
-            setIsAccountModalOpen(false);
-            if (changes) {
-              fetchAccounts();
-              fetchEntries();
-            }
-          }}
-        />
+
 
         {/* Inline Quick-Add Account Dialog */}
         <Dialog
