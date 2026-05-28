@@ -12,7 +12,7 @@ echo "1. Docker (and docker compose)"
 echo "2. PostgreSQL"
 echo "3. Ollama"
 echo ""
-read -p "Are all prerequisites installed and running? (y/N): " PREREQ
+read -p "Are all prerequisites installed and running? (y/N): " PREREQ </dev/tty
 if [[ "$PREREQ" != "y" && "$PREREQ" != "Y" ]]; then
     echo "Please install the prerequisites and run this script again."
     exit 1
@@ -20,7 +20,7 @@ fi
 
 echo ""
 DEFAULT_PATH="$HOME/.keys_sandbox/bella-keys"
-read -p "Enter installation path [$DEFAULT_PATH]: " INSTALL_PATH
+read -p "Enter installation path [$DEFAULT_PATH]: " INSTALL_PATH </dev/tty
 INSTALL_PATH=${INSTALL_PATH:-$DEFAULT_PATH}
 
 # Expand tilde if present
@@ -49,7 +49,7 @@ echo "CONFIGURATION SETUP"
 echo "How would you like to configure your .env file?"
 echo "1) Interactive Setup (Prompt for values with defaults)"
 echo "2) Offline Setup (Auto-generate and pause for manual editing)"
-read -p "Select an option (1/2): " ENV_OPTION
+read -p "Select an option (1/2): " ENV_OPTION </dev/tty
 
 if [ ! -f ".env" ]; then
     cp .env.example .env
@@ -58,13 +58,13 @@ fi
 if [ "$ENV_OPTION" == "1" ]; then
     echo "Interactive Setup selected..."
     
-    read -p "Enter EMS_PG_DB_PASSWORD [default_password]: " EMS_PASS
+    read -p "Enter EMS_PG_DB_PASSWORD [default_password]: " EMS_PASS </dev/tty
     EMS_PASS=${EMS_PASS:-default_password}
     
-    read -p "Enter ARIZE_PG_DB_PASSWORD [default_password]: " ARIZE_PASS
+    read -p "Enter ARIZE_PG_DB_PASSWORD [default_password]: " ARIZE_PASS </dev/tty
     ARIZE_PASS=${ARIZE_PASS:-default_password}
     
-    read -p "Enter LANGGRAPH_PG_DB_PASSWORD [default_password]: " LANGGRAPH_PASS
+    read -p "Enter LANGGRAPH_PG_DB_PASSWORD [default_password]: " LANGGRAPH_PASS </dev/tty
     LANGGRAPH_PASS=${LANGGRAPH_PASS:-default_password}
     
     # Use perl or sed to replace securely. Since bash can be on Mac or Linux/Windows Git Bash, sed -i has different syntax.
@@ -78,7 +78,7 @@ else
     echo "Offline Setup selected."
     echo "An .env file has been generated from .env.example in $INSTALL_PATH."
     echo "Please open this file in your favorite text editor, update the necessary variables (like database passwords), and save."
-    read -p "Press [Enter] when you are done editing the .env file to continue..."
+    read -p "Press [Enter] when you are done editing the .env file to continue..." </dev/tty
 fi
 
 echo ""
@@ -87,12 +87,12 @@ echo "The native PostgreSQL database must be initialized with the correct schema
 echo "An initialization script has been downloaded to: $INSTALL_PATH/init-db.sql"
 echo ""
 echo "If you have 'psql' installed locally, we can attempt to run this automatically."
-read -p "Would you like to run the database initialization via local psql now? (y/N): " RUN_PSQL
+read -p "Would you like to run the database initialization via local psql now? (y/N): " RUN_PSQL </dev/tty
 
 if [[ "$RUN_PSQL" == "y" || "$RUN_PSQL" == "Y" ]]; then
-    read -p "Enter PostgreSQL host [localhost]: " PG_HOST
+    read -p "Enter PostgreSQL host [localhost]: " PG_HOST </dev/tty
     PG_HOST=${PG_HOST:-localhost}
-    read -p "Enter PostgreSQL admin user [postgres]: " PG_USER
+    read -p "Enter PostgreSQL admin user [postgres]: " PG_USER </dev/tty
     PG_USER=${PG_USER:-postgres}
     
     echo "Running psql... you may be prompted for the $PG_USER password multiple times."
@@ -117,7 +117,7 @@ if [[ "$RUN_PSQL" == "y" || "$RUN_PSQL" == "Y" ]]; then
 else
     echo "Skipping automatic database initialization."
     echo "Please ensure you run $INSTALL_PATH/init-db.sql against your native PostgreSQL instance before continuing."
-    read -p "Press [Enter] once you have initialized the database..."
+    read -p "Press [Enter] once you have initialized the database..." </dev/tty
 fi
 
 echo ""
