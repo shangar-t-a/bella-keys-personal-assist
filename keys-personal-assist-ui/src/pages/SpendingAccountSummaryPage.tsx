@@ -26,6 +26,7 @@ import {
   TextField,
   Chip,
   OutlinedInput,
+  Tooltip,
 } from '@mui/material';
 import { Grid } from '@mui/material';
 import {
@@ -37,9 +38,11 @@ import {
   AccountBalance,
   CreditCard,
   Payments,
+  Settings,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { emsClient } from '@/api/clients/ems-client';
+import AccountManagementModal from '@/components/AccountManagementModal';
 import type {
   SpendingAccountEntryWithCalculatedFieldsResponse,
   SpendingEntryWithCalcPageResponse,
@@ -94,23 +97,31 @@ interface EntryFormFieldsProps {
   formData: FormData;
   accounts: string[];
   onChange: (next: FormData) => void;
+  onAddAccountClick: () => void;
 }
 
-function EntryFormFields({ formData, accounts, onChange }: EntryFormFieldsProps) {
+function EntryFormFields({ formData, accounts, onChange, onAddAccountClick }: EntryFormFieldsProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-      <FormControl fullWidth>
-        <InputLabel>Account</InputLabel>
-        <Select
-          value={formData.accountName}
-          label="Account"
-          onChange={(e) => onChange({ ...formData, accountName: e.target.value })}
-        >
-          {accounts.map((a) => (
-            <MenuItem key={a} value={a}>{a}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <FormControl fullWidth>
+          <InputLabel>Account</InputLabel>
+          <Select
+            value={formData.accountName}
+            label="Account"
+            onChange={(e) => onChange({ ...formData, accountName: e.target.value })}
+          >
+            {accounts.map((a) => (
+              <MenuItem key={a} value={a}>{a}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Tooltip title="Add New Account">
+          <IconButton onClick={onAddAccountClick} color="primary">
+            <Plus />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <FormControl fullWidth>
         <InputLabel>Month</InputLabel>
@@ -185,6 +196,11 @@ export default function SpendingAccountSummaryPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<SpendingAccountEntry | null>(null);
   const [formData, setFormData] = useState<FormData>(DEFAULT_FORM);
+
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isQuickAddAccountOpen, setIsQuickAddAccountOpen] = useState(false);
+  const [quickAddAccountName, setQuickAddAccountName] = useState('');
+  const [quickAddLoading, setQuickAddLoading] = useState(false);
 
   // ── Derived values for metric cards ─────────────────────────────────────────
   const now = new Date();
@@ -288,6 +304,26 @@ export default function SpendingAccountSummaryPage() {
       fetchEntries();
     } catch {
       toast.error('Failed to delete entry');
+    }
+  };
+
+  const handleQuickAddAccount = async () => {
+    if (!quickAddAccountName.trim()) {
+      toast.error('Account name cannot be empty');
+      return;
+    }
+    setQuickAddLoading(true);
+    try {
+      await emsClient.getOrCreateAccount({ accountName: quickAddAccountName.trim() });
+      toast.success(`Account "${quickAddAccountName.trim()}" created successfully`);
+      setFormData(prev => ({ ...prev, accountName: quickAddAccountName.trim() }));
+      setQuickAddAccountName('');
+      setIsQuickAddAccountOpen(false);
+      await fetchAccounts();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to create account');
+    } finally {
+      setQuickAddLoading(false);
     }
   };
 
@@ -443,21 +479,32 @@ export default function SpendingAccountSummaryPage() {
             <Grid container spacing={2} alignItems="center">
               {/* Account filter */}
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel shrink>Account</InputLabel>
-                  <Select
-                    value={filterAccount}
-                    displayEmpty
-                    input={<OutlinedInput notched label="Account" />}
-                    onChange={(e) => { setFilterAccount(e.target.value); setPage(0); }}
-                    renderValue={(v: string) => v || <em style={{ color: '#9e9e9e' }}>All Accounts</em>}
-                  >
-                    <MenuItem value="">All Accounts</MenuItem>
-                    {accounts.map((a) => (
-                      <MenuItem key={a} value={a}>{a}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel shrink>Account</InputLabel>
+                    <Select
+                      value={filterAccount}
+                      displayEmpty
+                      input={<OutlinedInput notched label="Account" />}
+                      onChange={(e) => { setFilterAccount(e.target.value); setPage(0); }}
+                      renderValue={(v: string) => v || <em style={{ color: '#9e9e9e' }}>All Accounts</em>}
+                    >
+                      <MenuItem value="">All Accounts</MenuItem>
+                      {accounts.map((a) => (
+                        <MenuItem key={a} value={a}>{a}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Tooltip title="Manage Accounts">
+                    <IconButton
+                      size="small"
+                      onClick={() => setIsAccountModalOpen(true)}
+                      color="primary"
+                    >
+                      <Settings fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Grid>
 
               {/* Month filter */}
@@ -621,7 +668,7 @@ export default function SpendingAccountSummaryPage() {
         <Dialog open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Add New Entry</DialogTitle>
           <DialogContent>
-            <EntryFormFields formData={formData} accounts={accounts} onChange={setFormData} />
+            <EntryFormFields formData={formData} accounts={accounts} onChange={setFormData} onAddAccountClick={() => setIsQuickAddAccountOpen(true)} />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
@@ -633,7 +680,7 @@ export default function SpendingAccountSummaryPage() {
         <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Edit Entry</DialogTitle>
           <DialogContent>
-            <EntryFormFields formData={formData} accounts={accounts} onChange={setFormData} />
+            <EntryFormFields formData={formData} accounts={accounts} onChange={setFormData} onAddAccountClick={() => setIsQuickAddAccountOpen(true)} />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
@@ -652,6 +699,56 @@ export default function SpendingAccountSummaryPage() {
           <DialogActions>
             <Button onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
             <Button onClick={handleDeleteEntry} variant="contained" color="error">Delete</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Account Management Modal */}
+        <AccountManagementModal
+          open={isAccountModalOpen}
+          onClose={(changes) => {
+            setIsAccountModalOpen(false);
+            if (changes) {
+              fetchAccounts();
+              fetchEntries();
+            }
+          }}
+        />
+
+        {/* Inline Quick-Add Account Dialog */}
+        <Dialog
+          open={isQuickAddAccountOpen}
+          onClose={() => setIsQuickAddAccountOpen(false)}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700 }}>Quick Add Account</DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              size="small"
+              label="Account Name"
+              placeholder="e.g. Citi Bank"
+              value={quickAddAccountName}
+              onChange={(e) => setQuickAddAccountName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleQuickAddAccount();
+                }
+              }}
+              disabled={quickAddLoading}
+              sx={{ mt: 1 }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setIsQuickAddAccountOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleQuickAddAccount}
+              variant="contained"
+              disabled={quickAddLoading || !quickAddAccountName.trim()}
+            >
+              Create
+            </Button>
           </DialogActions>
         </Dialog>
       </Container>
