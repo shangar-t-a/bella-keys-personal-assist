@@ -25,8 +25,10 @@ import {
   TextField,
   Chip,
   LinearProgress,
+  Tooltip as MuiTooltip,
 } from '@mui/material';
 import { Grid } from '@mui/material';
+import AccountManagementModal from '@/components/AccountManagementModal';
 import {
   Add as Plus,
   Edit,
@@ -38,6 +40,7 @@ import {
   ArrowUpward,
   ArrowDownward,
   Block,
+  Settings,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -84,13 +87,22 @@ export default function SavingsFundSegregatorPage() {
   const [selectedTx, setSelectedTx] = useState<SavingsBucketTransactionResponse | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
   // ── Data Fetching ────────────────────────────────────────────────────────────
-  const fetchAccounts = async () => {
+  const fetchAccounts = async (keepSelection = false) => {
     try {
       const data = await emsClient.getAllAccounts();
       setAccounts(data);
       if (data.length > 0) {
-        setSelectedAccountId(data[0].id);
+        const exists = data.some(acc => acc.id === selectedAccountId);
+        if (keepSelection && selectedAccountId && exists) {
+          // Keep current selection
+        } else {
+          setSelectedAccountId(data[0].id);
+        }
+      } else {
+        setSelectedAccountId('');
       }
     } catch {
       toast.error('Failed to fetch bank accounts');
@@ -324,23 +336,34 @@ export default function SavingsFundSegregatorPage() {
             </Typography>
           </Box>
 
-          <FormControl sx={{ minWidth: 240 }} size="small">
-            <InputLabel>Bank Account</InputLabel>
-            <Select
-              value={selectedAccountId}
-              label="Bank Account"
-              onChange={(e) => {
-                setSelectedAccountId(e.target.value);
-                setPage(0);
-              }}
-            >
-              {accounts.map((acc) => (
-                <MenuItem key={acc.id} value={acc.id}>
-                  {acc.accountName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FormControl sx={{ minWidth: 240 }} size="small">
+              <InputLabel>Bank Account</InputLabel>
+              <Select
+                value={selectedAccountId}
+                label="Bank Account"
+                onChange={(e) => {
+                  setSelectedAccountId(e.target.value);
+                  setPage(0);
+                }}
+              >
+                {accounts.map((acc) => (
+                  <MenuItem key={acc.id} value={acc.id}>
+                    {acc.accountName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <MuiTooltip title="Manage Accounts">
+              <IconButton
+                size="small"
+                onClick={() => setIsAccountModalOpen(true)}
+                color="primary"
+              >
+                <Settings fontSize="small" />
+              </IconButton>
+            </MuiTooltip>
+          </Box>
         </Box>
 
         {/* ── Metric Cards ── */}
@@ -882,6 +905,17 @@ export default function SavingsFundSegregatorPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Account Management Modal */}
+        <AccountManagementModal
+          open={isAccountModalOpen}
+          onClose={(changes) => {
+            setIsAccountModalOpen(false);
+            if (changes) {
+              fetchAccounts(true);
+            }
+          }}
+        />
       </Container>
     </Box>
   );
