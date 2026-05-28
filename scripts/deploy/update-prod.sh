@@ -15,7 +15,7 @@ echo "Downloading latest configuration files..."
 curl -sSL "$REPO_BASE/docker/docker-compose-prod.yaml" -o docker-compose-prod.yaml
 curl -sSL "$REPO_BASE/scripts/deploy/run-prod.ps1" -o run-prod.ps1
 curl -sSL "$REPO_BASE/scripts/deploy/update-prod.sh" -o update-prod.sh.tmp
-curl -sSL "$REPO_BASE/docker/.env.example" -o .env.example
+curl -sSL "$REPO_BASE/docker/.env.prod.example" -o .env.example
 
 # Check for new variables in .env.example that are missing in .env
 if [ -f ".env" ]; then

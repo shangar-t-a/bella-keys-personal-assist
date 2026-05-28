@@ -13,8 +13,10 @@ For detailed guides, see:
 
 ```text
 scripts/
-├── database/          # Database configuration SQL
-│   └── init-db.sql    # PostgreSQL init schema script
+├── database/          # Database configuration SQL & utilities
+│   ├── init-db.sql    # PostgreSQL init schema script (dev)
+│   ├── init-db-prod.sql # PostgreSQL init schema script (prod)
+│   └── backup-db.ps1  # Database backup utility script
 ├── electron/          # Build desktop app installer (developers only)
 │   ├── build.sh       # Build Electron app (Linux/macOS)
 │   ├── build.bat      # Build Electron app (Windows)

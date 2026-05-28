@@ -207,15 +207,15 @@ start_services() {
     case $SERVICES_TO_RUN in
         "minimal")
             echo "Starting minimal services (Expense Manager only)..."
-            docker compose -f docker-compose.prod.yaml up -d expense-manager-service
+            docker compose -f docker-compose-prod.yaml up -d ems
             ;;
         "standard")
             echo "Starting standard services (Expense Manager + Bella Chat)..."
-            docker compose -f docker-compose.prod.yaml --profile bella up -d
+            docker compose -f docker-compose-prod.yaml --profile bella up -d
             ;;
         "enhanced")
             echo "Starting enhanced services (Expense Manager + Bella Chat + Observability)..."
-            docker compose -f docker-compose.prod.yaml --profile bella --profile full up -d
+            docker compose -f docker-compose-prod.yaml --profile bella --profile full up -d
             ;;
         *)
             echo -e "${RED}Unknown service profile: $SERVICES_TO_RUN${NC}"
