@@ -1,12 +1,12 @@
-name: bella-keys-personal-assist-prod
+name: bella-apps
 
 # Production-ready Docker Compose for local deployment
 # Uses pre-built images from GitHub Container Registry
 
 services:
-  expense-manager-service:
+  ems:
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/expense-manager-service:latest
-    container_name: expense-manager-service-prod
+    container_name: ems
     ports:
       - "8000:8000"
     environment:
@@ -28,13 +28,18 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - bella-keys-network
+      - bella-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  bella-chat-service:
+  bella-chat:
     profiles: [bella, full]
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/bella-chat-service:latest
-    container_name: bella-chat-service-prod
+    container_name: bella-chat
     ports:
       - "5000:5000"
     environment:
@@ -57,7 +62,7 @@ services:
       # Keys Personal Wiki Agent Settings
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
       # EMS MCP Server Settings
-      - EMS_MCP_SERVER_URL=http://ems-mcp-server:8001/mcp
+      - EMS_MCP_SERVER_URL=http://ems-mcp:8001/mcp
       # LangGraph Postgres Checkpointer
       - LANGGRAPH_PG_DB_USER=${LANGGRAPH_PG_DB_USER}
       - LANGGRAPH_PG_DB_PASSWORD=${LANGGRAPH_PG_DB_PASSWORD}
@@ -67,7 +72,7 @@ services:
     depends_on:
       qdrant:
         condition: service_started
-      ems-mcp-server:
+      ems-mcp:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
@@ -76,21 +81,26 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - bella-keys-network
+      - bella-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  ems-mcp-server:
+  ems-mcp:
     profiles: [bella, full]
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/ems-mcp-server:latest
-    container_name: ems-mcp-server-prod
+    container_name: ems-mcp
     ports:
       - "8001:8001"
     environment:
-      - EMS_BASE_URL=http://expense-manager-service:8000
+      - EMS_BASE_URL=http://ems:8000
       - HOST=0.0.0.0
       - PORT=8001
     depends_on:
-      expense-manager-service:
+      ems:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/mcp"]
@@ -99,13 +109,18 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - bella-keys-network
+      - bella-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   qdrant:
     profiles: [bella, full]
     image: qdrant/qdrant:latest
-    container_name: qdrant-prod
+    container_name: qdrant
     ports:
       - "6333:6333" # REST API
       - "6334:6334" # gRPC API
@@ -118,13 +133,18 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - bella-keys-network
+      - bella-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   phoenix:
     profiles: [full]
     image: arizephoenix/phoenix:latest
-    container_name: phoenix-prod
+    container_name: phoenix
     ports:
       - 6006:6006 # PHOENIX_PORT
       - 4317:4317 # PHOENIX_GRPC_PORT
@@ -138,11 +158,16 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - bella-keys-network
+      - bella-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
-  bella-keys-network:
+  bella-network:
     driver: bridge
     ipam:
       config:

@@ -33,8 +33,8 @@ cd "$INSTALL_PATH" || exit 1
 echo "Downloading configuration files..."
 REPO_BASE="https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main"
 curl -sSL "$REPO_BASE/docker/docker-compose-prod.yaml" -o docker-compose-prod.yaml
-curl -sSL "$REPO_BASE/docker/.env.example" -o .env.example
-curl -sSL "$REPO_BASE/scripts/database/init-db.sql" -o init-db.sql
+curl -sSL "$REPO_BASE/docker/.env.prod.example" -o .env.example
+curl -sSL "$REPO_BASE/scripts/database/init-db-prod.sql" -o init-db-prod.sql
 curl -sSL "$REPO_BASE/scripts/deploy/run-prod.ps1" -o run-prod.ps1
 curl -sSL "$REPO_BASE/scripts/deploy/update-prod.sh" -o update-prod.sh
 chmod +x update-prod.sh
@@ -84,7 +84,7 @@ fi
 echo ""
 echo "DATABASE INITIALIZATION"
 echo "The native PostgreSQL database must be initialized with the correct schemas and users."
-echo "An initialization script has been downloaded to: $INSTALL_PATH/init-db.sql"
+echo "An initialization script has been downloaded to: $INSTALL_PATH/init-db-prod.sql"
 echo ""
 echo "If you have 'psql' installed locally, we can attempt to run this automatically."
 read -p "Would you like to run the database initialization via local psql now? (y/N): " RUN_PSQL </dev/tty
@@ -103,20 +103,19 @@ if [[ "$RUN_PSQL" == "y" || "$RUN_PSQL" == "Y" ]]; then
     ARIZE_PASS_VAL=$(grep "ARIZE_PG_DB_PASSWORD=" .env | cut -d '=' -f2)
     LANGGRAPH_PASS_VAL=$(grep "LANGGRAPH_PG_DB_PASSWORD=" .env | cut -d '=' -f2)
     
-    psql -h "$PG_HOST" -U "$PG_USER" -f init-db.sql \
+    psql -h "$PG_HOST" -U "$PG_USER" -f init-db-prod.sql \
         -v ems_pass="$EMS_PASS_VAL" \
-        -v ems_test_pass="$EMS_PASS_VAL" \
         -v arize_pass="$ARIZE_PASS_VAL" \
         -v langgraph_pass="$LANGGRAPH_PASS_VAL"
         
     if [ $? -eq 0 ]; then
         echo "Database initialized successfully."
     else
-        echo "Failed to initialize database via psql. You may need to run init-db.sql manually."
+        echo "Failed to initialize database via psql. You may need to run init-db-prod.sql manually."
     fi
 else
     echo "Skipping automatic database initialization."
-    echo "Please ensure you run $INSTALL_PATH/init-db.sql against your native PostgreSQL instance before continuing."
+    echo "Please ensure you run $INSTALL_PATH/init-db-prod.sql against your native PostgreSQL instance before continuing."
     read -p "Press [Enter] once you have initialized the database..." </dev/tty
 fi
 
