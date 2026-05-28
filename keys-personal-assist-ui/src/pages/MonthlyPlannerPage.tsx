@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
+import { useNavigate } from 'react-router-dom';
+import {  Box,
   Container,
   Typography,
   Card,
@@ -25,7 +25,6 @@ import {
   Chip,
   Checkbox,
   Stack,
-  Divider,
   Tab,
   Tabs,
 } from '@mui/material';
@@ -93,6 +92,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 export default function MonthlyPlannerPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -100,10 +100,6 @@ export default function MonthlyPlannerPage() {
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [expenses, setExpenses] = useState<MonthlyExpenseItem[]>([]);
   const [categories, setCategories] = useState<MonthlyCategory[]>([]);
-  
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryL1, setNewCategoryL1] = useState<'spending' | 'saving'>('spending');
   
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<MonthlyExpenseItem | null>(null);
@@ -233,30 +229,7 @@ export default function MonthlyPlannerPage() {
     }
   };
 
-  const handleAddCategory = async () => {
-    if (!newCategoryName) {
-      toast.error('Category name is mandatory');
-      return;
-    }
-    try {
-      await emsClient.addMonthlyCategory({ name: newCategoryName, category_l1: newCategoryL1 });
-      setNewCategoryName('');
-      toast.success('Category added');
-      fetchData();
-    } catch {
-      toast.error('Failed to add category');
-    }
-  };
 
-  const handleDeleteCategory = async (id: string) => {
-    try {
-      await emsClient.deleteMonthlyCategory(id);
-      toast.success('Category deleted');
-      fetchData();
-    } catch {
-      toast.error('Failed to delete category');
-    }
-  };
 
   const handleSaveExpense = async () => {
     if (!expenseForm.name || expenseForm.amount <= 0) {
@@ -335,7 +308,7 @@ export default function MonthlyPlannerPage() {
         <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'flex-end' }} spacing={2} sx={{ mb: 4 }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
-              Monthly Planner
+              Monthly Budget
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Track your monthly budget and expenses checklist
@@ -357,7 +330,7 @@ export default function MonthlyPlannerPage() {
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               sx={{ width: 100 }}
             />
-            <Button variant="outlined" startIcon={<Settings />} onClick={() => setIsCategoryModalOpen(true)}>
+            <Button variant="outlined" startIcon={<Settings />} onClick={() => navigate('/settings?tab=categories')}>
               Categories
             </Button>
           </Stack>
@@ -446,8 +419,8 @@ export default function MonthlyPlannerPage() {
                   <TableRow>
                     <TableCell padding="checkbox">Status</TableCell>
                     <TableCell>Name</TableCell>
-                    <TableCell>Category L1</TableCell>
-                    <TableCell>Category L2</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Category</TableCell>
                     <TableCell align="right">Amount</TableCell>
                     <TableCell align="center">Recurring</TableCell>
                     <TableCell align="right">Actions</TableCell>
@@ -474,7 +447,7 @@ export default function MonthlyPlannerPage() {
                         </TableCell>
                         <TableCell>{exp.name}</TableCell>
                         <TableCell>
-                          <Chip label={exp.category_l1} size="small" color={exp.category_l1 === 'spending' ? 'error' : 'success'} variant="outlined" />
+                          <Chip label={exp.category_l1 === 'spending' ? 'Spending' : 'Saving'} size="small" color={exp.category_l1 === 'spending' ? 'error' : 'success'} variant="outlined" />
                         </TableCell>
                         <TableCell>{exp.category_l2}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(exp.amount)}</TableCell>
@@ -499,7 +472,7 @@ export default function MonthlyPlannerPage() {
             <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: 400 }}>
                 <CardContent sx={{ height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>Allocation (L1)</Typography>
+                  <Typography variant="h6" gutterBottom>Allocation Type</Typography>
                   <ResponsiveContainer width="100%" height="90%">
                       <PieChart>
                         <Pie
@@ -527,7 +500,7 @@ export default function MonthlyPlannerPage() {
             <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: 400 }}>
                 <CardContent sx={{ height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>Category Breakdown (L2)</Typography>
+                  <Typography variant="h6" gutterBottom>Category Breakdown</Typography>
                   <ResponsiveContainer width="100%" height="90%">
                       <PieChart>
                         <Pie
@@ -555,52 +528,7 @@ export default function MonthlyPlannerPage() {
           </Grid>
         )}
 
-        {/* --- Category Management Modal --- */}
-        <Dialog open={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Manage Categories</DialogTitle>
-          <DialogContent>
-            <Box sx={{ mb: 3, pt: 1 }}>
-              <Typography variant="subtitle2" gutterBottom>Add New Category</Typography>
-              <Stack direction="row" spacing={1}>
-                <TextField 
-                  size="small" 
-                  fullWidth 
-                  required
-                  placeholder="Category Name" 
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                />
-                <Select
-                  size="small"
-                  required
-                  value={newCategoryL1}
-                  onChange={(e) => setNewCategoryL1(e.target.value as any)}
-                  sx={{ minWidth: 120 }}
-                >
-                  <MenuItem value="spending">Spending</MenuItem>
-                  <MenuItem value="saving">Saving</MenuItem>
-                </Select>
-                <Button variant="contained" onClick={handleAddCategory}>Add</Button>
-              </Stack>
-            </Box>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle2" gutterBottom>Existing Categories</Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {categories.map((cat) => (
-                <Chip
-                  key={cat.id}
-                  label={`${cat.name} (${cat.category_l1})`}
-                  onDelete={() => handleDeleteCategory(cat.id)}
-                  color={cat.category_l1 === 'spending' ? 'error' : 'success'}
-                  variant="outlined"
-                />
-              ))}
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsCategoryModalOpen(false)}>Close</Button>
-          </DialogActions>
-        </Dialog>
+
 
         {/* --- Expense Form Modal --- */}
         <Dialog open={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} maxWidth="xs" fullWidth>
@@ -618,17 +546,17 @@ export default function MonthlyPlannerPage() {
                 onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })} 
               />
               <FormControl fullWidth required>
-                <InputLabel>Category L1</InputLabel>
+                <InputLabel>Type</InputLabel>
                 <Select
                   value={expenseForm.category_l1}
-                  label="Category L1"
+                  label="Type"
                   onChange={(e) => {
                     const newL1 = e.target.value as any;
                     const filtered = categories.filter(c => c.category_l1 === newL1);
                     setExpenseForm({ 
-                      ...expenseForm, 
-                      category_l1: newL1,
-                      category_l2: filtered.length > 0 ? filtered[0].name : ''
+                       ...expenseForm, 
+                       category_l1: newL1,
+                       category_l2: filtered.length > 0 ? filtered[0].name : ''
                     });
                   }}
                 >
@@ -637,13 +565,13 @@ export default function MonthlyPlannerPage() {
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>Category L2 (Optional)</InputLabel>
+                <InputLabel>Category (Optional)</InputLabel>
                 <Select
                   value={expenseForm.category_l2}
-                  label="Category L2 (Optional)"
+                  label="Category (Optional)"
                   onChange={(e) => setExpenseForm({ ...expenseForm, category_l2: e.target.value })}
                 >
-                  <MenuItem value=""><em>None (Defaults to L1)</em></MenuItem>
+                  <MenuItem value=""><em>None (Defaults to Type)</em></MenuItem>
                   {categories
                     .filter(c => c.category_l1 === expenseForm.category_l1)
                     .map(c => <MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>)

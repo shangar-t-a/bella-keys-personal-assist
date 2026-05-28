@@ -34,6 +34,7 @@ import {
     LightMode as Sun,
     Menu,
     AccountBalanceWallet,
+    Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { getAvailableServices } from '@/config/features';
@@ -81,20 +82,20 @@ const getNavSections = (): NavSection[] => {
                     icon: BarChart3,
                     children: [
                         {
-                            name: 'Spending Summary',
-                            href: '/dashboard/spending-account-summary',
+                            name: 'Account Balances',
+                            href: '/dashboard/accounts',
                             icon: CreditCard,
                         },
                         {
-                            name: 'Savings Segregator',
-                            href: '/dashboard/savings-fund-segregator',
+                            name: 'Savings Envelopes',
+                            href: '/dashboard/envelopes',
                             icon: AccountBalanceWallet,
                         },
                     ],
                 },
                 {
-                    name: 'Monthly Planner',
-                    href: '/dashboard/monthly-planner',
+                    name: 'Monthly Budget',
+                    href: '/budget',
                     icon: CalendarMonth,
                 },
             ],
@@ -410,8 +411,68 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                 <Divider />
 
+                {/* ── Settings ───────────────────────────────────── */}
+                <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
+                    {isOpen ? (
+                        <RouterLink to="/settings" style={LINK_STYLE} onClick={mobile ? closeMobile : undefined}>
+                            <ListItemButton
+                                sx={{
+                                    borderRadius: 1.5,
+                                    py: 0.875,
+                                    minHeight: 40,
+                                    position: 'relative',
+                                    ...(isActive('/settings') ? {
+                                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                        color: theme.palette.primary.main,
+                                        '&::before': {
+                                            content: '""',
+                                            position: 'absolute',
+                                            left: 0,
+                                            top: '20%',
+                                            height: '60%',
+                                            width: 3,
+                                            bgcolor: 'primary.main',
+                                            borderRadius: '0 3px 3px 0',
+                                        },
+                                    } : {}),
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                                }}
+                            >
+                                <ListItemIcon sx={{ minWidth: 36, color: isActive('/settings') ? 'primary.main' : 'text.secondary' }}>
+                                    <SettingsIcon sx={{ fontSize: 20 }} />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary="Settings"
+                                    primaryTypographyProps={{
+                                        fontSize: '0.875rem',
+                                        fontWeight: isActive('/settings') ? 600 : 400,
+                                    }}
+                                />
+                            </ListItemButton>
+                        </RouterLink>
+                    ) : (
+                        <Tooltip title="Settings" placement="right">
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <RouterLink to="/settings" style={LINK_STYLE}>
+                                    <IconButton
+                                        size="small"
+                                        color={isActive('/settings') ? 'primary' : 'default'}
+                                        sx={{
+                                            color: isActive('/settings') ? 'primary.main' : 'text.secondary',
+                                            bgcolor: isActive('/settings') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                                        }}
+                                    >
+                                        <SettingsIcon />
+                                    </IconButton>
+                                </RouterLink>
+                            </Box>
+                        </Tooltip>
+                    )}
+                </Box>
+
                 {/* ── Theme toggle ───────────────────────────────── */}
-                <Box sx={{ px: 1, py: 1 }}>
+                <Box sx={{ px: 1, pb: 1, pt: 0.5 }}>
                     {isOpen ? (
                         <ListItemButton onClick={toggleTheme} sx={{ borderRadius: 1.5, py: 0.875 }}>
                             <ListItemIcon sx={{ minWidth: 36 }}>
