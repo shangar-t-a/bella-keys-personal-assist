@@ -2,24 +2,34 @@
 
 This document details the development environment setup, build procedures, architecture rules, and release pipeline.
 
-## 1. Running Services Locally
+## 1. Local Development Quick Start
 
-For active development, services can be run directly on the host machine.
+Automate project setup and dependency synchronization (works on Linux, macOS, and Windows Git Bash):
 
-### Expense Manager Service (FastAPI)
 ```bash
-cd services/expense-manager-service
-uv sync
-uv run app/main.py
+bash scripts/setup.sh
 ```
 
-### Desktop UI (React/Vite Dev Mode)
+This script copies env file templates, syncs all Python dependencies via `uv`, installs UI packages via `npm`, and can optionally initialize local databases.
+
+### Running Development Services
+
+Use the unified developer launcher to start different development configurations (interactive or via command line arguments: `ems-web`, `bella-web`, `ems-desktop`, `bella-desktop`):
+
 ```bash
-cd keys-personal-assist-ui
-npm install --legacy-peer-deps
-npm run dev
+bash scripts/run-dev.sh [profile]
 ```
-The interface is available at `http://localhost:3000`. API requests to `/api/ems` and `/api/bella-chat` are proxied to the local backends.
+
+For example, to run the Expense Manager Service with Electron UI:
+```bash
+bash scripts/run-dev.sh ems-desktop
+```
+
+### Common Developer Tasks
+
+* **Running Migrations:** Run `bash scripts/db-migrate.sh` to apply database schema updates via Alembic.
+* **Running Tests:** Run `bash scripts/run-tests.sh` to execute the pytest suite.
+
 
 ---
 
@@ -29,7 +39,7 @@ To build production installer binaries:
 
 * **Windows:**
   ```powershell
-  .\scripts\build-electron.bat
+  .\scripts\electron\build.bat
   ```
 * **Linux/macOS:**
   ```bash

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run Bella Keys desktop app with services from GitHub Container Registry
-# Run from repo root: bash scripts/services/run-services-installed-app.sh
+# Run from repo root: bash scripts/run-desktop-app.sh
 
 set -euo pipefail
 
@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Script configuration
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UI_DIR="$REPO_ROOT/keys-personal-assist-ui"
 BUILD_DIR="$REPO_ROOT/build"
 DOCKER_DIR="$REPO_ROOT/docker"
@@ -27,6 +27,23 @@ echo -e "${BLUE}🚀 Bella Keys Desktop App Runner${NC}"
 echo "=================================="
 
 # Service management functions
+check_prerequisites_prompt() {
+    echo -e "${YELLOW}📋 Prerequisites Checklist:${NC}"
+    echo -e "  1. ${BLUE}Docker Desktop / Engine${NC} (Must be installed and running)"
+    echo -e "  2. ${BLUE}PostgreSQL${NC} (Must be running on your host machine on port 5432)"
+    echo -e "  3. ${BLUE}Environment Setup${NC} (Run 'bash scripts/setup.sh' to configure files and databases)"
+    echo -e "  4. ${BLUE}Packaged Electron App${NC} (Must be built - run 'bash scripts/electron/build.sh' or build.bat first)"
+    echo -e "  5. ${BLUE}Ollama${NC} (Optional - required if using local-first AI models)"
+    echo
+    
+    read -p "Have you installed and started all the required prerequisites? (y/N): " response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        echo -e "${RED}❌ Aborted. Please install and run all prerequisites before launching the app.${NC}"
+        echo "For detailed setup instructions, please refer to: docs/user/setup-guide.md"
+        exit 1
+    fi
+}
+
 check_docker() {
     if ! command -v docker &> /dev/null; then
         echo -e "${RED}❌ Docker is not installed or not in PATH${NC}"
@@ -281,10 +298,14 @@ trap cleanup EXIT INT TERM
 
 # Main execution
 main() {
+    # Prompt and confirm prerequisites
+    check_prerequisites_prompt
+    echo
+    
     echo -e "${BLUE}Starting Bella Keys desktop app...${NC}"
     echo
     
-    # Check prerequisites
+    # Check Docker service
     check_docker
     echo
     

@@ -17,3 +17,11 @@ The project uses a hybrid "inside-out" architecture: application logic is contai
 * [services/bella-chat-service](services/bella-chat-service/README.md): LangGraph AI assistant orchestration service.
 * [services/etl-pipelines](services/etl-pipelines/README.md): Knowledge ingestion pipelines.
 * [mcps/ems-mcp-server](mcps/ems-mcp-server/README.md): Model Context Protocol server exposing financial data.
+
+## Quick Start
+
+1. **Setup Environment and Dependencies:**
+   Run `bash scripts/setup.sh` (works on Linux, macOS, and Windows Git Bash)
+2. **Run Development Services:**
+   Run `bash scripts/run-dev.sh [profile]` (works on Linux, macOS, and Windows Git Bash)
+
