@@ -1,75 +1,59 @@
 # Scripts Index
 
-Quick reference for all build and run scripts.
+Quick reference for all build, run, and utility scripts in the repository.
 
 ## Documentation
 
-For detailed documentation, see:
+For detailed guides, see:
 
-- [Build & Run Guide](../docs/build/README.md) - Overview and quick start
-- [Scripts Reference](../docs/build/scripts-reference.md) - Complete script catalog
-- [Electron App](../docs/build/electron-app.md) - Desktop app build/run
-- [Local Development](../docs/build/local-development.md) - Docker development
-- [Troubleshooting](../docs/build/troubleshooting.md) - Common issues
+- [User Setup Guide](../docs/user/setup-guide.md) - Host prerequisites, setup, and runner instructions.
+- [Developer Workflow](../docs/developer/development-workflow.md) - Local development environment details.
 
 ## Directory Structure
 
-```
+```text
 scripts/
-├── database/          # Database initialization
-│   └── init-db.sql    # PostgreSQL init script
-├── electron/          # Build desktop app (developers only)
+├── database/          # Database configuration SQL
+│   └── init-db.sql    # PostgreSQL init schema script
+├── electron/          # Build desktop app installer (developers only)
 │   ├── build.sh       # Build Electron app (Linux/macOS)
-│   └── build.bat      # Build Electron app (Windows)
-├── services/          # Run backend services
-│   ├── run-services-installed-app.sh     # Run services for installed app
-│   ├── run-services-installed-app.bat    # Windows version
-│   ├── run-ems-web.sh     # EMS + Web UI (development)
-│   ├── run-bella-web.sh   # Bella Chat + Web UI (development)
-│   └── run-*.sh           # Other service combinations
-└── README.md          # This file
+│   ├── build.bat      # Build Electron app (Windows)
+│   ├── setup-electron.js
+│   └── setup-wincodesign.js
+├── db-migrate.sh      # Run database migrations (Linux/macOS/Windows Git Bash)
+├── run-desktop-app.sh  # Run packaged app + pull services from GHCR (Linux/macOS/Windows Git Bash)
+├── run-dev.sh         # Unified developer runner (Linux/macOS/Windows Git Bash)
+├── run-tests.sh       # Run test suites (Linux/macOS/Windows Git Bash)
+├── setup.sh           # Unified environment & dependency setup (Linux/macOS/Windows Git Bash)
+└── README.md          # This file (Scripts Index)
 ```
 
-## Quick Start
+## Quick Reference
 
-### Build Desktop App
-
+### 1. Environment & Dependency Setup
+Sets up environment configurations, syncs Python packages using `uv`, installs UI packages using `npm`, and initializes databases.
 ```bash
-# Linux/macOS
-bash scripts/electron/build.sh
-
-# Windows
-scripts\electron\build.bat
+bash scripts/setup.sh
 ```
 
-### Run Services (For Installed App)
-
-If you installed the desktop app, start backend services:
-
+### 2. Run Local Development Services
+Launches development databases/services in Docker and starts React/Electron components locally. Supports profiles: `ems-web`, `bella-web`, `ems-desktop`, `bella-desktop`.
 ```bash
-# Linux/macOS
-bash scripts/services/run-services-installed-app.sh
-
-# Windows
-scripts\services\run-services-installed-app.bat
+bash scripts/run-dev.sh [profile]
 ```
 
-### Run Services (Development)
-
-For development with specific service combinations:
-
+### 3. Run Packaged Desktop App (Production)
+Pulls pre-built containers from the GitHub Container Registry (GHCR) and starts the compiled desktop app.
 ```bash
-# EMS + Web UI
-bash scripts/services/run-ems-web.sh
-
-# Bella Chat + Web UI
-bash scripts/services/run-bella-web.sh
-
-# See scripts/services/ for all options
+bash scripts/run-desktop-app.sh
 ```
 
-## Prerequisites
+### 4. Running Migrations & Tests
+Convenient wrappers for database schema migrations and testing.
+```bash
+# Apply database migrations
+bash scripts/db-migrate.sh
 
-- Node.js 18+ (for Electron builds)
-- Docker Desktop (for running services)
-- Git
+# Run backend pytest suite
+bash scripts/run-tests.sh
+```

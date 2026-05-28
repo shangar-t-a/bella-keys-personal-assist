@@ -10,33 +10,31 @@ Ensure the following dependencies are installed and running on your host machine
 * **PostgreSQL:** Required on the host machine to store financial and AI checkpoint data.
 * **Ollama (Optional):** Required on the host machine if using local-first AI models.
 
-## 1. Database Initialization
+## 1. Setup and Environment Configuration
 
-The application follows an "inside-out" architecture, meaning databases run on your host PC rather than inside Docker containers.
+The application uses an "inside-out" architecture, meaning the application logic runs in Docker containers while data (PostgreSQL database and Ollama models) resides on your host machine.
 
-1. Locate the initialization script at `scripts/database/init-db.sql`.
-2. Execute this script against your host PostgreSQL instance (e.g., using `psql` or an administration GUI like pgAdmin or DBeaver).
-3. The script creates the following databases:
-   * `expense_manager`
-   * `expense_manager_test` (for unit/integration testing)
-   * `bella_chat_arize_data`
-   * `bella_chat_checkpoints`
+Run the setup automation script to copy environment files, sync dependencies, and initialize the databases automatically (works on Linux, macOS, and Windows Git Bash):
 
-## 2. Environment Configuration
-
-1. Copy the sample environment file:
-   ```bash
-   cp docker/.env.example docker/.env
-   ```
-2. Open `docker/.env` and configure your database passwords and API keys (e.g., Google or OpenAI keys, if applicable).
-
-## 3. Running the Application
-
-Launch both the backend services and the desktop application using the unified runner script:
-
-```powershell
-.\scripts\run-desktop-app.bat
+```bash
+bash scripts/setup.sh
 ```
+
+During the setup process, choose `y` when prompted to initialize the PostgreSQL databases. This runs the SQL schema `scripts/database/init-db.sql` automatically.
+
+If you prefer manual setup:
+1. Copy `docker/.env.example` to `docker/.env` and edit it to configure passwords and keys.
+2. Execute `scripts/database/init-db.sql` on your host PostgreSQL instance.
+
+## 2. Running the Application
+
+Launch both the backend services and the desktop application using the unified runner script (works on Linux, macOS, and Windows Git Bash):
+
+```bash
+bash scripts/run-desktop-app.sh
+```
+
+
 
 During startup, select a service profile:
 
