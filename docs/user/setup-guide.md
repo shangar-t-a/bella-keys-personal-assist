@@ -10,7 +10,7 @@ Ensure the following dependencies are installed and running on your host machine
 * **PostgreSQL:** Required on the host machine to store financial and AI checkpoint data.
 * **Ollama (Optional):** Required on the host machine if using local-first AI models.
 
-## 1. Setup and Environment Configuration
+## 1. Local Development Setup
 
 The application uses an "inside-out" architecture, meaning the application logic runs in Docker containers while data (PostgreSQL database and Ollama models) resides on your host machine.
 
@@ -26,7 +26,17 @@ If you prefer manual setup:
 1. Copy `docker/.env.example` to `docker/.env` and edit it to configure passwords and keys.
 2. Execute `scripts/database/init-db.sql` on your host PostgreSQL instance.
 
-## 2. Running the Application
+## 2. Production Deployment (Home PC)
+
+For installing Bella Keys on a target end-user machine without cloning the repository, use the production installer script:
+
+```bash
+curl -sSL "https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main/scripts/deploy/install-prod.sh" | bash
+```
+
+The script will guide you through setting up your environment variables and initializing your databases securely. Once complete, you can manage the services using the provided `run-prod.ps1` script (on Windows) located in your installation directory.
+
+## 3. Running the Application (Development)
 
 Launch both the backend services and the desktop application using the unified runner script (works on Linux, macOS, and Windows Git Bash):
 
