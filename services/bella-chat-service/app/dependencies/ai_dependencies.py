@@ -14,7 +14,7 @@ from app.core.vector_store import (
 from app.settings import get_settings
 
 if TYPE_CHECKING:
-    from app.core.embeddings.clients import HuggingfaceEmbeddingsClient
+    from app.core.embeddings.clients.base import EmbeddingsClientInterface
     from app.core.llms.clients import (
         GeminiClient,
         OllamaClient,
@@ -36,13 +36,15 @@ def get_app_synthesis_llm_client() -> "GeminiClient | OllamaClient":
 
 
 @lru_cache(maxsize=1)
-def get_app_embedding_client() -> "HuggingfaceEmbeddingsClient":
+def get_app_embedding_client() -> "EmbeddingsClientInterface":
     """Get the embedding client."""
     settings = get_settings()
+
     embedding_client = get_embedding_client(
         provider=settings.EMBEDDING_MODEL_PROVIDER,
         model_name=settings.EMBEDDING_MODEL_NAME,
         ollama_base_url=settings.OLLAMA_URL,
+        output_dimensionality=settings.EMBEDDING_MODEL_DIMENSION,
     )
     return embedding_client
 

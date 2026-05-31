@@ -9,7 +9,11 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from openinference.instrumentation.langchain import LangChainInstrumentor
-from phoenix.otel import register
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from app.dependencies.agents import create_orchestrator_agent
 from app.dependencies.ai_dependencies import (
@@ -43,12 +47,19 @@ def setup_arize_tracing() -> None:
     """Setup Arize tracing if enabled."""
     settings = get_settings()
     if settings.ARIZE_ENABLED:
-        trace_provider = register(
-            endpoint=settings.ARIZE_TRACES_URL,
-            project_name=settings.ARIZE_PROJECT_NAME,
-            auto_instrument=True,
-            batch=True,
+        resource = Resource(
+            attributes={
+                "service.name": settings.ARIZE_PROJECT_NAME,
+            }
         )
+        trace_provider = TracerProvider(resource=resource)
+
+        # Configure standard OTLP HTTP exporter pointing to the Phoenix collector endpoint
+        exporter = OTLPSpanExporter(endpoint=settings.ARIZE_TRACES_URL)
+        span_processor = BatchSpanProcessor(exporter)
+        trace_provider.add_span_processor(span_processor)
+
+        trace.set_tracer_provider(trace_provider)
 
         LangChainInstrumentor().instrument(tracer_provider=trace_provider)
 

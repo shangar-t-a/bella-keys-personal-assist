@@ -38,7 +38,8 @@ COPY --from=builder /app/.venv ./.venv
 COPY app ./app
 COPY entrypoint.sh /app/
 
-RUN chmod +x /app/entrypoint.sh
+# Normalize line endings to LF and make entrypoint executable
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 5000
 
