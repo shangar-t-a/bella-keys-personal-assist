@@ -16,12 +16,13 @@ ALTER DATABASE expense_manager_test OWNER TO ems_test_user;
 
 -- 2. Bella Chat - Arize/Phoenix Observability
 CREATE DATABASE bella_chat_arize_data;
-CREATE USER arize_user WITH ENCRYPTED PASSWORD :'arize_pass';
-GRANT ALL PRIVILEGES ON DATABASE bella_chat_arize_data TO arize_user;
-ALTER DATABASE bella_chat_arize_data OWNER TO arize_user;
+CREATE USER bella_chat_user WITH ENCRYPTED PASSWORD :'bella_chat_pass';
+GRANT ALL PRIVILEGES ON DATABASE bella_chat_arize_data TO bella_chat_user;
+ALTER DATABASE bella_chat_arize_data OWNER TO bella_chat_user;
 
 -- 3. Bella Chat - LangGraph Checkpoints
 CREATE DATABASE bella_chat_checkpoints;
-CREATE USER langgraph_user WITH ENCRYPTED PASSWORD :'langgraph_pass';
-GRANT ALL PRIVILEGES ON DATABASE bella_chat_checkpoints TO langgraph_user;
-ALTER DATABASE bella_chat_checkpoints OWNER TO langgraph_user;
+-- Create USER done at step 2
+-- CREATE USER bella_chat_user WITH ENCRYPTED PASSWORD :'bella_chat_pass';
+GRANT ALL PRIVILEGES ON DATABASE bella_chat_checkpoints TO bella_chat_user;
+ALTER DATABASE bella_chat_checkpoints OWNER TO bella_chat_user;

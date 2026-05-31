@@ -10,12 +10,12 @@ from utilities.time_profile import log_exec_time
 class OllamaEmbeddingsClient(OllamaEmbeddings, EmbeddingsClientInterface):
     """Ollama embeddings client implementation."""
 
-    def __init__(self, model_name: str, base_url: str = "http://localhost:11434", **kwargs):
+    def __init__(self, model_name: str, base_url: str | None = None, **kwargs):
         """Initialize the Ollama client with model name.
 
         Args:
             model_name (str): The Ollama model to use.
-            base_url (str): The base URL for the Ollama server. Defaults to "http://localhost:11434".
+            base_url (str | None): The base URL for the Ollama server. Defaults to None (resolves to default).
             **kwargs: Additional keyword arguments for the OllamaEmbeddings.
 
         Examples:
@@ -35,7 +35,8 @@ class OllamaEmbeddingsClient(OllamaEmbeddings, EmbeddingsClientInterface):
             >>> embedding = client.embed_query(text)
             >>> print(embedding)
         """
-        super().__init__(model=model_name, base_url=base_url, **kwargs)
+        effective_base_url = base_url or "http://localhost:11434"
+        super().__init__(model=model_name, base_url=effective_base_url, **kwargs)
         self._logger = GetAppLogger().get_logger()
 
     @log_exec_time
