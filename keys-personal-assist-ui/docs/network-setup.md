@@ -7,8 +7,8 @@ Browser (localhost:3000)
     ↓
 nginx (port 80 in container)
     ↓
-    ├─→ /api/bella-chat/* → bella-chat-dev:5000
-    └─→ /api/ems/*        → ems-dev:8000
+    ├─→ /api/bella-chat/* → bella-chat:5000
+    └─→ /api/ems/*        → ems:8000
 ```
 
 ## How It Works
@@ -22,8 +22,8 @@ The Vite development server runs on `localhost:3000` and proxies backend request
 ### Production Mode (Docker)
 
 Nginx serves static files and routes backend requests:
-* `/api/bella-chat` targets `http://bella-chat-dev:5000`
-* `/api/ems` targets `http://ems-dev:8000`
+* `/api/bella-chat` targets `http://bella-chat:5000`
+* `/api/ems` targets `http://ems:8000`
 
 ## Port Configuration
 
@@ -38,4 +38,4 @@ Nginx serves static files and routes backend requests:
 
 ## Docker Networking
 
-All services run on the `bella-network-dev` bridge network. Containerized services communicate using Docker DNS resolution (e.g., `bella-chat-dev:5000`, `ems-dev:8000`).
+All services run on the `bella-network` bridge network. Containerized services communicate using Docker DNS resolution (e.g., `bella-chat:5000`, `ems:8000`).

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from utilities.auth_middleware import JWTAuthMiddleware
 
 from app.routers.v1 import router as v1_router
 from app.settings import get_settings
@@ -20,6 +21,12 @@ def setup_middlewares(app: FastAPI, settings) -> None:
         allow_methods=settings.ALLOWED_METHODS,
         allow_headers=settings.ALLOWED_HEADERS,
         expose_headers=settings.CORS_EXPOSE_HEADERS,
+    )
+
+    # Add JWT Auth Middleware for protecting endpoints
+    app.add_middleware(
+        JWTAuthMiddleware,
+        secret_key=settings.JWT_SECRET.get_secret_value() if hasattr(settings, "JWT_SECRET") else None,
     )
 
 

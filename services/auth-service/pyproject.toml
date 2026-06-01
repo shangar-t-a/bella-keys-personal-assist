@@ -1,0 +1,45 @@
+[project]
+name = "auth-service"
+dynamic = ["version"]
+description = "Authentication Service"
+readme = "README.md"
+authors = [
+    { name = "Shangar Arivazhagan (Keys)", email = "shangar202000@gmail.com" },
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.136.3",
+    "pydantic>=2.11.10",
+    "pydantic-settings>=2.11.0",
+    "uvicorn>=0.37.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aiosqlite>=0.20.0",
+    "asyncpg>=0.30.0",
+    "alembic>=1.17.2",
+    "passlib[bcrypt]>=1.7.4",
+    "python-jose[cryptography]>=3.3.0",
+    "python-multipart>=0.0.18",
+]
+
+[dependency-groups]
+lint = ["ruff>=0.13.3"]
+test = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "tox>=4.30.3",
+]
+type = [
+    "mypy>=1.18.2",
+]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "app/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app/"]

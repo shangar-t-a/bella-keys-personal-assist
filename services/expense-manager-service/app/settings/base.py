@@ -22,6 +22,9 @@ class ExpenseManagerBaseSettings(BaseSettings):
     # Environment
     APP_ENV: ENV_TYPES = "prod"
 
+    # Authentication
+    JWT_SECRET: SecretStr | None = None
+
     # Storage settings
     STORAGE_TYPE: STORAGE_TYPES = "postgresql"
 

@@ -13,16 +13,20 @@ CREATE USER ems_test_user WITH ENCRYPTED PASSWORD :'ems_test_pass';
 GRANT ALL PRIVILEGES ON DATABASE expense_manager_test TO ems_test_user;
 ALTER DATABASE expense_manager_test OWNER TO ems_test_user;
 
-
 -- 2. Bella Chat - Arize/Phoenix Observability
 CREATE DATABASE bella_chat_arize_data;
-CREATE USER bella_chat_user WITH ENCRYPTED PASSWORD :'bella_chat_pass';
-GRANT ALL PRIVILEGES ON DATABASE bella_chat_arize_data TO bella_chat_user;
-ALTER DATABASE bella_chat_arize_data OWNER TO bella_chat_user;
+CREATE USER arize_user WITH ENCRYPTED PASSWORD :'arize_pass';
+GRANT ALL PRIVILEGES ON DATABASE bella_chat_arize_data TO arize_user;
+ALTER DATABASE bella_chat_arize_data OWNER TO arize_user;
 
 -- 3. Bella Chat - LangGraph Checkpoints
 CREATE DATABASE bella_chat_checkpoints;
--- Create USER done at step 2
--- CREATE USER bella_chat_user WITH ENCRYPTED PASSWORD :'bella_chat_pass';
-GRANT ALL PRIVILEGES ON DATABASE bella_chat_checkpoints TO bella_chat_user;
-ALTER DATABASE bella_chat_checkpoints OWNER TO bella_chat_user;
+CREATE USER langgraph_user WITH ENCRYPTED PASSWORD :'langgraph_pass';
+GRANT ALL PRIVILEGES ON DATABASE bella_chat_checkpoints TO langgraph_user;
+ALTER DATABASE bella_chat_checkpoints OWNER TO langgraph_user;
+
+-- 4. Auth Service
+CREATE DATABASE auth_service_dev;
+CREATE USER auth_user WITH ENCRYPTED PASSWORD :'auth_pass';
+GRANT ALL PRIVILEGES ON DATABASE auth_service_dev TO auth_user;
+ALTER DATABASE auth_service_dev OWNER TO auth_user;

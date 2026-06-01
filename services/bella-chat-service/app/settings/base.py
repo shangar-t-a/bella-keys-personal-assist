@@ -25,6 +25,9 @@ class BellaChatBaseSettings(BaseSettings):
     # Environment
     APP_ENV: ENV_TYPES = "prod"
 
+    # Authentication
+    JWT_SECRET: SecretStr | None = None
+
     # Logging settings
     FASTAPI_LOG_LEVEL: LOG_LEVELS = "INFO"
     CONSOLE_LOG_LEVEL: LOG_LEVELS = "INFO"
@@ -64,7 +67,7 @@ class BellaChatBaseSettings(BaseSettings):
     ARIZE_ENABLED: bool = True
     ARIZE_TRACES_URL: str = "http://localhost:6006/v1/traces"
     ARIZE_PROJECT_NAME: str = "bella-chat-service"
-    ARIZE_PG_DB_USER: str = "bella_chat_user"
+    ARIZE_PG_DB_USER: str = "arize_user"
     ARIZE_PG_DB_PASSWORD: SecretStr = SecretStr("")
     ARIZE_PG_DB_HOST: str = "localhost"
     ARIZE_PG_DB_NAME: str = "bella_chat_arize_data"
@@ -76,7 +79,7 @@ class BellaChatBaseSettings(BaseSettings):
     EMS_MCP_SERVER_URL: str = "http://localhost:8001/mcp"
 
     # Orchestrator Settings — LangGraph Postgres checkpointer
-    LANGGRAPH_PG_DB_USER: str = "bella_chat_user"
+    LANGGRAPH_PG_DB_USER: str = "langgraph_user"
     LANGGRAPH_PG_DB_PASSWORD: SecretStr = SecretStr("")
     LANGGRAPH_PG_DB_HOST: str = "localhost"
     LANGGRAPH_PG_DB_NAME: str = "bella_chat_checkpoints"

@@ -196,7 +196,7 @@ class SavingsBucketService:
         """Get total transaction count."""
         return await self.savings_bucket_repository.get_transactions_count_for_account(account_id=account_id)
 
-    async def cancel_transaction(self, transaction_id: str, reason: str) -> SavingsBucketTransaction:
+    async def cancel_transaction(self, transaction_id: str, reason: str) -> SavingsBucketTransaction:  # noqa: PLR0912
         """Cancel a transaction, reversing its balance changes atomically in the database."""
         tx = await self.savings_bucket_repository.get_transaction_by_id(transaction_id=transaction_id)
         if tx is None:
@@ -225,13 +225,12 @@ class SavingsBucketService:
                         current_balance=savings_bucket.allocated_amount,
                         requested_amount=tx.amount,
                     )
-            else:
-                if dest_bucket.allocated_amount < tx.amount:
-                    raise SavingsBucketInsufficientFundsError(
-                        name=dest_bucket.name,
-                        current_balance=dest_bucket.allocated_amount,
-                        requested_amount=tx.amount,
-                    )
+            elif dest_bucket.allocated_amount < tx.amount:
+                raise SavingsBucketInsufficientFundsError(
+                    name=dest_bucket.name,
+                    current_balance=dest_bucket.allocated_amount,
+                    requested_amount=tx.amount,
+                )
 
         # 2. Update destination bucket balance (subtract amount)
         if tx.destination_bucket_id:
@@ -270,4 +269,6 @@ class SavingsBucketService:
                 )
 
         # 4. Mark transaction as cancelled
-        return await self.savings_bucket_repository.cancel_transaction(transaction_id=transaction_id, reason=cleaned_reason)
+        return await self.savings_bucket_repository.cancel_transaction(
+            transaction_id=transaction_id, reason=cleaned_reason
+        )

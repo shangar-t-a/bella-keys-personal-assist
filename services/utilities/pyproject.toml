@@ -5,7 +5,9 @@ description = "Utilities for common tasks"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.136.3",
     "python-dotenv>=1.1.1",
+    "python-jose[cryptography]>=3.5.0",
 ]
 
 [dependency-groups]
