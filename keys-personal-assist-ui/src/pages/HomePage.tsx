@@ -1,12 +1,20 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Container } from '@mui/material';
 import { ArrowForward as ArrowRight } from '@mui/icons-material';
+import { getAvailableServices } from '@/config/features';
 
 export default function HomePage() {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    navigate('/dashboard/spending-account-summary');
+    const services = getAvailableServices();
+    if (services.expenseManager) {
+      navigate('/dashboard/accounts');
+    } else if (services.bellaChat) {
+      navigate('/chat');
+    } else {
+      navigate('/settings');
+    }
   };
 
   return (
