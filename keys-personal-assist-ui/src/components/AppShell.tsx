@@ -433,88 +433,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                 <Divider />
 
-                {/* ── User Profile ───────────────────────────────── */}
-                <Box sx={{ px: 1, py: 0.5 }}>
-                    {isOpen ? (
-                        <ListItemButton
-                            onClick={handleUserMenuOpen}
-                            sx={{
-                                borderRadius: 1.5,
-                                py: 0.75,
-                                px: 1.5,
-                                minHeight: 48,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5,
-                                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
-                            }}
-                        >
-                            <Avatar
-                                sx={{
-                                    width: 32,
-                                    height: 32,
-                                    bgcolor: theme.palette.primary.main,
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600,
-                                }}
-                            >
-                                {user?.username ? user.username[0].toUpperCase() : 'U'}
-                            </Avatar>
-                            <Box sx={{ minWidth: 0, flexGrow: 1, textAlign: 'left' }}>
-                                <Typography
-                                    variant="subtitle2"
-                                    noWrap
-                                    sx={{
-                                        fontWeight: 600,
-                                        fontSize: '0.875rem',
-                                        color: 'text.primary',
-                                    }}
-                                >
-                                    {user?.username || 'Guest'}
-                                </Typography>
-                                <Typography
-                                    variant="caption"
-                                    noWrap
-                                    sx={{
-                                        display: 'block',
-                                        color: 'text.secondary',
-                                        fontSize: '0.75rem',
-                                    }}
-                                >
-                                    {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
-                                </Typography>
-                            </Box>
-                        </ListItemButton>
-                    ) : (
-                        <Tooltip title={user?.username || 'User Profile'} placement="right">
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <IconButton
-                                    onClick={handleUserMenuOpen}
-                                    size="small"
-                                    sx={{
-                                        p: 0.5,
-                                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
-                                    }}
-                                >
-                                    <Avatar
-                                        sx={{
-                                            width: 32,
-                                            height: 32,
-                                            bgcolor: theme.palette.primary.main,
-                                            fontSize: '0.875rem',
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {user?.username ? user.username[0].toUpperCase() : 'U'}
-                                    </Avatar>
-                                </IconButton>
-                            </Box>
-                        </Tooltip>
-                    )}
-                </Box>
-
-                <Divider />
-
                 {/* ── Settings ───────────────────────────────────── */}
                 <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
                     {isOpen ? (
@@ -576,7 +494,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 </Box>
 
                 {/* ── Theme toggle ───────────────────────────────── */}
-                <Box sx={{ px: 1, pb: 1, pt: 0.5 }}>
+                <Box sx={{ px: 1, py: 0.5 }}>
                     {isOpen ? (
                         <ListItemButton onClick={toggleTheme} sx={{ borderRadius: 1.5, py: 0.875 }}>
                             <ListItemIcon sx={{ minWidth: 36 }}>
@@ -592,6 +510,78 @@ export default function AppShell({ children }: { children: ReactNode }) {
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                 <IconButton size="small" onClick={toggleTheme}>
                                     {mode === 'dark' ? <Sun /> : <Moon />}
+                                </IconButton>
+                            </Box>
+                        </Tooltip>
+                    )}
+                </Box>
+
+                <Divider />
+
+                {/* ── User Profile ───────────────────────────────── */}
+                <Box sx={{ px: 1, pb: 1, pt: 0.5 }}>
+                    {isOpen ? (
+                        <ListItemButton
+                            onClick={handleUserMenuOpen}
+                            sx={{
+                                borderRadius: 1.5,
+                                py: 0.75,
+                                minHeight: 40,
+                                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                            }}
+                        >
+                            <ListItemIcon sx={{ minWidth: 36, display: 'flex', justifyContent: 'center' }}>
+                                <Avatar
+                                    sx={{
+                                        width: 28,
+                                        height: 28,
+                                        bgcolor: theme.palette.primary.main,
+                                        fontSize: '0.8125rem',
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {user?.username ? user.username[0].toUpperCase() : 'U'}
+                                </Avatar>
+                            </ListItemIcon>
+                            <ListItemText
+                                primary={user?.username || 'Guest'}
+                                secondary={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                                primaryTypographyProps={{
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600,
+                                    lineHeight: 1.2,
+                                    color: 'text.primary',
+                                }}
+                                secondaryTypographyProps={{
+                                    fontSize: '0.75rem',
+                                    lineHeight: 1.2,
+                                    color: 'text.secondary',
+                                }}
+                                sx={{ my: 0 }}
+                            />
+                        </ListItemButton>
+                    ) : (
+                        <Tooltip title={user?.username || 'User Profile'} placement="right">
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <IconButton
+                                    onClick={handleUserMenuOpen}
+                                    size="small"
+                                    sx={{
+                                        p: 0.5,
+                                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                                    }}
+                                >
+                                    <Avatar
+                                        sx={{
+                                            width: 28,
+                                            height: 28,
+                                            bgcolor: theme.palette.primary.main,
+                                            fontSize: '0.8125rem',
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {user?.username ? user.username[0].toUpperCase() : 'U'}
+                                    </Avatar>
                                 </IconButton>
                             </Box>
                         </Tooltip>

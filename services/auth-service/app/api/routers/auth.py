@@ -91,8 +91,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     user.last_login = datetime.utcnow()
     await db.commit()
 
-    access_token = create_access_token(data={"sub": user.username})
-    refresh_token = create_refresh_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.username, "role": user.role})
+    refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
 
     # Store refresh token in DB
     new_rt = RefreshToken(
@@ -140,8 +140,8 @@ async def refresh(req: RefreshRequest, db: AsyncSession = Depends(get_db)):
     if not user:
         raise credentials_exception
 
-    access_token = create_access_token(data={"sub": user.username})
-    new_refresh_token = create_refresh_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.username, "role": user.role})
+    new_refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
 
     # Rotate refresh token
     rt_record.token = new_refresh_token

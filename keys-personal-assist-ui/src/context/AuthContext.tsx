@@ -16,6 +16,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const decodeToken = (token: string): { sub: string; role?: string } | null => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error("Failed to decode token", e);
+    return null;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -26,8 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedToken = localStorage.getItem('access_token');
     if (storedToken) {
       setToken(storedToken);
-      // Optional: decode token or fetch user info here to set the user state
-      setUser({ id: "1", username: "admin", role: "admin" });
+      const decoded = decodeToken(storedToken);
+      if (decoded) {
+        setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
+      } else {
+        setUser({ id: "1", username: "admin", role: "admin" });
+      }
     }
   }, []);
 
@@ -35,8 +57,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(newToken);
     localStorage.setItem('access_token', newToken);
     localStorage.setItem('refresh_token', refreshToken);
-    // Ideally we'd fetch the user profile here and set it
-    setUser({ id: "1", username: "admin", role: "admin" });
+    const decoded = decodeToken(newToken);
+    if (decoded) {
+      setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
+    } else {
+      setUser({ id: "1", username: "admin", role: "admin" });
+    }
   };
 
   const logout = () => {
