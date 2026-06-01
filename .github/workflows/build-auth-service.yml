@@ -1,0 +1,28 @@
+name: Build Auth Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image tag (leave empty to use VERSION file)"
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - "services/auth-service/VERSION"
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-docker-build.yml
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    with:
+      service_path: ./services/auth-service
+      image_name: auth-service
+      tag: ${{ inputs.version }}
+      push: ${{ github.event_name != 'pull_request' }}
+      image_description: "Authentication Service - JWT Token Issuer and User Manager"
