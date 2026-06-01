@@ -5,6 +5,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import AppShell from '@/components/AppShell';
 import { getAvailableServices } from '@/config/features';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 
 const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : BrowserRouter;
 
@@ -15,6 +16,7 @@ const SpendingAccountSummaryPage = lazy(() => import('@/pages/SpendingAccountSum
 const MonthlyPlannerPage = lazy(() => import('@/pages/MonthlyPlannerPage'));
 const SavingsFundSegregatorPage = lazy(() => import('@/pages/SavingsFundSegregatorPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const Login = lazy(() => import('@/pages/Login'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -28,33 +30,55 @@ const LoadingFallback = () => (
   </Box>
 );
 
-function App() {
+function AppContent() {
+  const { isAuthenticated } = useAuth();
   const services = getAvailableServices();
 
+  if (!isAuthenticated) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
+  return (
+    <AppShell>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          {services.bellaChat && <Route path="/chat" element={<ChatPage />} />}
+          {services.expenseManager && (
+            <>
+              <Route path="/dashboard" element={<Navigate to="/dashboard/accounts" replace />} />
+              <Route path="/dashboard/accounts" element={<SpendingAccountSummaryPage />} />
+              <Route path="/budget" element={<MonthlyPlannerPage />} />
+              <Route path="/dashboard/envelopes" element={<SavingsFundSegregatorPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </>
+          )}
+          {/* If already authenticated, redirect away from /login */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          {/* Fallback route */}
+          <Route path="*" element={<HomePage />} />
+        </Routes>
+      </Suspense>
+    </AppShell>
+  );
+}
+
+function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <AppShell>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              {services.bellaChat && <Route path="/chat" element={<ChatPage />} />}
-              {services.expenseManager && (
-                <>
-                  <Route path="/dashboard" element={<Navigate to="/dashboard/accounts" replace />} />
-                  <Route path="/dashboard/accounts" element={<SpendingAccountSummaryPage />} />
-                  <Route path="/budget" element={<MonthlyPlannerPage />} />
-                  <Route path="/dashboard/envelopes" element={<SavingsFundSegregatorPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                </>
-              )}
-              {/* Fallback route for disabled features */}
-              <Route path="*" element={<HomePage />} />
-            </Routes>
-          </Suspense>
-        </AppShell>
-        <Toaster position="top-right" richColors />
-      </Router>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+          <Toaster position="top-right" richColors />
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

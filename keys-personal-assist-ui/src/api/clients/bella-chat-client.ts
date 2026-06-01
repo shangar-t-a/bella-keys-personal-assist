@@ -6,6 +6,7 @@
  * and by Vite dev server in development to the actual backend services.
  */
 import { getBellaChatBase } from '@/api/config';
+import { fetchWithAuth } from './fetchClient';
 
 class BellaChatClient {
   private baseURL: string;
@@ -21,7 +22,7 @@ class BellaChatClient {
    * @returns Raw fetch Response whose body is a text/event-stream
    */
   async sendMessage(message: string, conversationId: string): Promise<Response> {
-    return fetch(`${this.baseURL}/v1/chat/`, {
+    return fetchWithAuth(`${this.baseURL}/v1/chat/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

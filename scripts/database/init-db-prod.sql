@@ -18,3 +18,9 @@ CREATE DATABASE bella_chat_checkpoints;
 CREATE USER langgraph_user WITH ENCRYPTED PASSWORD :'langgraph_pass';
 GRANT ALL PRIVILEGES ON DATABASE bella_chat_checkpoints TO langgraph_user;
 ALTER DATABASE bella_chat_checkpoints OWNER TO langgraph_user;
+
+-- 4. Auth Service
+CREATE DATABASE auth_service;
+CREATE USER auth_user WITH ENCRYPTED PASSWORD :'auth_pass';
+GRANT ALL PRIVILEGES ON DATABASE auth_service TO auth_user;
+ALTER DATABASE auth_service OWNER TO auth_user;

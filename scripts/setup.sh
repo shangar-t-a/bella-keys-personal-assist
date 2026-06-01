@@ -10,12 +10,14 @@ AUTO_CONFIRM=false
 DB_USER="postgres"
 DB_HOST="localhost"
 DB_PORT="5432"
+AUTH_PASS="auth_password"
 EMS_PASS="ems_password"
 EMS_TEST_PASS="test123"
 ARIZE_PASS="arize_password"
 LANGGRAPH_PASS="langgraph_password"
 RUN_DB_OPT=""
 
+AUTH_PASS_ARG=""
 EMS_PASS_ARG=""
 EMS_TEST_PASS_ARG=""
 ARIZE_PASS_ARG=""
@@ -38,6 +40,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --db-port)
             DB_PORT="$2"
+            shift 2
+            ;;
+        --auth-pass)
+            AUTH_PASS_ARG="$2"
+            AUTH_PASS="$2"
             shift 2
             ;;
         --ems-pass)
@@ -70,7 +77,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [-y|--yes] [--db-user USER] [--db-host HOST] [--db-port PORT] [--ems-pass PASS] [--ems-test-pass PASS] [--arize-pass PASS] [--langgraph-pass PASS] [--init-db|--no-init-db]"
+            echo "Usage: $0 [-y|--yes] [--db-user USER] [--db-host HOST] [--db-port PORT] [--auth-pass PASS] [--ems-pass PASS] [--ems-test-pass PASS] [--arize-pass PASS] [--langgraph-pass PASS] [--init-db|--no-init-db]"
             exit 1
             ;;
     esac
@@ -97,6 +104,7 @@ fi
 # Validation for non-interactive mode with DB initialization enabled
 if [ "$AUTO_CONFIRM" = true ] && [ "$RUN_DB" = true ]; then
     MISSING_ARGS=()
+    if [ -z "$AUTH_PASS_ARG" ]; then MISSING_ARGS+=("--auth-pass"); fi
     if [ -z "$EMS_PASS_ARG" ]; then MISSING_ARGS+=("--ems-pass"); fi
     if [ -z "$EMS_TEST_PASS_ARG" ]; then MISSING_ARGS+=("--ems-test-pass"); fi
     if [ -z "$ARIZE_PASS_ARG" ]; then MISSING_ARGS+=("--arize-pass"); fi
@@ -226,7 +234,8 @@ if command -v python &> /dev/null || command -v python3 &> /dev/null; then
             --ems-pass "$EMS_PASS" \
             --ems-test-pass "$EMS_TEST_PASS" \
             --arize-pass "$ARIZE_PASS" \
-            --langgraph-pass "$LANGGRAPH_PASS" || {
+            --langgraph-pass "$LANGGRAPH_PASS" \
+            --auth-pass "$AUTH_PASS" || {
                 echo -e "${YELLOW}Warning: Failed to sync environment passwords via Python.${NC}"
             }
     else
@@ -292,6 +301,7 @@ if command -v psql &> /dev/null; then
             DB_PORT=${input_port:-$DB_PORT}
 
             echo -e "${YELLOW}🔑 Database User Passwords:${NC}"
+            AUTH_PASS=$(prompt_password "auth_user" "$AUTH_PASS_ARG")
             EMS_PASS=$(prompt_password "ems_user" "$EMS_PASS_ARG")
             EMS_TEST_PASS=$(prompt_password "ems_test_user" "$EMS_TEST_PASS_ARG")
             ARIZE_PASS=$(prompt_password "arize_user" "$ARIZE_PASS_ARG")
@@ -304,6 +314,7 @@ if command -v psql &> /dev/null; then
              -v ems_test_pass="$EMS_TEST_PASS" \
              -v arize_pass="$ARIZE_PASS" \
              -v langgraph_pass="$LANGGRAPH_PASS" \
+             -v auth_pass="$AUTH_PASS" \
              -f "$REPO_ROOT/scripts/database/init-db.sql"
              
         if [ $? -eq 0 ]; then
@@ -322,7 +333,8 @@ if command -v psql &> /dev/null; then
                         --ems-pass "$EMS_PASS" \
                         --ems-test-pass "$EMS_TEST_PASS" \
                         --arize-pass "$ARIZE_PASS" \
-                        --langgraph-pass "$LANGGRAPH_PASS" || {
+                        --langgraph-pass "$LANGGRAPH_PASS" \
+                        --auth-pass "$AUTH_PASS" || {
                             echo -e "${YELLOW}Warning: Failed to sync environment passwords via Python.${NC}"
                         }
                     echo -e "${GREEN}Environment files updated with database passwords.${NC}"

@@ -7,3 +7,7 @@ export function getEmsBase(): string {
 export function getBellaChatBase(): string {
     return isElectron ? 'http://localhost:5000' : '/api/bella-chat'
 }
+
+export function getAuthBase(): string {
+    return isElectron ? 'http://localhost:8002' : '/api/auth'
+}

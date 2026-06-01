@@ -32,14 +32,14 @@ cd "$INSTALL_PATH" || exit 1
 
 echo "Downloading configuration files..."
 REPO_BASE="https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main"
-curl -sSL "$REPO_BASE/docker/docker-compose-prod.yaml" -o docker-compose-prod.yaml
+curl -sSL "$REPO_BASE/docker/docker-compose.prod.yaml" -o docker-compose.prod.yaml
 curl -sSL "$REPO_BASE/docker/.env.prod.example" -o .env.example
 curl -sSL "$REPO_BASE/scripts/database/init-db-prod.sql" -o init-db-prod.sql
 curl -sSL "$REPO_BASE/scripts/deploy/run-prod.ps1" -o run-prod.ps1
 curl -sSL "$REPO_BASE/scripts/deploy/update-prod.sh" -o update-prod.sh
 chmod +x update-prod.sh
 
-if [ ! -f "docker-compose-prod.yaml" ]; then
+if [ ! -f "docker-compose.prod.yaml" ]; then
     echo "Failed to download configuration files. Please check your internet connection or the repository status."
     exit 1
 fi
@@ -57,6 +57,9 @@ fi
 
 if [ "$ENV_OPTION" == "1" ]; then
     echo "Interactive Setup selected..."
+
+    read -p "Enter AUTH_PG_DB_PASSWORD [default_password]: " AUTH_PASS </dev/tty
+    AUTH_PASS=${AUTH_PASS:-default_password}
     
     read -p "Enter EMS_PG_DB_PASSWORD [default_password]: " EMS_PASS </dev/tty
     EMS_PASS=${EMS_PASS:-default_password}
@@ -69,7 +72,8 @@ if [ "$ENV_OPTION" == "1" ]; then
     
     # Use perl or sed to replace securely. Since bash can be on Mac or Linux/Windows Git Bash, sed -i has different syntax.
     # We will use temporary files for safety across platforms.
-    sed "s/EMS_PG_DB_PASSWORD=.*/EMS_PG_DB_PASSWORD=$EMS_PASS/" .env > .env.tmp && mv .env.tmp .env
+    sed "s/auth_user:[^@]*@/auth_user:$AUTH_PASS@/" .env > .env.tmp && mv .env.tmp .env
+    sed "s/ems_user:[^@]*@/ems_user:$EMS_PASS@/" .env > .env.tmp && mv .env.tmp .env
     sed "s/ARIZE_PG_DB_PASSWORD=.*/ARIZE_PG_DB_PASSWORD=$ARIZE_PASS/" .env > .env.tmp && mv .env.tmp .env
     sed "s/LANGGRAPH_PG_DB_PASSWORD=.*/LANGGRAPH_PG_DB_PASSWORD=$LANGGRAPH_PASS/" .env > .env.tmp && mv .env.tmp .env
     
@@ -99,12 +103,26 @@ if [[ "$RUN_PSQL" == "y" || "$RUN_PSQL" == "Y" ]]; then
     # We use grep in the sed script to pull the passwords to pass to psql if we used variables in the init-db.sql
     # Wait, the init-db.sql uses :'ems_pass' variables.
     
-    EMS_PASS_VAL=$(grep "EMS_PG_DB_PASSWORD=" .env | cut -d '=' -f2)
+    # Extract passwords from connection strings
+    EMS_URL=$(grep "EMS_PG_DATABASE_URL=" .env | cut -d '=' -f2-)
+    EMS_URL="${EMS_URL%\"}"; EMS_URL="${EMS_URL#\"}"; EMS_URL="${EMS_URL%\'}"; EMS_URL="${EMS_URL#\'}"
+    TEMP_EMS="${EMS_URL#*ems_user:}"
+    EMS_PASS_VAL="${TEMP_EMS%%@*}"
+
+    AUTH_URL=$(grep "AUTH_PG_DATABASE_URL=" .env | cut -d '=' -f2-)
+    AUTH_URL="${AUTH_URL%\"}"; AUTH_URL="${AUTH_URL#\"}"; AUTH_URL="${AUTH_URL%\'}"; AUTH_URL="${AUTH_URL#\'}"
+    TEMP_AUTH="${AUTH_URL#*auth_user:}"
+    AUTH_PASS_VAL="${TEMP_AUTH%%@*}"
+
     ARIZE_PASS_VAL=$(grep "ARIZE_PG_DB_PASSWORD=" .env | cut -d '=' -f2)
+    ARIZE_PASS_VAL="${ARIZE_PASS_VAL%\"}"; ARIZE_PASS_VAL="${ARIZE_PASS_VAL#\"}"; ARIZE_PASS_VAL="${ARIZE_PASS_VAL%\'}"; ARIZE_PASS_VAL="${ARIZE_PASS_VAL#\'}"
+
     LANGGRAPH_PASS_VAL=$(grep "LANGGRAPH_PG_DB_PASSWORD=" .env | cut -d '=' -f2)
+    LANGGRAPH_PASS_VAL="${LANGGRAPH_PASS_VAL%\"}"; LANGGRAPH_PASS_VAL="${LANGGRAPH_PASS_VAL#\"}"; LANGGRAPH_PASS_VAL="${LANGGRAPH_PASS_VAL%\'}"; LANGGRAPH_PASS_VAL="${LANGGRAPH_PASS_VAL#\'}"
     
     psql -h "$PG_HOST" -U "$PG_USER" -f init-db-prod.sql \
         -v ems_pass="$EMS_PASS_VAL" \
+        -v auth_pass="$AUTH_PASS_VAL" \
         -v arize_pass="$ARIZE_PASS_VAL" \
         -v langgraph_pass="$LANGGRAPH_PASS_VAL"
         
@@ -122,8 +140,8 @@ fi
 echo ""
 echo "DEPLOYMENT"
 echo "Pulling latest images and starting services..."
-docker compose -f docker-compose-prod.yaml pull
-docker compose -f docker-compose-prod.yaml up -d
+docker compose -f docker-compose.prod.yaml pull
+docker compose -f docker-compose.prod.yaml up -d
 
 echo ""
 echo "======================================================"

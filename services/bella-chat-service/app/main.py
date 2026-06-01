@@ -3,10 +3,10 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from openinference.instrumentation.langchain import LangChainInstrumentor
 from opentelemetry import trace
@@ -24,6 +24,7 @@ from app.dependencies.ai_dependencies import (
 )
 from app.routers import app_router
 from app.settings import get_settings
+from utilities.auth_middleware import JWTAuthMiddleware
 
 # Suppress noisy schema-conversion warnings from the Gemini tool adapter.
 # LangChain logs a WARNING for every tool schema field it drops (e.g.
@@ -40,6 +41,12 @@ def setup_middlewares(app: FastAPI, settings) -> None:
         allow_methods=settings.ALLOWED_METHODS,
         allow_headers=settings.ALLOWED_HEADERS,
         expose_headers=settings.CORS_EXPOSE_HEADERS,
+    )
+
+    # Add JWT Auth Middleware for protecting endpoints
+    app.add_middleware(
+        JWTAuthMiddleware,
+        secret_key=settings.JWT_SECRET.get_secret_value() if hasattr(settings, "JWT_SECRET") else None
     )
 
 
@@ -119,6 +126,18 @@ def create_app() -> FastAPI:
 
     # Setup middlewares
     setup_middlewares(app, settings)
+
+    @app.get("/health")
+    async def health_check(request: Request) -> dict[str, str]:
+        """Health check endpoint."""
+        uptime_seconds = (datetime.now() - request.app.state.start_time).total_seconds()
+        uptime_str = str(timedelta(seconds=int(uptime_seconds)))
+        return {
+            "status": "healthy",
+            "version": settings.APP_VERSION,
+            "start_time": request.app.state.start_time.isoformat(),
+            "uptime": uptime_str,
+        }
 
     return app
 
