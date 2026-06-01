@@ -42,6 +42,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/ems/, ''),
         },
+        '/api/auth': {
+          target: 'http://localhost:8002',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/auth/, ''),
+        },
       },
     },
   }

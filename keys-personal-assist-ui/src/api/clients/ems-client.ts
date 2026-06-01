@@ -21,6 +21,7 @@ import type {
   SavingsBucketTransactionsPageResponse,
 } from '@/types/api';
 import { getEmsBase } from '@/api/config';
+import { fetchWithAuth } from './fetchClient';
 
 export interface SpendingEntryListParams {
   page?: number;
@@ -49,13 +50,13 @@ class EMSClient {
   // ── Account endpoints ──────────────────────────────────────────────────────
 
   async getAllAccounts(): Promise<AccountNameResponse[]> {
-    const response = await fetch(`${this.baseURL}/v1/account/list`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/account/list`);
     if (!response.ok) throw new Error('Failed to fetch accounts');
     return response.json();
   }
 
   async getOrCreateAccount(data: AccountNameRequest): Promise<AccountNameResponse> {
-    const response = await fetch(`${this.baseURL}/v1/account/get_or_create`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/account/get_or_create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -65,7 +66,7 @@ class EMSClient {
   }
 
   async updateAccountName(accountId: string, data: AccountUpdateRequest): Promise<AccountNameResponse> {
-    const response = await fetch(`${this.baseURL}/v1/account/${accountId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/account/${accountId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -75,7 +76,7 @@ class EMSClient {
   }
 
   async deleteAccount(accountId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/account/${accountId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/account/${accountId}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete account');
@@ -84,13 +85,13 @@ class EMSClient {
   // ── Period endpoints ────────────────────────────────────────────────────────
 
   async getAllPeriods(): Promise<PeriodResponse[]> {
-    const response = await fetch(`${this.baseURL}/v1/period/list`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/period/list`);
     if (!response.ok) throw new Error('Failed to fetch periods');
     return response.json();
   }
 
   async getOrCreatePeriod(data: PeriodRequest): Promise<PeriodResponse> {
-    const response = await fetch(`${this.baseURL}/v1/period/get_or_create`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/period/get_or_create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -100,7 +101,7 @@ class EMSClient {
   }
 
   async updatePeriod(periodId: string, data: PeriodRequest): Promise<PeriodResponse> {
-    const response = await fetch(`${this.baseURL}/v1/period/${periodId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/period/${periodId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -110,7 +111,7 @@ class EMSClient {
   }
 
   async deletePeriod(periodId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/period/${periodId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/period/${periodId}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete period');
@@ -132,7 +133,7 @@ class EMSClient {
     const queryString = qs.toString();
     const listUrl = `${this.baseURL}/v1/spending_account/list${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(listUrl);
+    const response = await fetchWithAuth(listUrl);
     if (!response.ok) throw new Error('Failed to fetch spending accounts');
     return response.json();
   }
@@ -151,7 +152,7 @@ class EMSClient {
     const queryString = qs.toString();
     const listUrl = `${this.baseURL}/v1/spending_account/${accountId}/list${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(listUrl);
+    const response = await fetchWithAuth(listUrl);
     if (!response.ok) throw new Error('Failed to fetch spending account entries');
     return response.json();
   }
@@ -159,7 +160,7 @@ class EMSClient {
   async addSpendingAccountEntry(
     data: SpendingAccountEntryRequest
   ): Promise<SpendingAccountEntryWithCalculatedFieldsResponse> {
-    const response = await fetch(`${this.baseURL}/v1/spending_account`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/spending_account`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -172,7 +173,7 @@ class EMSClient {
     entryId: string,
     data: SpendingAccountEntryRequest
   ): Promise<SpendingAccountEntryWithCalculatedFieldsResponse> {
-    const response = await fetch(`${this.baseURL}/v1/spending_account/${entryId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/spending_account/${entryId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -182,7 +183,7 @@ class EMSClient {
   }
 
   async deleteSpendingAccountEntry(entryId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/spending_account/${entryId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/spending_account/${entryId}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete spending account entry');
@@ -191,13 +192,13 @@ class EMSClient {
   // ── Monthly Planner endpoints ─────────────────────────────────────────────
 
   async listMonthlyCategories(): Promise<MonthlyCategory[]> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/categories`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/categories`);
     if (!response.ok) throw new Error('Failed to fetch categories');
     return response.json();
   }
 
   async addMonthlyCategory(data: { name: string; category_l1: string }): Promise<MonthlyCategory> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/categories`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/categories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -207,20 +208,20 @@ class EMSClient {
   }
 
   async deleteMonthlyCategory(categoryId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/categories/${categoryId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/categories/${categoryId}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete category');
   }
 
   async getMonthlySummary(year: number, month: number): Promise<MonthlySummary> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/summary/${year}/${month}`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/summary/${year}/${month}`);
     if (!response.ok) throw new Error('Failed to fetch summary');
     return response.json();
   }
 
   async updateMonthlySalary(year: number, month: number, salary: number): Promise<MonthlySummary> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/summary/${year}/${month}/salary`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/summary/${year}/${month}/salary`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ salary }),
@@ -230,13 +231,13 @@ class EMSClient {
   }
 
   async listMonthlyExpenses(year: number, month: number): Promise<MonthlyExpenseItem[]> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}`);
     if (!response.ok) throw new Error('Failed to fetch expenses');
     return response.json();
   }
 
   async addMonthlyExpense(year: number, month: number, data: MonthlyExpenseItemRequest): Promise<MonthlyExpenseItem> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -246,7 +247,7 @@ class EMSClient {
   }
 
   async updateMonthlyExpense(expenseId: string, data: MonthlyExpenseItemRequest): Promise<MonthlyExpenseItem> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${expenseId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/expenses/${expenseId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -256,21 +257,21 @@ class EMSClient {
   }
 
   async deleteMonthlyExpense(expenseId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${expenseId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/expenses/${expenseId}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete expense');
   }
 
   async resetMonthlyStatuses(year: number, month: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}/reset`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}/reset`, {
       method: 'POST',
     });
     if (!response.ok) throw new Error('Failed to reset statuses');
   }
 
   async syncMonthlyFromPrevious(year: number, month: number): Promise<MonthlyExpenseItem[]> {
-    const response = await fetch(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}/sync`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/expenses/${year}/${month}/sync`, {
       method: 'POST',
     });
     if (!response.ok) throw new Error('Failed to sync from previous month');
@@ -280,13 +281,13 @@ class EMSClient {
   // ── Savings Buckets (V2 Fund Segregation) ───────────────────────────────────
 
   async getSavingsBuckets(accountId: string): Promise<SavingsBucketResponse[]> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/list/${accountId}`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/list/${accountId}`);
     if (!response.ok) throw new Error('Failed to fetch savings buckets');
     return response.json();
   }
 
   async createSavingsBucket(accountId: string, data: SavingsBucketCreateRequest): Promise<SavingsBucketResponse> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/${accountId}/bucket`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/${accountId}/bucket`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -299,7 +300,7 @@ class EMSClient {
   }
 
   async updateSavingsBucket(bucketId: string, data: SavingsBucketUpdateRequest): Promise<SavingsBucketResponse> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/bucket/${bucketId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/bucket/${bucketId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -312,7 +313,7 @@ class EMSClient {
   }
 
   async deleteSavingsBucket(bucketId: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/bucket/${bucketId}`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/bucket/${bucketId}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -325,7 +326,7 @@ class EMSClient {
     accountId: string,
     data: SavingsBucketTransactionCreateRequest
   ): Promise<SavingsBucketTransactionResponse> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/${accountId}/transaction`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/${accountId}/transaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -342,7 +343,7 @@ class EMSClient {
     limit: number = 50,
     offset: number = 0
   ): Promise<SavingsBucketTransactionsPageResponse> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/${accountId}/transactions?limit=${limit}&offset=${offset}`);
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/${accountId}/transactions?limit=${limit}&offset=${offset}`);
     if (!response.ok) throw new Error('Failed to fetch savings bucket transactions');
     return response.json();
   }
@@ -351,7 +352,7 @@ class EMSClient {
     transactionId: string,
     data: { reason: string }
   ): Promise<SavingsBucketTransactionResponse> {
-    const response = await fetch(`${this.baseURL}/v1/savings_buckets/transaction/${transactionId}/cancel`, {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/transaction/${transactionId}/cancel`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
