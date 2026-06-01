@@ -2693,7 +2693,7 @@ dependencies = [
     { name = "python-jose", extra = ["cryptography"] },
 ]
 wheels = [
-    { filename = "utilities-1.0.0-py3-none-any.whl", hash = "sha256:adbcf1f85c015616ca46f082d848df929639c34be14ab2f84192c6e1c7c16e22" },
+    { filename = "utilities-1.0.0-py3-none-any.whl", hash = "sha256:a15386a081ab28a41cd1fa26cdc9869d1294ea0f20a91c7059a0646665ea63c5" },
 ]
 
 [package.metadata]

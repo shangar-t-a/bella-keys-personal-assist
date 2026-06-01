@@ -25,6 +25,10 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         """Intercept and validate requests."""
+        # 0. Allow OPTIONS requests to pass through for CORS preflight
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # 1. Check if path is excluded
         path = request.url.path
         for pattern in self.exclude_paths:
