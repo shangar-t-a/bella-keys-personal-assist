@@ -18,6 +18,9 @@ import {
     Typography,
     useMediaQuery,
     useTheme,
+    Avatar,
+    Menu as MuiMenu,
+    MenuItem,
 } from '@mui/material';
 import {
     AutoAwesome as Sparkles,
@@ -35,9 +38,11 @@ import {
     Menu,
     AccountBalanceWallet,
     Settings as SettingsIcon,
+    Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { getAvailableServices } from '@/config/features';
+import { useAuth } from '@/context/AuthContext';
 
 const DRAWER_WIDTH = 240;
 const MINI_WIDTH = 64;
@@ -124,6 +129,23 @@ export default function AppShell({ children }: { children: ReactNode }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const navSections = getNavSections();
+
+    const { user, logout } = useAuth();
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const userMenuOpen = Boolean(anchorEl);
+    
+    const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    
+    const handleUserMenuClose = () => {
+        setAnchorEl(null);
+    };
+    
+    const handleLogout = () => {
+        handleUserMenuClose();
+        logout();
+    };
 
     const isActive = (href: string, exact = false) =>
         exact
@@ -411,6 +433,88 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                 <Divider />
 
+                {/* ── User Profile ───────────────────────────────── */}
+                <Box sx={{ px: 1, py: 0.5 }}>
+                    {isOpen ? (
+                        <ListItemButton
+                            onClick={handleUserMenuOpen}
+                            sx={{
+                                borderRadius: 1.5,
+                                py: 0.75,
+                                px: 1.5,
+                                minHeight: 48,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                            }}
+                        >
+                            <Avatar
+                                sx={{
+                                    width: 32,
+                                    height: 32,
+                                    bgcolor: theme.palette.primary.main,
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600,
+                                }}
+                            >
+                                {user?.username ? user.username[0].toUpperCase() : 'U'}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0, flexGrow: 1, textAlign: 'left' }}>
+                                <Typography
+                                    variant="subtitle2"
+                                    noWrap
+                                    sx={{
+                                        fontWeight: 600,
+                                        fontSize: '0.875rem',
+                                        color: 'text.primary',
+                                    }}
+                                >
+                                    {user?.username || 'Guest'}
+                                </Typography>
+                                <Typography
+                                    variant="caption"
+                                    noWrap
+                                    sx={{
+                                        display: 'block',
+                                        color: 'text.secondary',
+                                        fontSize: '0.75rem',
+                                    }}
+                                >
+                                    {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                                </Typography>
+                            </Box>
+                        </ListItemButton>
+                    ) : (
+                        <Tooltip title={user?.username || 'User Profile'} placement="right">
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <IconButton
+                                    onClick={handleUserMenuOpen}
+                                    size="small"
+                                    sx={{
+                                        p: 0.5,
+                                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                                    }}
+                                >
+                                    <Avatar
+                                        sx={{
+                                            width: 32,
+                                            height: 32,
+                                            bgcolor: theme.palette.primary.main,
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {user?.username ? user.username[0].toUpperCase() : 'U'}
+                                    </Avatar>
+                                </IconButton>
+                            </Box>
+                        </Tooltip>
+                    )}
+                </Box>
+
+                <Divider />
+
                 {/* ── Settings ───────────────────────────────────── */}
                 <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
                     {isOpen ? (
@@ -579,6 +683,40 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 {/* Page routes */}
                 {children}
             </Box>
+
+            {/* User Dropdown Menu */}
+            <MuiMenu
+                anchorEl={anchorEl}
+                open={userMenuOpen}
+                onClose={handleUserMenuClose}
+                onClick={handleUserMenuClose}
+                PaperProps={{
+                    elevation: 3,
+                    sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.12))',
+                        mt: 1,
+                        minWidth: 180,
+                        border: `1px solid ${theme.palette.divider}`,
+                    },
+                }}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            >
+                <Box sx={{ px: 2, py: 1.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        {user?.username || 'Guest'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                    </Typography>
+                </Box>
+                <Divider />
+                <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1 }}>
+                    <LogoutIcon fontSize="small" color="action" />
+                    <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: '0.875rem' }} />
+                </MenuItem>
+            </MuiMenu>
         </Box>
     );
 }
