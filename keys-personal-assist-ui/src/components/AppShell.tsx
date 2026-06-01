@@ -39,6 +39,7 @@ import {
     AccountBalanceWallet,
     Settings as SettingsIcon,
     Logout as LogoutIcon,
+    MoreVert,
 } from '@mui/icons-material';
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { getAvailableServices } from '@/config/features';
@@ -433,132 +434,62 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                 <Divider />
 
-                {/* ── Settings ───────────────────────────────────── */}
-                <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
-                    {isOpen ? (
-                        <RouterLink to="/settings" style={LINK_STYLE} onClick={mobile ? closeMobile : undefined}>
-                            <ListItemButton
-                                sx={{
-                                    borderRadius: 1.5,
-                                    py: 0.875,
-                                    minHeight: 40,
-                                    position: 'relative',
-                                    ...(isActive('/settings') ? {
-                                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                        color: theme.palette.primary.main,
-                                        '&::before': {
-                                            content: '""',
-                                            position: 'absolute',
-                                            left: 0,
-                                            top: '20%',
-                                            height: '60%',
-                                            width: 3,
-                                            bgcolor: 'primary.main',
-                                            borderRadius: '0 3px 3px 0',
-                                        },
-                                    } : {}),
-                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
-                                }}
-                            >
-                                <ListItemIcon sx={{ minWidth: 36, color: isActive('/settings') ? 'primary.main' : 'text.secondary' }}>
-                                    <SettingsIcon sx={{ fontSize: 20 }} />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="Settings"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.875rem',
-                                        fontWeight: isActive('/settings') ? 600 : 400,
-                                    }}
-                                />
-                            </ListItemButton>
-                        </RouterLink>
-                    ) : (
-                        <Tooltip title="Settings" placement="right">
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <RouterLink to="/settings" style={LINK_STYLE}>
-                                    <IconButton
-                                        size="small"
-                                        color={isActive('/settings') ? 'primary' : 'default'}
-                                        sx={{
-                                            color: isActive('/settings') ? 'primary.main' : 'text.secondary',
-                                            bgcolor: isActive('/settings') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
-                                        }}
-                                    >
-                                        <SettingsIcon />
-                                    </IconButton>
-                                </RouterLink>
-                            </Box>
-                        </Tooltip>
-                    )}
-                </Box>
-
-                {/* ── Theme toggle ───────────────────────────────── */}
-                <Box sx={{ px: 1, py: 0.5 }}>
-                    {isOpen ? (
-                        <ListItemButton onClick={toggleTheme} sx={{ borderRadius: 1.5, py: 0.875 }}>
-                            <ListItemIcon sx={{ minWidth: 36 }}>
-                                {mode === 'dark' ? <Sun sx={{ fontSize: 20 }} /> : <Moon sx={{ fontSize: 20 }} />}
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                                primaryTypographyProps={{ fontSize: '0.875rem' }}
-                            />
-                        </ListItemButton>
-                    ) : (
-                        <Tooltip title={mode === 'dark' ? 'Light Mode' : 'Dark Mode'} placement="right">
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <IconButton size="small" onClick={toggleTheme}>
-                                    {mode === 'dark' ? <Sun /> : <Moon />}
-                                </IconButton>
-                            </Box>
-                        </Tooltip>
-                    )}
-                </Box>
-
-                <Divider />
-
                 {/* ── User Profile ───────────────────────────────── */}
-                <Box sx={{ px: 1, pb: 1, pt: 0.5 }}>
+                <Box sx={{ px: 1.5, pb: 1.5, pt: 1 }}>
                     {isOpen ? (
                         <ListItemButton
                             onClick={handleUserMenuOpen}
                             sx={{
-                                borderRadius: 1.5,
-                                py: 0.75,
-                                minHeight: 40,
-                                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                                borderRadius: 2,
+                                py: 1,
+                                px: 1.5,
+                                minHeight: 48,
+                                border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                                bgcolor: alpha(theme.palette.action.hover, 0.02),
+                                '&:hover': {
+                                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                                    borderColor: alpha(theme.palette.primary.main, 0.15),
+                                },
                             }}
                         >
-                            <ListItemIcon sx={{ minWidth: 36, display: 'flex', justifyContent: 'center' }}>
-                                <Avatar
-                                    sx={{
-                                        width: 28,
-                                        height: 28,
-                                        bgcolor: theme.palette.primary.main,
-                                        fontSize: '0.8125rem',
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    {user?.username ? user.username[0].toUpperCase() : 'U'}
-                                </Avatar>
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={user?.username || 'Guest'}
-                                secondary={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
-                                primaryTypographyProps={{
+                            <Avatar
+                                sx={{
+                                    width: 32,
+                                    height: 32,
+                                    bgcolor: theme.palette.primary.main,
                                     fontSize: '0.875rem',
                                     fontWeight: 600,
-                                    lineHeight: 1.2,
-                                    color: 'text.primary',
+                                    mr: 1.5,
+                                    color: 'white',
                                 }}
-                                secondaryTypographyProps={{
-                                    fontSize: '0.75rem',
-                                    lineHeight: 1.2,
-                                    color: 'text.secondary',
-                                }}
-                                sx={{ my: 0 }}
-                            />
+                            >
+                                {user?.username ? user.username[0].toUpperCase() : 'U'}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0, flexGrow: 1, textAlign: 'left' }}>
+                                <Typography
+                                    variant="subtitle2"
+                                    noWrap
+                                    sx={{
+                                        fontWeight: 600,
+                                        fontSize: '0.875rem',
+                                        color: 'text.primary',
+                                    }}
+                                >
+                                    {user?.username || 'Guest'}
+                                </Typography>
+                                <Typography
+                                    variant="caption"
+                                    noWrap
+                                    sx={{
+                                        display: 'block',
+                                        color: 'text.secondary',
+                                        fontSize: '0.75rem',
+                                    }}
+                                >
+                                    {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                                </Typography>
+                            </Box>
+                            <MoreVert sx={{ color: 'text.secondary', fontSize: 18, ml: 1 }} />
                         </ListItemButton>
                     ) : (
                         <Tooltip title={user?.username || 'User Profile'} placement="right">
@@ -567,17 +498,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                     onClick={handleUserMenuOpen}
                                     size="small"
                                     sx={{
-                                        p: 0.5,
-                                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
+                                        p: 0.75,
+                                        border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                                        '&:hover': {
+                                            bgcolor: alpha(theme.palette.primary.main, 0.04),
+                                            borderColor: alpha(theme.palette.primary.main, 0.15),
+                                        },
                                     }}
                                 >
                                     <Avatar
                                         sx={{
-                                            width: 28,
-                                            height: 28,
+                                            width: 32,
+                                            height: 32,
                                             bgcolor: theme.palette.primary.main,
-                                            fontSize: '0.8125rem',
+                                            fontSize: '0.875rem',
                                             fontWeight: 600,
+                                            color: 'white',
                                         }}
                                     >
                                         {user?.username ? user.username[0].toUpperCase() : 'U'}
@@ -681,13 +617,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 onClose={handleUserMenuClose}
                 onClick={handleUserMenuClose}
                 PaperProps={{
-                    elevation: 3,
+                    elevation: 4,
                     sx: {
                         overflow: 'visible',
-                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.12))',
-                        mt: 1,
-                        minWidth: 180,
+                        filter: 'drop-shadow(0px 4px 20px rgba(0,0,0,0.08))',
+                        mt: -1,
+                        minWidth: 200,
+                        borderRadius: 2,
                         border: `1px solid ${theme.palette.divider}`,
+                        p: 0.5,
                     },
                 }}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
@@ -701,10 +639,35 @@ export default function AppShell({ children }: { children: ReactNode }) {
                         {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
                     </Typography>
                 </Box>
-                <Divider />
-                <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1 }}>
-                    <LogoutIcon fontSize="small" color="action" />
-                    <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: '0.875rem' }} />
+                <Divider sx={{ my: 0.5 }} />
+                
+                {/* Settings */}
+                <RouterLink to="/settings" style={LINK_STYLE}>
+                    <MenuItem sx={{ gap: 1.5, py: 1, borderRadius: 1 }}>
+                        <SettingsIcon fontSize="small" color="action" />
+                        <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: '0.875rem' }} />
+                    </MenuItem>
+                </RouterLink>
+
+                {/* Theme Toggle */}
+                <MenuItem onClick={toggleTheme} sx={{ gap: 1.5, py: 1, borderRadius: 1 }}>
+                    {mode === 'dark' ? (
+                        <Sun sx={{ fontSize: 18 }} color="action" />
+                    ) : (
+                        <Moon sx={{ fontSize: 18 }} color="action" />
+                    )}
+                    <ListItemText 
+                        primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'} 
+                        primaryTypographyProps={{ fontSize: '0.875rem' }} 
+                    />
+                </MenuItem>
+
+                <Divider sx={{ my: 0.5 }} />
+
+                {/* Log Out */}
+                <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, borderRadius: 1, color: 'error.main' }}>
+                    <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
+                    <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} />
                 </MenuItem>
             </MuiMenu>
         </Box>
