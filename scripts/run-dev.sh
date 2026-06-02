@@ -17,34 +17,84 @@ fi
 
 CHOICE="${1:-}"
 
-# Interactive Menu
+# Step 1: Service Selection
 show_menu() {
     echo "===================================="
     echo "*      Bella Keys Dev Launcher     *"
     echo "===================================="
     echo
     echo "Select a development configuration:"
-    echo "1) EMS + Web UI"
-    echo "2) Bella Chat + Web UI"
-    echo "3) EMS + Desktop (Electron)"
-    echo "4) Bella Chat + Desktop (Electron)"
     echo
-    read -p "Enter your choice (1-4): " menu_choice
-    case "$menu_choice" in
-        1) CHOICE="ems-web" ;;
-        2) CHOICE="bella-web" ;;
-        3) CHOICE="ems-desktop" ;;
-        4) CHOICE="bella-desktop" ;;
-        *) echo "Invalid choice." ; show_menu ;;
+    echo "  1. EMS only          - Auth + Expense Manager"
+    echo "  2. AI Chat           - Auth + EMS + Bella Chat + Qdrant  [recommended]"
+    echo "  3. AI Chat + Monitor - Everything above + Phoenix observability"
+    echo
+    read -p "Select services [1-3]: " service_choice
+
+    AI_CHAT_ENABLED=false
+    case "$service_choice" in
+        1) PROFILES=()             ; SERVICE_LABEL="EMS only" ;;
+        2) PROFILES=("ai-chat")    ; AI_CHAT_ENABLED=true ; SERVICE_LABEL="AI Chat" ;;
+        3) PROFILES=("ai-chat" "monitor") ; AI_CHAT_ENABLED=true ; SERVICE_LABEL="AI Chat + Monitor" ;;
+        *) echo "Invalid choice." ; show_menu ; return ;;
+    esac
+
+    # Step 2: Launch mode
+    echo
+    echo "How do you want to run the UI?"
+    echo
+    echo "  1. Web UI (Docker/nginx)"
+    echo "  2. Desktop (Electron)"
+    echo "  3. No UI (backend only)"
+    echo
+    read -p "Select launch mode [1-3]: " ui_choice
+
+    case "$ui_choice" in
+        1)
+            if [ "$AI_CHAT_ENABLED" = true ]; then
+                echo
+                echo "  Which services should the Web UI expose?"
+                echo "  1. EMS only"
+                echo "  2. EMS + AI Chat"
+                echo
+                read -p "Select UI scope [1-2] (default: 2): " ui_scope
+                ui_scope="${ui_scope:-2}"
+                if [ "$ui_scope" = "1" ]; then
+                    PROFILES+=("ui-ems")
+                    CHOICE="web-ui-ems"
+                else
+                    PROFILES+=("ui")
+                    CHOICE="web-ui"
+                fi
+            else
+                PROFILES+=("ui-ems")
+                CHOICE="web-ui-ems"
+            fi
+            ;;
+        2) CHOICE="desktop" ;;
+        3) CHOICE="backend-only" ;;
+        *) echo "Invalid choice." ; show_menu ; return ;;
     esac
 }
 
 if [ -z "$CHOICE" ]; then
+    PROFILES=()
+    AI_CHAT_ENABLED=false
+    SERVICE_LABEL=""
     show_menu
 fi
 
+# Build --profile flags from array
+build_profile_args() {
+    local args=()
+    for p in "${PROFILES[@]:-}"; do
+        args+=("--profile" "$p")
+    done
+    echo "${args[@]:-}"
+}
+
 cleanup() {
-    if [[ "$CHOICE" == "ems-desktop" || "$CHOICE" == "bella-desktop" ]]; then
+    if [[ "$CHOICE" == "desktop" ]]; then
         echo
         echo "Stopping backend services..."
         docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
@@ -53,34 +103,27 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+PROFILE_ARGS=$(build_profile_args)
+
 case "$CHOICE" in
-    "ems-web")
-        echo "Starting EMS services (Web UI + backend)..."
-        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile ems-web up -d --build
+    "web-ui"|"web-ui-ems")
+        echo "Starting services ($SERVICE_LABEL + Web UI)..."
+        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" $PROFILE_ARGS up -d --build
         ;;
-    "bella-web")
-        echo "Starting all services (Web UI + backends)..."
-        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile bella --profile web up -d --build
-        ;;
-    "ems-desktop")
-        echo "Starting EMS backend services..."
-        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --build
+    "desktop")
+        echo "Starting backend services ($SERVICE_LABEL)..."
+        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" $PROFILE_ARGS up -d --build
         echo "Launching Electron app in development..."
         cd "$UI_DIR"
         node "$REPO_ROOT/scripts/electron/setup-electron.js"
         npm run dev:electron
         ;;
-    "bella-desktop")
-        echo "Starting backend services (EMS + Bella)..."
-        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --profile bella up -d --build
-        echo "Launching Electron app in development..."
-        cd "$UI_DIR"
-        node "$REPO_ROOT/scripts/electron/setup-electron.js"
-        npm run dev:electron
+    "backend-only")
+        echo "Starting backend services ($SERVICE_LABEL)..."
+        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" $PROFILE_ARGS up -d --build
         ;;
     *)
         echo "Invalid configuration choice: $CHOICE"
-        echo "Valid choices: ems-web, bella-web, ems-desktop, bella-desktop"
         exit 1
         ;;
 esac

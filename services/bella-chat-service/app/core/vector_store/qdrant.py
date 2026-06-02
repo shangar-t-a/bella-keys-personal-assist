@@ -13,6 +13,7 @@ from qdrant_client.models import (
     VectorParams,
 )
 
+from app.settings import get_settings
 from utilities.logger import GetAppLogger
 from utilities.time_profile import log_exec_time
 
@@ -116,6 +117,14 @@ class CustomQdrantVectorStore(QdrantVectorStore):
             retrieval_mode (RetrievalMode): The retrieval mode (e.g., DENSE, HYBRID).
             **kwargs: Additional keyword arguments for QdrantVectorStore.
         """
+        # Ensure collection exists before initializing QdrantVectorStore
+        if not client.collection_exists(collection_name=collection_name):
+            settings = get_settings()
+            client.create_collection(
+                collection_name=collection_name,
+                embedding_dimension=settings.EMBEDDING_MODEL_DIMENSION,
+            )
+
         super().__init__(
             client=client,
             collection_name=collection_name,

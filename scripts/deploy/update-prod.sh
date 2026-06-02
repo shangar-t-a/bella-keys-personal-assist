@@ -21,26 +21,19 @@ curl -sSL "$REPO_BASE/docker/.env.prod.example" -o .env.example
 if [ -f ".env" ]; then
     echo "Checking for new environment variables..."
     NEW_VARS_FOUND=0
-    
-    # Read each line of .env.example
+
     while IFS= read -r line || [[ -n "$line" ]]; do
-        # Skip empty lines and comments
         if [[ -z "$line" ]] || [[ "$line" == \#* ]]; then
             continue
         fi
-        
-        # Extract variable name
         VAR_NAME=$(echo "$line" | cut -d '=' -f 1)
-        
-        # Check if variable exists in .env
         if ! grep -q "^${VAR_NAME}=" .env; then
             echo "New variable found: $VAR_NAME"
-            # Append the new variable to the end of the .env file
             echo "$line" >> .env
             NEW_VARS_FOUND=1
         fi
     done < .env.example
-    
+
     if [ "$NEW_VARS_FOUND" -eq 1 ]; then
         echo ""
         echo "WARNING: New environment variables have been automatically appended to your .env file."
@@ -51,13 +44,86 @@ if [ -f ".env" ]; then
     fi
 fi
 
+# Step 1: Service Selection
+echo ""
+echo "============================================="
+echo "  Step 1: Select Services"
+echo "============================================="
+echo ""
+echo "  1. EMS only          — Auth + Expense Manager"
+echo "  2. AI Chat           — Auth + EMS + Bella Chat + Qdrant  [recommended]"
+echo "  3. AI Chat + Monitor — Everything above + Phoenix observability"
+echo ""
+read -p "Select services [1-3] (default: 2): " SERVICE_CHOICE
+SERVICE_CHOICE="${SERVICE_CHOICE:-2}"
+
+PROFILES=()
+AI_CHAT_ENABLED=false
+
+case "$SERVICE_CHOICE" in
+    1)
+        SERVICE_LABEL="EMS only (auth-service, ems)"
+        ;;
+    2)
+        PROFILES+=("--profile" "ai-chat")
+        AI_CHAT_ENABLED=true
+        SERVICE_LABEL="AI Chat (auth-service, ems, bella-chat, ems-mcp, qdrant)"
+        ;;
+    3)
+        PROFILES+=("--profile" "ai-chat" "--profile" "monitor")
+        AI_CHAT_ENABLED=true
+        SERVICE_LABEL="AI Chat + Monitor (auth-service, ems, bella-chat, ems-mcp, qdrant, phoenix)"
+        ;;
+    *)
+        echo "Invalid selection. Defaulting to AI Chat."
+        PROFILES+=("--profile" "ai-chat")
+        AI_CHAT_ENABLED=true
+        SERVICE_LABEL="AI Chat (auth-service, ems, bella-chat, ems-mcp, qdrant)"
+        ;;
+esac
+
+# Step 2: Web UI (optional)
+echo ""
+echo "============================================="
+echo "  Step 2: Web UI (optional)"
+echo "============================================="
+echo ""
+read -p "Enable the Web UI? [y/N]: " UI_CHOICE
+
+if [[ "$UI_CHOICE" =~ ^[Yy]$ ]]; then
+    if [ "$AI_CHAT_ENABLED" = true ]; then
+        echo ""
+        echo "  Which services should the Web UI expose?"
+        echo "  1. EMS only"
+        echo "  2. EMS + AI Chat"
+        echo ""
+        read -p "Select UI scope [1-2] (default: 2): " UI_SCOPE
+        UI_SCOPE="${UI_SCOPE:-2}"
+        if [ "$UI_SCOPE" = "1" ]; then
+            PROFILES+=("--profile" "ui-ems")
+            SERVICE_LABEL="$SERVICE_LABEL + Web UI (EMS only)"
+        else
+            PROFILES+=("--profile" "ui")
+            SERVICE_LABEL="$SERVICE_LABEL + Web UI (EMS + AI Chat)"
+        fi
+    else
+        # EMS-only services selected — UI can only expose EMS
+        PROFILES+=("--profile" "ui-ems")
+        SERVICE_LABEL="$SERVICE_LABEL + Web UI (EMS only)"
+    fi
+fi
+
+# Deploy
+echo ""
+echo "Active configuration: $SERVICE_LABEL"
+echo ""
+
 echo "Pulling latest Docker images..."
-docker compose -f docker-compose.prod.yaml pull
+docker compose -f docker-compose.prod.yaml "${PROFILES[@]}" pull
 
 echo "Restarting services..."
-docker compose -f docker-compose.prod.yaml up -d --remove-orphans
+docker compose -f docker-compose.prod.yaml "${PROFILES[@]}" up -d --remove-orphans
 
-# Replace the current update script with the newly downloaded one for next time
 mv update-prod.sh.tmp update-prod.sh
 chmod +x update-prod.sh
 
