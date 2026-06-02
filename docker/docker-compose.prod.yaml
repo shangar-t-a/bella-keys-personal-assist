@@ -1,10 +1,11 @@
 name: bella-apps
 
 # Profiles:
-#   (none)    — postgres + ems (always on)
-#   bella     — bella-chat + qdrant + phoenix (tracing)
-#   web       — UI with full nginx config (bella-chat + ems proxied)
-#   ems-web   — UI with ems-only nginx config
+#   (none)      — auth-service + ems (always on)
+#   ai-chat     — bella-chat + ems-mcp + qdrant
+#   monitor     — phoenix / arize observability
+#   ui          — full nginx UI (proxies EMS + bella-chat)
+#   ui-ems      — EMS-only nginx UI
 
 services:
 
@@ -66,7 +67,7 @@ services:
         max-file: "3"
 
   bella-chat:
-    profiles: [bella]
+    profiles: [ai-chat]
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/bella-chat-service:latest
     container_name: bella-chat
     ports:
@@ -130,7 +131,7 @@ services:
         max-file: "3"
 
   ems-mcp:
-    profiles: [bella]
+    profiles: [ai-chat]
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/ems-mcp-server:latest
     container_name: ems-mcp
     ports:
@@ -160,7 +161,7 @@ services:
         max-file: "3"
 
   qdrant:
-    profiles: [bella]
+    profiles: [ai-chat]
     image: qdrant/qdrant:latest
     container_name: qdrant
     ports:
@@ -184,7 +185,7 @@ services:
         max-file: "3"
 
   phoenix:
-    profiles: [bella]
+    profiles: [monitor]
     image: arizephoenix/phoenix:latest
     container_name: phoenix
     ports:
@@ -204,7 +205,7 @@ services:
 
   # Full UI: proxies both /api/ems and /api/bella-chat
   keys-ui:
-    profiles: [web]
+    profiles: [ui]
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/keys-personal-assist-ui:latest
     container_name: keys-ui
     ports:
@@ -223,7 +224,7 @@ services:
 
   # EMS-only UI: proxies /api/ems only (no bella-chat block)
   keys-ui-ems:
-    profiles: [ems-web]
+    profiles: [ui-ems]
     image: ${REGISTRY:-ghcr.io}/${REPO_OWNER:-shangar-t-a}/keys-personal-assist-ui:latest
     container_name: keys-ui-ems
     ports:
