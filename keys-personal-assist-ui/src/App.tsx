@@ -32,8 +32,12 @@ const LoadingFallback = () => (
 );
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const services = getAvailableServices();
+
+  if (loading) {
+    return <LoadingFallback />;
+  }
 
   if (!isAuthenticated) {
     return (
