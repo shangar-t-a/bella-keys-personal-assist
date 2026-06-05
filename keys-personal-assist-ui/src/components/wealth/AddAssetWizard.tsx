@@ -57,6 +57,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
   // Input value states
   const [units, setUnits] = useState<string>('');
   const [pricePerUnit, setPricePerUnit] = useState<string>('');
+  const [currentPricePerUnit, setCurrentPricePerUnit] = useState<string>('');
   const [currentValueInput, setCurrentValueInput] = useState<string>('');
   const [totalInvestedInput, setTotalInvestedInput] = useState<string>('');
 
@@ -85,6 +86,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     setNotes('');
     setUnits('');
     setPricePerUnit('');
+    setCurrentPricePerUnit('');
     setCurrentValueInput('');
     setTotalInvestedInput('');
     setMetalType('Gold');
@@ -113,19 +115,28 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
 
   // Dynamic automatic calculation triggers
   useEffect(() => {
-    if (isUnitBased && units && pricePerUnit) {
+    if (isUnitBased && units) {
       const u = parseFloat(units);
-      const p = parseFloat(pricePerUnit);
-      if (!isNaN(u) && !isNaN(p)) {
-        const calcVal = (u * p).toFixed(2);
-        setTotalInvestedInput(calcVal);
-        // Default current value to invested value if not modified
-        if (!currentValueInput) {
-          setCurrentValueInput(calcVal);
+      if (!isNaN(u)) {
+        const p = parseFloat(pricePerUnit);
+        if (!isNaN(p)) {
+          setTotalInvestedInput((u * p).toFixed(2));
+        } else {
+          setTotalInvestedInput('');
         }
+
+        const cp = parseFloat(currentPricePerUnit || pricePerUnit);
+        if (!isNaN(cp)) {
+          setCurrentValueInput((u * cp).toFixed(2));
+        } else {
+          setCurrentValueInput('');
+        }
+      } else {
+        setTotalInvestedInput('');
+        setCurrentValueInput('');
       }
     }
-  }, [units, pricePerUnit, isUnitBased]);
+  }, [units, pricePerUnit, currentPricePerUnit, isUnitBased]);
 
   const handleSubtypeSelect = (subtype: string) => {
     setSelectedSubtype(subtype);
@@ -147,12 +158,17 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     if (isUnitBased) {
       const u = parseFloat(units);
       const p = parseFloat(pricePerUnit);
+      const cp = currentPricePerUnit ? parseFloat(currentPricePerUnit) : p;
       if (isNaN(u) || u <= 0) {
         toast.error('Quantity/Units must be a positive number');
         return false;
       }
       if (isNaN(p) || p <= 0) {
-        toast.error('Price per unit must be a positive number');
+        toast.error('Purchase price per unit must be a positive number');
+        return false;
+      }
+      if (isNaN(cp) || cp <= 0) {
+        toast.error('Current price per unit must be a positive number');
         return false;
       }
     } else {
@@ -177,7 +193,11 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     let finalCurrent = parseFloat(currentValueInput);
 
     if (isUnitBased) {
-      finalInvested = parseFloat(units) * parseFloat(pricePerUnit);
+      const u = parseFloat(units);
+      const p = parseFloat(pricePerUnit);
+      const cp = parseFloat(currentPricePerUnit) || p;
+      finalInvested = u * p;
+      finalCurrent = u * cp;
     }
 
     const reqData: AssetRequest = {
@@ -199,7 +219,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
         await emsClient.addTransactionToAsset(createdAsset.id, {
           transactionType: 'REVALUE',
           amount: finalCurrent,
-          pricePerUnit: isUnitBased ? (finalCurrent / parseFloat(units)) : null,
+          pricePerUnit: isUnitBased ? (parseFloat(currentPricePerUnit) || parseFloat(pricePerUnit)) : null,
           description: 'Initial valuation adjustment',
         });
       }
@@ -211,9 +231,9 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
         setName(selectedSubtype);
         setUnits('');
         setPricePerUnit('');
+        setCurrentPricePerUnit('');
         setCurrentValueInput('');
         setTotalInvestedInput('');
-        setNotes('');
         setNotes('');
         setStep(2);
       } else {
@@ -438,7 +458,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                   <TextField
                     fullWidth
                     required
-                    label="Name *"
+                    label="Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -449,7 +469,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                       <TextField
                         fullWidth
                         required
-                        label={selectedCategory?.code === 'COMMODITIES' ? 'Weight (grams) *' : 'Quantity / Units *'}
+                        label={selectedCategory?.code === 'COMMODITIES' ? 'Weight (grams)' : 'Quantity / Units'}
                         type="number"
                         value={units}
                         onChange={(e) => setUnits(e.target.value)}
@@ -458,7 +478,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                       <TextField
                         fullWidth
                         required
-                        label={selectedCategory?.code === 'COMMODITIES' ? 'Price per Gram (INR) *' : 'Price per Unit (INR) *'}
+                        label={selectedCategory?.code === 'COMMODITIES' ? 'Purchase Price per Gram (INR)' : 'Purchase Price per Unit (INR)'}
                         type="number"
                         value={pricePerUnit}
                         onChange={(e) => setPricePerUnit(e.target.value)}
@@ -472,32 +492,71 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
 
                   {/* Aligned Balances inputs */}
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <TextField
-                      fullWidth
-                      required
-                      label="Current Value *"
-                      type="number"
-                      value={currentValueInput}
-                      onChange={(e) => setCurrentValueInput(e.target.value)}
-                      inputProps={{ step: 'any', min: '0' }}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      }}
-                    />
-                    <TextField
-                      fullWidth
-                      required
-                      disabled={isUnitBased} // Units calculation handles this
-                      label="Total Invested *"
-                      type="number"
-                      value={totalInvestedInput}
-                      onChange={(e) => setTotalInvestedInput(e.target.value)}
-                      inputProps={{ step: 'any', min: '0' }}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      }}
-                    />
+                    {isUnitBased ? (
+                      <>
+                        <TextField
+                          fullWidth
+                          label={selectedCategory?.code === 'COMMODITIES' ? 'Current Price per Gram (INR)' : 'Current Price per Unit / NAV (INR)'}
+                          type="number"
+                          value={currentPricePerUnit}
+                          onChange={(e) => setCurrentPricePerUnit(e.target.value)}
+                          placeholder={pricePerUnit ? `Defaults to ${pricePerUnit}` : ''}
+                          inputProps={{ step: 'any', min: '0' }}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                          }}
+                        />
+                        <TextField
+                          fullWidth
+                          disabled
+                          label="Current Value"
+                          value={currentValueInput}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <TextField
+                          fullWidth
+                          required
+                          label="Current Value"
+                          type="number"
+                          value={currentValueInput}
+                          onChange={(e) => setCurrentValueInput(e.target.value)}
+                          inputProps={{ step: 'any', min: '0' }}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                          }}
+                        />
+                        <TextField
+                          fullWidth
+                          required
+                          label="Total Invested"
+                          type="number"
+                          value={totalInvestedInput}
+                          onChange={(e) => setTotalInvestedInput(e.target.value)}
+                          inputProps={{ step: 'any', min: '0' }}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                          }}
+                        />
+                      </>
+                    )}
                   </Box>
+
+                  {isUnitBased && (
+                    <TextField
+                      fullWidth
+                      disabled
+                      label="Total Invested"
+                      value={totalInvestedInput}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                    />
+                  )}
 
                   {/* Collapsible notes section */}
                   <Accordion variant="outlined" sx={{ borderRadius: '6px !important', mt: 1 }}>

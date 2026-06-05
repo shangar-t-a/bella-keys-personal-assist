@@ -56,6 +56,22 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
 
   const isUnitBased = asset?.categoryCode === 'EQUITY' || asset?.categoryCode === 'COMMODITIES';
 
+  // Custom Confirm Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
+
+  const openConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmDialog({ open: true, title, message, onConfirm });
+  };
+
+  const closeConfirm = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+  };
+
   // Load transactions for the asset
   const fetchTransactions = async () => {
     if (!asset) return;
@@ -178,19 +194,22 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
     }
   };
 
-  const handleDeleteTransaction = async (txId: string) => {
-    if (!window.confirm('Are you sure you want to delete this transaction? This will revert the valuation calculations.')) {
-      return;
-    }
-    try {
-      await emsClient.deleteAssetTransaction(txId);
-      toast.success('Transaction deleted');
-      fetchTransactions();
-      onSuccess(); // Trigger reload of parent page
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete transaction');
-    }
+  const handleDeleteTransaction = (txId: string) => {
+    openConfirm(
+      'Delete Transaction',
+      'Are you sure you want to delete this transaction? This will revert the valuation calculations. This action cannot be undone.',
+      async () => {
+        try {
+          await emsClient.deleteAssetTransaction(txId);
+          toast.success('Transaction deleted');
+          fetchTransactions();
+          onSuccess(); // Trigger reload of parent page
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to delete transaction');
+        }
+      }
+    );
   };
 
   const getBadgeColor = (type: string) => {
@@ -214,8 +233,9 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <>
+      <Dialog 
+        open={open} 
       onClose={onClose} 
       maxWidth="lg" 
       fullWidth
@@ -454,5 +474,24 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
         </Button>
       </DialogActions>
     </Dialog>
+
+      {/* Custom Confirm Dialog */}
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">{confirmDialog.message}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={closeConfirm} variant="text" color="inherit">Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => { confirmDialog.onConfirm(); closeConfirm(); }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

@@ -99,6 +99,22 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   const [editNotes, setEditNotes] = useState('');
   const [editCategoryId, setEditCategoryId] = useState('');
 
+  // Custom Confirm Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
+
+  const openConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmDialog({ open: true, title, message, onConfirm });
+  };
+
+  const closeConfirm = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+  };
+
   // Filtering state
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
@@ -188,18 +204,21 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   };
 
   // Delete action
-  const handleDeleteAsset = async (asset: Asset) => {
-    if (!window.confirm(`Are you sure you want to delete "${asset.name}"? This will delete all its transaction records.`)) {
-      return;
-    }
-    try {
-      await emsClient.deleteAsset(asset.id);
-      toast.success('Asset deleted');
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete asset');
-    }
+  const handleDeleteAsset = (asset: Asset) => {
+    openConfirm(
+      'Delete Asset',
+      `Are you sure you want to delete "${asset.name}"? This will delete all its transaction records. This action cannot be undone.`,
+      async () => {
+        try {
+          await emsClient.deleteAsset(asset.id);
+          toast.success('Asset deleted');
+          fetchData();
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to delete asset');
+        }
+      }
+    );
   };
 
   // Open transaction ledger
@@ -239,7 +258,7 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: isPositive ? 'success.main' : 'error.main' }}>
         {isPositive ? <TrendingUpIcon fontSize="small" /> : <TrendingDownIcon fontSize="small" />}
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+        <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
           {isPositive ? '+' : ''}{formatCurrency(absVal)} ({isPositive ? '+' : ''}{pctVal.toFixed(2)}%)
         </Typography>
       </Box>
@@ -404,7 +423,7 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
               >
                 <Grid container alignItems="center" spacing={2}>
                   {/* Category Title & Badge */}
-                  <Grid size={{ xs: 12, md: 4 }}>
+                  <Grid size={{ xs: 12, md: 3.5 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Box 
                         sx={{ 
@@ -448,9 +467,9 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                   </Grid>
 
                   {/* Returns */}
-                  <Grid size={{ xs: 4, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, pr: 2 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.72rem', width: '100%', textAlign: { xs: 'left', md: 'right' } }}>Returns</Typography>
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                  <Grid size={{ xs: 4, md: 3.5 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.72rem' }}>Returns</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                       {renderReturnsText(returns, pctReturns)}
                     </Box>
                   </Grid>
@@ -546,28 +565,30 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
         <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
           Edit Asset Details
         </DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, minWidth: { sm: 400 }, pt: 2 }}>
-          <TextField
-            fullWidth
-            required
-            label="Asset Name"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Subcategory / Type"
-            value={editSubCategory}
-            onChange={(e) => setEditSubCategory(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Notes"
-            value={editNotes}
-            onChange={(e) => setEditNotes(e.target.value)}
-          />
+        <DialogContent sx={{ minWidth: { sm: 400 } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
+            <TextField
+              fullWidth
+              required
+              label="Asset Name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Subcategory / Type"
+              value={editSubCategory}
+              onChange={(e) => setEditSubCategory(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Notes"
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+            />
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setEditOpen(false)} variant="text" color="inherit">
@@ -575,6 +596,24 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
           </Button>
           <Button onClick={handleUpdateAsset} variant="contained" color="primary">
             Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Custom Confirm Dialog */}
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">{confirmDialog.message}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={closeConfirm} variant="text" color="inherit">Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => { confirmDialog.onConfirm(); closeConfirm(); }}
+          >
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
