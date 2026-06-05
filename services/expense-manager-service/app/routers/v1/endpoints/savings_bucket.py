@@ -1,6 +1,5 @@
 """Router for savings buckets and transactions endpoints."""
 
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.routers.v1.schemas.savings_bucket import (

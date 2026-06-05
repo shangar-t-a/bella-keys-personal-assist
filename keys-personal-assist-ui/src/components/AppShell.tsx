@@ -37,6 +37,7 @@ import {
     LightMode as Sun,
     Menu,
     AccountBalanceWallet,
+    TrendingUp,
     Settings as SettingsIcon,
     Logout as LogoutIcon,
     MoreVert,
@@ -103,6 +104,11 @@ const getNavSections = (): NavSection[] => {
                     name: 'Monthly Budget',
                     href: '/budget',
                     icon: CalendarMonth,
+                },
+                {
+                    name: 'Wealth Manager',
+                    href: '/wealth',
+                    icon: TrendingUp,
                 },
             ],
         });

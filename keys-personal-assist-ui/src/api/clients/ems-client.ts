@@ -20,6 +20,15 @@ import type {
   SavingsBucketTransactionResponse,
   SavingsBucketTransactionsPageResponse,
 } from '@/types/api';
+import type {
+  AssetCategory,
+  Asset,
+  AssetRequest,
+  AssetUpdateRequest,
+  AssetTransaction,
+  AssetTransactionRequest,
+  AssetSummary,
+} from '@/types/asset';
 import { getEmsBase } from '@/api/config';
 import { fetchWithAuth } from './fetchClient';
 
@@ -362,6 +371,95 @@ class EMSClient {
       throw new Error(errData.detail || 'Failed to cancel transaction');
     }
     return response.json();
+  }
+
+  // ── Wealth Manager Assets endpoints ────────────────────────────────────────
+
+  async getAllAssetCategories(): Promise<AssetCategory[]> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/categories`);
+    if (!response.ok) throw new Error('Failed to fetch asset categories');
+    return response.json();
+  }
+
+  async listAssets(params: { categoryId?: string; search?: string } = {}): Promise<Asset[]> {
+    const qs = new URLSearchParams();
+    if (params.categoryId) qs.set('category_id', params.categoryId);
+    if (params.search) qs.set('search', params.search);
+    const queryString = qs.toString();
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets${queryString ? `?${queryString}` : ''}`);
+    if (!response.ok) throw new Error('Failed to list assets');
+    return response.json();
+  }
+
+  async getAssetSummary(): Promise<AssetSummary> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/summary`);
+    if (!response.ok) throw new Error('Failed to fetch asset summary');
+    return response.json();
+  }
+
+  async getAssetById(id: string): Promise<Asset> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch asset details');
+    return response.json();
+  }
+
+  async createAsset(data: AssetRequest): Promise<Asset> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to create asset');
+    }
+    return response.json();
+  }
+
+  async updateAsset(id: string, data: AssetUpdateRequest): Promise<Asset> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to update asset');
+    }
+    return response.json();
+  }
+
+  async deleteAsset(id: string): Promise<void> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete asset');
+  }
+
+  async getTransactionsForAsset(id: string): Promise<AssetTransaction[]> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/${id}/transactions`);
+    if (!response.ok) throw new Error('Failed to fetch asset transactions');
+    return response.json();
+  }
+
+  async addTransactionToAsset(id: string, data: AssetTransactionRequest): Promise<AssetTransaction> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/${id}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to add transaction');
+    }
+    return response.json();
+  }
+
+  async deleteAssetTransaction(txId: string): Promise<void> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/assets/transactions/${txId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete transaction');
   }
 }
 
