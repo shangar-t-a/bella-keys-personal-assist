@@ -45,12 +45,7 @@ class MonthlyPlannerService:
         summary = await self.repo.get_summary(period.id)
         if not summary:
             # Return a default summary if not found
-            return MonthlySummaryDetail(
-                id="",
-                salary=0.0,
-                month=month,
-                year=year
-            )
+            return MonthlySummaryDetail(id="", salary=0.0, month=month, year=year)
         return summary
 
     async def update_salary(self, month: int, year: int, salary: float) -> MonthlySummaryDetail:
@@ -64,8 +59,14 @@ class MonthlyPlannerService:
         return await self.repo.list_expenses(period.id)
 
     async def add_expense(  # noqa: PLR0913
-        self, month: int, year: int, name: str, amount: float,
-        category_l1: str, category_l2: str, is_recurring: bool = True
+        self,
+        month: int,
+        year: int,
+        name: str,
+        amount: float,
+        category_l1: str,
+        category_l2: str,
+        is_recurring: bool = True,
     ) -> MonthlyExpenseItemDetail:
         """Add a new expense item for the given month and year."""
         period = await self.period_repo.get_or_create_period(month=month, year=year)
@@ -76,13 +77,19 @@ class MonthlyPlannerService:
             status=ExpenseStatus.PENDING,
             category_l1=category_l1,
             category_l2=category_l2,
-            is_recurring=is_recurring
+            is_recurring=is_recurring,
         )
         return await self.repo.add_expense(item)
 
     async def update_expense(  # noqa: PLR0913
-        self, expense_id: str, name: str, amount: float,
-        status: str, category_l1: str, category_l2: str, is_recurring: bool
+        self,
+        expense_id: str,
+        name: str,
+        amount: float,
+        status: str,
+        category_l1: str,
+        category_l2: str,
+        is_recurring: bool,
     ) -> MonthlyExpenseItemDetail:
         """Update an existing expense item's details."""
         item = MonthlyExpenseItem(
@@ -92,7 +99,7 @@ class MonthlyPlannerService:
             status=status,
             category_l1=category_l1,
             category_l2=category_l2,
-            is_recurring=is_recurring
+            is_recurring=is_recurring,
         )
         return await self.repo.update_expense(expense_id, item)
 
@@ -127,7 +134,7 @@ class MonthlyPlannerService:
                     status=ExpenseStatus.PENDING,
                     category_l1=prev.category_l1,
                     category_l2=prev.category_l2,
-                    is_recurring=prev.is_recurring
+                    is_recurring=prev.is_recurring,
                 )
                 new_item = await self.repo.add_expense(item)
                 new_items.append(new_item)

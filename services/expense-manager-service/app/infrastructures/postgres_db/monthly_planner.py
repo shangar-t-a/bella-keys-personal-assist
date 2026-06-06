@@ -239,9 +239,6 @@ class PostgresMonthlyPlannerRepository(MonthlyPlannerRepositoryInterface):
                 prev_year -= 1
 
             # Find period ID
-            prev_stmt = select(PeriodModel.id).where(
-                PeriodModel.month == prev_month,
-                PeriodModel.year == prev_year
-            )
+            prev_stmt = select(PeriodModel.id).where(PeriodModel.month == prev_month, PeriodModel.year == prev_year)
             result = await session.execute(prev_stmt)
             return result.scalar_one_or_none()

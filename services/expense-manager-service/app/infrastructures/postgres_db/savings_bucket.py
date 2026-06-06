@@ -1,6 +1,5 @@
 """Postgres repository implementation for savings buckets and transactions."""
 
-
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

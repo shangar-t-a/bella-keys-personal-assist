@@ -16,6 +16,7 @@ const SpendingAccountSummaryPage = lazy(() => import('@/pages/SpendingAccountSum
 const MonthlyPlannerPage = lazy(() => import('@/pages/MonthlyPlannerPage'));
 const SavingsFundSegregatorPage = lazy(() => import('@/pages/SavingsFundSegregatorPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const WealthPage = lazy(() => import('@/pages/WealthPage'));
 const Login = lazy(() => import('@/pages/Login'));
 
 // Loading fallback component
@@ -31,8 +32,12 @@ const LoadingFallback = () => (
 );
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const services = getAvailableServices();
+
+  if (loading) {
+    return <LoadingFallback />;
+  }
 
   if (!isAuthenticated) {
     return (
@@ -56,6 +61,7 @@ function AppContent() {
               <Route path="/dashboard" element={<Navigate to="/dashboard/accounts" replace />} />
               <Route path="/dashboard/accounts" element={<SpendingAccountSummaryPage />} />
               <Route path="/budget" element={<MonthlyPlannerPage />} />
+              <Route path="/wealth" element={<WealthPage />} />
               <Route path="/dashboard/envelopes" element={<SavingsFundSegregatorPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </>

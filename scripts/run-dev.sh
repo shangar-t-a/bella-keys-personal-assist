@@ -88,7 +88,9 @@ fi
 build_profile_args() {
     local args=()
     for p in "${PROFILES[@]:-}"; do
-        args+=("--profile" "$p")
+        if [ -n "$p" ]; then
+            args+=("--profile" "$p")
+        fi
     done
     echo "${args[@]:-}"
 }

@@ -11,6 +11,7 @@ from app.infrastructures.postgres_db.database import Base
 
 class MonthlyCategoryModel(Base):
     """Postgres model for custom level 2 categories."""
+
     __tablename__ = "monthly_category"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid.uuid4().hex)
@@ -23,6 +24,7 @@ class MonthlyCategoryModel(Base):
 
 class MonthlySummaryModel(Base):
     """Postgres model for monthly summary (salary)."""
+
     __tablename__ = "monthly_summary"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid.uuid4().hex)
@@ -40,6 +42,7 @@ class MonthlySummaryModel(Base):
 
 class MonthlyExpenseItemModel(Base):
     """Postgres model for individual expense items."""
+
     __tablename__ = "monthly_expense_item"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid.uuid4().hex)

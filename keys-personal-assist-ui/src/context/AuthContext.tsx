@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getAuthBase } from '../api/config';
 
 interface User {
   id: string;
@@ -12,6 +13,7 @@ interface AuthContextType {
   login: (token: string, refresh_token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,21 +39,7 @@ const decodeToken = (token: string): { sub: string; role?: string } | null => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    // On mount, check if we have a refresh token in secure storage/localStorage
-    // If we do, we could attempt a silent refresh here.
-    const storedToken = localStorage.getItem('access_token');
-    if (storedToken) {
-      setToken(storedToken);
-      const decoded = decodeToken(storedToken);
-      if (decoded) {
-        setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
-      } else {
-        setUser({ id: "1", username: "admin", role: "admin" });
-      }
-    }
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   const login = (newToken: string, refreshToken: string) => {
     setToken(newToken);
@@ -72,8 +60,93 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('refresh_token');
   };
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const storedRefreshToken = localStorage.getItem('refresh_token');
+      const storedAccessToken = localStorage.getItem('access_token');
+
+      if (storedRefreshToken) {
+        try {
+          const authBase = getAuthBase();
+          const response = await fetch(`${authBase}/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ refresh_token: storedRefreshToken }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const { access_token, refresh_token: new_refresh_token } = data;
+            
+            setToken(access_token);
+            localStorage.setItem('access_token', access_token);
+            localStorage.setItem('refresh_token', new_refresh_token);
+            
+            const decoded = decodeToken(access_token);
+            if (decoded) {
+              setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
+            } else {
+              setUser({ id: "1", username: "admin", role: "admin" });
+            }
+          } else {
+            logout();
+          }
+        } catch (error) {
+          console.error("Error during silent token refresh on mount:", error);
+          if (storedAccessToken) {
+            const decoded = decodeToken(storedAccessToken);
+            const isExpired = decoded && (decoded as any).exp ? (decoded as any).exp * 1000 < Date.now() : true;
+            if (!isExpired) {
+              setToken(storedAccessToken);
+              if (decoded) {
+                setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
+              }
+            } else {
+              logout();
+            }
+          } else {
+            logout();
+          }
+        }
+      } else {
+        logout();
+      }
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      logout();
+    };
+
+    const handleAuthRefresh = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.access_token) {
+        const newToken = customEvent.detail.access_token;
+        setToken(newToken);
+        const decoded = decodeToken(newToken);
+        if (decoded) {
+          setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
+        }
+      }
+    };
+
+    window.addEventListener('auth-logout', handleAuthLogout);
+    window.addEventListener('auth-refresh', handleAuthRefresh);
+
+    return () => {
+      window.removeEventListener('auth-logout', handleAuthLogout);
+      window.removeEventListener('auth-refresh', handleAuthRefresh);
+    };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token, loading }}>
       {children}
     </AuthContext.Provider>
   );

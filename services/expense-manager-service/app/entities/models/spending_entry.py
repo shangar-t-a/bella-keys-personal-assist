@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from app.entities.models.base import BaseEntity
 from app.entities.models.sort import SortOrder
@@ -78,14 +78,14 @@ class SpendingEntrySortField(StrEnum):
     TOTAL_SPENT = "total_spent"
 
 
-class SpendingEntrySort(BaseEntity):
+class SpendingEntrySort(BaseModel):
     """Entity representing sorting options for spending entries."""
 
     sort_by: SpendingEntrySortField = Field(default=SpendingEntrySortField.YEAR, description="Field to sort by")
     sort_order: SortOrder = Field(default=SortOrder.ASC, description="Sort order (asc/desc)")
 
 
-class SpendingEntryFilter(BaseEntity):
+class SpendingEntryFilter(BaseModel):
     """Entity representing filtering options for spending entries."""
 
     month: int | None = Field(default=None, description="Filter by month (1-12)")
