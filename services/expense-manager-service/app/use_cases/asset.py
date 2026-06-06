@@ -50,7 +50,6 @@ class AssetService:
             category_name=category_name,
             category_code=category_code,
             name=asset.name,
-            sub_category=asset.sub_category,
             subcategory_id=asset.subcategory_id,
             invested_value=asset.invested_value,
             current_value=asset.current_value,
@@ -65,33 +64,40 @@ class AssetService:
         )
 
     async def create_asset(self, asset_create: AssetCreate) -> AssetWithCalc:
-        """Create a new asset and log its initial transaction."""
+        """Create a new asset and log its initial BUY transaction."""
         asset_id = uuid.uuid4().hex
 
-        # Create the asset model
+        # Unpack optional sub-model fields
+        interest_rate = asset_create.interest_details.interest_rate if asset_create.interest_details else None
+        interest_compounding = (
+            asset_create.interest_details.compounding if asset_create.interest_details else None
+        )
+        maturity_date = asset_create.interest_details.maturity_date if asset_create.interest_details else None
+        units = asset_create.unit_details.units if asset_create.unit_details else None
+        price_per_unit = asset_create.unit_details.price_per_unit if asset_create.unit_details else None
+
         asset = Asset(
             id=asset_id,
             category_id=asset_create.category_id,
             name=asset_create.name,
-            sub_category=asset_create.sub_category,
             subcategory_id=asset_create.subcategory_id,
             invested_value=0.0,
             current_value=0.0,
-            interest_rate=asset_create.interest_rate,
-            interest_compounding=asset_create.interest_compounding,
-            maturity_date=asset_create.maturity_date,
+            interest_rate=interest_rate,
+            interest_compounding=interest_compounding,
+            maturity_date=maturity_date,
             notes=asset_create.notes,
         )
         created_asset = await self.asset_repository.add_asset(asset)
 
-        # Log the initial transaction
+        # Log the initial BUY transaction
         tx = AssetTransaction(
             id=uuid.uuid4().hex,
             asset_id=asset_id,
             transaction_type=AssetTransactionType.BUY,
             amount=asset_create.initial_amount,
-            units=asset_create.units,
-            price_per_unit=asset_create.price_per_unit,
+            units=units,
+            price_per_unit=price_per_unit,
             description="Initial deposit/purchase",
         )
         await self.asset_repository.add_transaction(tx)
@@ -99,30 +105,49 @@ class AssetService:
         # Recalculate cached values
         await self._recalculate_asset_values(asset_id)
 
-        # Retrieve recalculated asset
         updated_asset = await self.asset_repository.get_asset_by_id(asset_id)
         if not updated_asset:
             return await self._to_calc_model(created_asset)
         return await self._to_calc_model(updated_asset)
 
     async def update_asset(self, asset_id: str, asset_update: AssetUpdate) -> AssetWithCalc:
-        """Update asset details."""
+        """Partially update asset metadata (PATCH semantics).
+
+        Only fields explicitly provided in asset_update are applied.
+        All other fields are preserved from the existing asset record.
+        """
         existing_asset = await self.asset_repository.get_asset_by_id(asset_id)
         if not existing_asset:
             raise ValueError(f"Asset with ID {asset_id} not found.")
 
+        # Merge: use update value if provided, else keep existing
         updated_asset = Asset(
             id=existing_asset.id,
-            category_id=asset_update.category_id,
-            name=asset_update.name,
-            sub_category=asset_update.sub_category,
-            subcategory_id=asset_update.subcategory_id,
+            category_id=asset_update.category_id or existing_asset.category_id,
+            name=asset_update.name or existing_asset.name,
+            subcategory_id=(
+                asset_update.subcategory_id
+                if asset_update.subcategory_id is not None
+                else existing_asset.subcategory_id
+            ),
             invested_value=existing_asset.invested_value,
             current_value=existing_asset.current_value,
-            interest_rate=asset_update.interest_rate,
-            interest_compounding=asset_update.interest_compounding,
-            maturity_date=asset_update.maturity_date,
-            notes=asset_update.notes,
+            interest_rate=(
+                asset_update.interest_details.interest_rate
+                if asset_update.interest_details
+                else existing_asset.interest_rate
+            ),
+            interest_compounding=(
+                asset_update.interest_details.compounding
+                if asset_update.interest_details
+                else existing_asset.interest_compounding
+            ),
+            maturity_date=(
+                asset_update.interest_details.maturity_date
+                if asset_update.interest_details
+                else existing_asset.maturity_date
+            ),
+            notes=asset_update.notes if asset_update.notes is not None else existing_asset.notes,
             created_at=existing_asset.created_at,
         )
         saved_asset = await self.asset_repository.edit_asset(asset_id, updated_asset)
@@ -198,13 +223,16 @@ class AssetService:
         if not asset:
             raise ValueError(f"Asset with ID {asset_id} not found.")
 
+        units = tx_create.unit_details.units if tx_create.unit_details else None
+        price_per_unit = tx_create.unit_details.price_per_unit if tx_create.unit_details else None
+
         tx = AssetTransaction(
             id=uuid.uuid4().hex,
             asset_id=asset_id,
             transaction_type=tx_create.transaction_type,
             amount=tx_create.amount,
-            units=tx_create.units,
-            price_per_unit=tx_create.price_per_unit,
+            units=units,
+            price_per_unit=price_per_unit,
             transaction_date=tx_create.transaction_date,
             description=tx_create.description,
         )
@@ -233,21 +261,24 @@ class AssetService:
 
         transactions = await self.asset_repository.get_transactions_for_asset(asset_id)
         if not transactions:
-            # Reset
+            # Reset values but preserve all metadata
             updated = Asset(
                 id=asset.id,
                 category_id=asset.category_id,
                 name=asset.name,
-                sub_category=asset.sub_category,
+                subcategory_id=asset.subcategory_id,
                 invested_value=0.0,
                 current_value=0.0,
+                interest_rate=asset.interest_rate,
+                interest_compounding=asset.interest_compounding,
+                maturity_date=asset.maturity_date,
                 notes=asset.notes,
                 created_at=asset.created_at,
             )
             await self.asset_repository.edit_asset(asset_id, updated)
             return
 
-        # Determine if asset is unit-based (if any transaction contains unit values)
+        # Determine if asset is unit-based (any BUY/SELL has unit values)
         is_unit_based = any(
             t.units is not None
             for t in transactions
@@ -263,7 +294,7 @@ class AssetService:
             sells = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.SELL)
             invested_value = max(0.0, buys - sells)
 
-            # Look for the latest REVALUE transaction
+            # Latest REVALUE sets current value
             revalues = [t for t in transactions if t.transaction_type == AssetTransactionType.REVALUE]
             current_value = revalues[0].amount if revalues else invested_value
         else:
@@ -284,14 +315,19 @@ class AssetService:
 
             invested_value = max(0.0, invested_cash)
 
-            # Resolve price per unit (latest mock live price or latest transaction price)
-            ticker_symbol = asset.sub_category or asset.name
+            # Resolve ticker symbol: prefer subcategory code, fall back to asset name
+            ticker_symbol = asset.name
+            if asset.subcategory_id:
+                sub = await self.asset_repository.get_subcategory_by_id(asset.subcategory_id)
+                if sub:
+                    ticker_symbol = sub.code
+
             live_price = PriceResolverService.resolve_price(ticker_symbol)
 
             if live_price is not None:
                 ppu = live_price
             else:
-                # Find most recent price_per_unit in transactions (REVALUE or BUY)
+                # Fall back to most recent price_per_unit from BUY/REVALUE transactions
                 latest_ppu_txs = [
                     t
                     for t in transactions
@@ -302,14 +338,17 @@ class AssetService:
 
             current_value = total_units * ppu
 
-        # Save recalculations
+        # Save recalculations, preserving all metadata
         updated = Asset(
             id=asset.id,
             category_id=asset.category_id,
             name=asset.name,
-            sub_category=asset.sub_category,
+            subcategory_id=asset.subcategory_id,
             invested_value=round(invested_value, 2),
             current_value=round(current_value, 2),
+            interest_rate=asset.interest_rate,
+            interest_compounding=asset.interest_compounding,
+            maturity_date=asset.maturity_date,
             notes=asset.notes,
             created_at=asset.created_at,
         )

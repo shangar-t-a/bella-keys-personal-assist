@@ -6,7 +6,6 @@ from app.entities.models.asset import (
     AssetCategory,
     AssetSubcategory,
     AssetTransaction,
-    AssetTransactionType,
 )
 from app.routers.v1.schemas.asset import (
     AssetCategoryResponse,
@@ -22,8 +21,10 @@ from app.routers.v1.schemas.asset import (
 from app.use_cases.models.asset import (
     AssetCategorySummary,
     AssetCreate,
+    AssetInterestDetails,
     AssetSummary,
     AssetTransactionCreate,
+    AssetUnitDetails,
     AssetUpdate,
     AssetWithCalc,
 )
@@ -35,17 +36,28 @@ class AssetCreateMapper:
     @staticmethod
     def to_use_case_model(request: AssetRequest) -> AssetCreate:
         """Convert request payload to use case create model."""
+        interest_details = None
+        if request.interest_details:
+            interest_details = AssetInterestDetails(
+                interest_rate=request.interest_details.interest_rate,
+                compounding=request.interest_details.compounding,
+                maturity_date=request.interest_details.maturity_date,
+            )
+
+        unit_details = None
+        if request.unit_details:
+            unit_details = AssetUnitDetails(
+                units=request.unit_details.units,
+                price_per_unit=request.unit_details.price_per_unit,
+            )
+
         return AssetCreate(
             category_id=request.category_id,
             name=request.name,
-            sub_category=request.sub_category,
             subcategory_id=request.subcategory_id,
             initial_amount=request.initial_amount,
-            units=request.units,
-            price_per_unit=request.price_per_unit,
-            interest_rate=request.interest_rate,
-            interest_compounding=request.interest_compounding,
-            maturity_date=request.maturity_date,
+            unit_details=unit_details,
+            interest_details=interest_details,
             notes=request.notes,
         )
 
@@ -56,14 +68,19 @@ class AssetUpdateMapper:
     @staticmethod
     def to_use_case_model(request: AssetUpdateRequest) -> AssetUpdate:
         """Convert request payload to use case update model."""
+        interest_details = None
+        if request.interest_details:
+            interest_details = AssetInterestDetails(
+                interest_rate=request.interest_details.interest_rate,
+                compounding=request.interest_details.compounding,
+                maturity_date=request.interest_details.maturity_date,
+            )
+
         return AssetUpdate(
             category_id=request.category_id,
             name=request.name,
-            sub_category=request.sub_category,
             subcategory_id=request.subcategory_id,
-            interest_rate=request.interest_rate,
-            interest_compounding=request.interest_compounding,
-            maturity_date=request.maturity_date,
+            interest_details=interest_details,
             notes=request.notes,
         )
 
@@ -74,13 +91,18 @@ class AssetTransactionCreateMapper:
     @staticmethod
     def to_use_case_model(request: AssetTransactionRequest) -> AssetTransactionCreate:
         """Convert request payload to use case transaction create model."""
-        tx_date = request.transaction_date or datetime.now(UTC)
+        unit_details = None
+        if request.unit_details:
+            unit_details = AssetUnitDetails(
+                units=request.unit_details.units,
+                price_per_unit=request.unit_details.price_per_unit,
+            )
+
         return AssetTransactionCreate(
-            transaction_type=AssetTransactionType(request.transaction_type.upper()),
+            transaction_type=request.transaction_type,
             amount=request.amount,
-            units=request.units,
-            price_per_unit=request.price_per_unit,
-            transaction_date=tx_date,
+            unit_details=unit_details,
+            transaction_date=request.transaction_date or datetime.now(UTC),
             description=request.description,
         )
 
@@ -97,7 +119,6 @@ class AssetResponseMapper:
             category_name=asset.category_name,
             category_code=asset.category_code,
             name=asset.name,
-            sub_category=asset.sub_category,
             subcategory_id=asset.subcategory_id,
             invested_value=asset.invested_value,
             current_value=asset.current_value,

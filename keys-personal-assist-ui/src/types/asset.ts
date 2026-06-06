@@ -1,3 +1,5 @@
+export type CompoundingFrequency = 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY';
+
 export interface AssetSubcategory {
   id: string;
   categoryId: string;
@@ -17,18 +19,28 @@ export interface AssetCategory {
   subcategories: AssetSubcategory[];
 }
 
+export interface AssetInterestDetails {
+  interestRate: number;
+  compounding: CompoundingFrequency;
+  maturityDate?: string | null;
+}
+
+export interface AssetUnitDetails {
+  units: number;
+  pricePerUnit: number;
+}
+
 export interface Asset {
   id: string;
   categoryId: string;
   categoryName: string;
   categoryCode: 'EQUITY' | 'DEBT' | 'REAL_ESTATE' | 'COMMODITIES' | 'CASH_BANK';
   name: string;
-  subCategory: string | null;
   subcategoryId: string | null;
   investedValue: number;
   currentValue: number;
   interestRate: number | null;
-  interestCompounding: string | null;
+  interestCompounding: CompoundingFrequency | null;
   maturityDate: string | null;
   notes: string | null;
   absoluteReturns: number;
@@ -40,25 +52,18 @@ export interface Asset {
 export interface AssetRequest {
   categoryId: string;
   name: string;
-  subCategory?: string | null;
   subcategoryId?: string | null;
   initialAmount: number;
-  units?: number | null;
-  pricePerUnit?: number | null;
-  interestRate?: number | null;
-  interestCompounding?: string | null;
-  maturityDate?: string | null;
+  unitDetails?: AssetUnitDetails | null;
+  interestDetails?: AssetInterestDetails | null;
   notes?: string | null;
 }
 
 export interface AssetUpdateRequest {
-  categoryId: string;
-  name: string;
-  subCategory?: string | null;
+  categoryId?: string | null;
+  name?: string | null;
   subcategoryId?: string | null;
-  interestRate?: number | null;
-  interestCompounding?: string | null;
-  maturityDate?: string | null;
+  interestDetails?: AssetInterestDetails | null;
   notes?: string | null;
 }
 
@@ -76,8 +81,7 @@ export interface AssetTransaction {
 export interface AssetTransactionRequest {
   transactionType: 'BUY' | 'SELL' | 'REVALUE';
   amount: number;
-  units?: number | null;
-  pricePerUnit?: number | null;
+  unitDetails?: AssetUnitDetails | null;
   transactionDate?: string | null; // ISO datetime
   description?: string | null;
 }

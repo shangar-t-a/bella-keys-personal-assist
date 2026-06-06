@@ -176,8 +176,12 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
     const reqData: AssetTransactionRequest = {
       transactionType,
       amount: finalAmount,
-      units: isUnitBased && transactionType !== 'REVALUE' ? parseFloat(units) : null,
-      pricePerUnit: isUnitBased ? parseFloat(pricePerUnit) : null,
+      unitDetails:
+        isUnitBased && transactionType !== 'REVALUE'
+          ? { units: parseFloat(units), pricePerUnit: parseFloat(pricePerUnit) }
+          : isUnitBased && transactionType === 'REVALUE'
+          ? { units: 0, pricePerUnit: parseFloat(pricePerUnit) }
+          : null,
       transactionDate: new Date(transactionDate).toISOString(),
       description: description.trim() || null,
     };
@@ -260,7 +264,7 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
             Transaction Ledger
           </Typography>
           <Typography variant="subtitle2" color="text.secondary">
-            Asset: {asset?.name} ({asset?.subCategory || asset?.categoryName})
+            Asset: {asset?.name} ({asset?.categoryName})
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>

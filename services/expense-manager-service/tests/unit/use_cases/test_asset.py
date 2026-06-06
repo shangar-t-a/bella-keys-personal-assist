@@ -7,9 +7,15 @@ import pytest
 
 from app.infrastructures.postgres_db.models.asset_category import AssetCategoryModel
 from app.infrastructures.postgres_db.models.asset_subcategory import AssetSubcategoryModel
-from app.entities.models.asset import AssetTransactionType
+from app.entities.models.asset import AssetTransactionType, CompoundingFrequency
 from app.use_cases.asset import AssetService
-from app.use_cases.models.asset import AssetCreate, AssetTransactionCreate, AssetUpdate
+from app.use_cases.models.asset import (
+    AssetCreate,
+    AssetInterestDetails,
+    AssetTransactionCreate,
+    AssetUnitDetails,
+    AssetUpdate,
+)
 
 
 @pytest.fixture
@@ -76,11 +82,31 @@ async def get_categories_map(asset_service):
                         has_interest=True,
                         has_maturity=True,
                     ),
+                    AssetSubcategoryModel(
+                        id="c91d4bb83e914acc9fcee8ebcbc840f4",
+                        category_id="a434c382103b417e914e9f7823f6e111",
+                        name="Physical Gold / Silver",
+                        code="GOLD_24K",
+                        description="Unit-based valuation for gold/silver",
+                        valuation_type="UNIT_BASED",
+                        has_interest=False,
+                        has_maturity=False,
+                    ),
                 ]
             )
             await session.commit()
         cats = await asset_service.get_all_categories()
     return {c.code: c.id for c in cats}
+
+
+async def get_subcategory_map(asset_service):
+    """Retrieve a lookup map for seeded subcategory codes to subcategory IDs."""
+    cats = await asset_service.get_all_categories()
+    sub_map = {}
+    for cat in cats:
+        for sub in cat.subcategories:
+            sub_map[sub.code] = sub.id
+    return sub_map
 
 
 class TestAssetServiceCategories:
@@ -105,19 +131,27 @@ class TestAssetServiceCRUD:
     async def test_create_and_recalculate_flat_asset(self, asset_service):
         """Test creating a simple flat asset and verifying calculations."""
         categories_map = await get_categories_map(asset_service)
+        subcategory_map = await get_subcategory_map(asset_service)
         debt_cat_id = categories_map["DEBT"]
+        ppf_sub_id = subcategory_map.get("PPF")
+
         asset_in = AssetCreate(
             category_id=debt_cat_id,
             name="PPF Account",
-            sub_category="PPF",
+            subcategory_id=ppf_sub_id,
             initial_amount=50000.00,
+            interest_details=AssetInterestDetails(
+                interest_rate=7.1,
+                compounding=CompoundingFrequency.YEARLY,
+            ),
             notes="Self PPF account",
         )
         asset = await asset_service.create_asset(asset_in)
 
         assert asset.name == "PPF Account"
         assert asset.category_code == "DEBT"
-        assert asset.sub_category == "PPF"
+        assert asset.interest_rate == 7.1
+        assert asset.interest_compounding == CompoundingFrequency.YEARLY
         assert asset.invested_value == 50000.00
         assert asset.current_value == 50000.00  # Default to invested if no revaluation
         assert asset.absolute_returns == 0.00
@@ -147,14 +181,19 @@ class TestAssetServiceCRUD:
     async def test_create_and_recalculate_unit_based_asset(self, asset_service):
         """Test creating a unit-based asset (Commodity Gold) and verifying live calculations."""
         categories_map = await get_categories_map(asset_service)
+        subcategory_map = await get_subcategory_map(asset_service)
         comm_cat_id = categories_map["COMMODITIES"]
+        gold_sub_id = subcategory_map.get("GOLD_24K")  # Resolves mock live price (15863.18)
+
         asset_in = AssetCreate(
             category_id=comm_cat_id,
             name="Gold Jewelry",
-            sub_category="GOLD_24K",  # Resolves mock live price (15863.18)
+            subcategory_id=gold_sub_id,
             initial_amount=909000.00,
-            units=250.00,  # 250 grams
-            price_per_unit=3636.00,  # ₹3636 per gram
+            unit_details=AssetUnitDetails(
+                units=250.00,  # 250 grams
+                price_per_unit=3636.00,  # ₹3636 per gram
+            ),
             notes="Wedding gold",
         )
         asset = await asset_service.create_asset(asset_in)
@@ -166,22 +205,21 @@ class TestAssetServiceCRUD:
         assert asset.absolute_returns == (250.00 * 15863.18) - 909000.00
         assert asset.percentage_returns > 300.00  # ROI returns > 300%
 
-        # Update metadata
+        # Update metadata (PATCH — only name changes)
         update_in = AssetUpdate(
-            category_id=comm_cat_id,
             name="Gold Jewelry Renamed",
-            sub_category="GOLD_24K",
-            notes="Updated notes",
         )
         edited = await asset_service.update_asset(asset.id, update_in)
         assert edited.name == "Gold Jewelry Renamed"
+        # Verify PATCH preserved subcategory_id and notes
+        assert edited.subcategory_id == gold_sub_id
+        assert edited.notes == "Wedding gold"
 
         # Log a BUY transaction of 50 more grams at ₹5000 per gram
         buy_tx = AssetTransactionCreate(
             transaction_type=AssetTransactionType.BUY,
             amount=250000.00,
-            units=50.00,
-            price_per_unit=5000.00,
+            unit_details=AssetUnitDetails(units=50.00, price_per_unit=5000.00),
             description="Bought extra gold coin",
         )
         await asset_service.add_transaction(asset.id, buy_tx)
@@ -198,16 +236,11 @@ class TestAssetServiceCRUD:
         sell_tx = AssetTransactionCreate(
             transaction_type=AssetTransactionType.SELL,
             amount=317263.60,
-            units=20.00,
-            price_per_unit=15863.18,
+            unit_details=AssetUnitDetails(units=20.00, price_per_unit=15863.18),
             description="Sold 20 grams coin",
         )
         await asset_service.add_transaction(asset.id, sell_tx)
 
-        # Recalculated state:
-        # Total units: 300 - 20 = 280 grams
-        # Total invested cost (reduced prorated/cashflow): 1,159,000 - (20 * 5000 approx base cost or transactional cashflow deduction)
-        # Note: Recalculator tracks Cash flow base: buys_invested - sells_invested = (909000 + 250000) - (20 * 15863.18) = 841,736.4
         recalced_sell = await asset_service.get_asset_by_id(asset.id)
         assert recalced_sell.invested_value == 841736.4
         assert recalced_sell.current_value == 280.00 * 15863.18
@@ -228,6 +261,86 @@ class TestAssetServiceCRUD:
         await asset_service.delete_asset(asset.id)
 
 
+class TestAssetTransactionValidation:
+    """Tests for AssetTransactionCreate validation rules."""
+
+    def test_amount_must_be_positive(self):
+        """Reject transactions with amount <= 0."""
+        with pytest.raises(Exception):
+            AssetTransactionCreate(
+                transaction_type=AssetTransactionType.BUY,
+                amount=0.0,
+            )
+
+    def test_amount_negative_rejected(self):
+        """Reject transactions with negative amount."""
+        with pytest.raises(Exception):
+            AssetTransactionCreate(
+                transaction_type=AssetTransactionType.BUY,
+                amount=-100.0,
+            )
+
+    def test_unit_details_units_must_be_positive(self):
+        """Reject unit_details with zero units."""
+        with pytest.raises(Exception):
+            AssetUnitDetails(units=0.0, price_per_unit=100.0)
+
+    def test_unit_details_price_per_unit_must_be_positive(self):
+        """Reject unit_details with zero price_per_unit."""
+        with pytest.raises(Exception):
+            AssetUnitDetails(units=10.0, price_per_unit=0.0)
+
+    def test_valid_transaction_no_units(self):
+        """Value-based transactions (no unit_details) should be accepted."""
+        tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.REVALUE,
+            amount=55000.00,
+        )
+        assert tx.amount == 55000.00
+        assert tx.unit_details is None
+
+    def test_valid_transaction_with_units(self):
+        """Unit-based transactions with full unit_details should be accepted."""
+        tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.BUY,
+            amount=250000.00,
+            unit_details=AssetUnitDetails(units=50.0, price_per_unit=5000.0),
+        )
+        assert tx.unit_details.units == 50.0
+        assert tx.unit_details.price_per_unit == 5000.0
+
+
+class TestAssetPatchSemantics:
+    """Tests for PATCH update behaviour on AssetUpdate."""
+
+    async def test_patch_preserves_unchanged_fields(self, asset_service):
+        """Updating only name should not touch category_id, subcategory_id, notes."""
+        categories_map = await get_categories_map(asset_service)
+        subcategory_map = await get_subcategory_map(asset_service)
+        debt_cat_id = categories_map["DEBT"]
+        ppf_sub_id = subcategory_map.get("PPF")
+
+        asset_in = AssetCreate(
+            category_id=debt_cat_id,
+            name="PPF Original",
+            subcategory_id=ppf_sub_id,
+            initial_amount=10000.00,
+            notes="Original notes",
+        )
+        created = await asset_service.create_asset(asset_in)
+
+        # PATCH: only update name
+        patch = AssetUpdate(name="PPF Renamed")
+        updated = await asset_service.update_asset(created.id, patch)
+
+        assert updated.name == "PPF Renamed"
+        assert updated.category_id == debt_cat_id
+        assert updated.subcategory_id == ppf_sub_id
+        assert updated.notes == "Original notes"
+
+        await asset_service.delete_asset(created.id)
+
+
 class TestAssetServiceSummary:
     """Tests for portfolio summaries aggregates."""
 
@@ -244,7 +357,6 @@ class TestAssetServiceSummary:
         asset_in1 = AssetCreate(
             category_id=cb_cat_id,
             name="SBI Savings",
-            sub_category="Savings",
             initial_amount=10000.00,
         )
         a1 = await asset_service.create_asset(asset_in1)
@@ -254,7 +366,6 @@ class TestAssetServiceSummary:
         asset_in2 = AssetCreate(
             category_id=eq_cat_id,
             name="Mutual Fund",
-            sub_category="MF",
             initial_amount=20000.00,
         )
         a2 = await asset_service.create_asset(asset_in2)

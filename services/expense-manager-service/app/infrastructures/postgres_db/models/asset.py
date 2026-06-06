@@ -19,7 +19,6 @@ class AssetModel(Base):
         String, ForeignKey("asset_category.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String, nullable=False, index=True)
-    sub_category: Mapped[str | None] = mapped_column(String, nullable=True)
     subcategory_id: Mapped[str | None] = mapped_column(
         String, ForeignKey("asset_subcategory.id", ondelete="RESTRICT"), nullable=True, index=True
     )

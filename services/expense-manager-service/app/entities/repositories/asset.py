@@ -7,6 +7,7 @@ from app.entities.models.asset import (
     AssetCategory,
     AssetFilter,
     AssetSort,
+    AssetSubcategory,
     AssetTransaction,
 )
 
@@ -27,6 +28,11 @@ class AssetRepositoryInterface(ABC):
     @abstractmethod
     async def get_category_by_code(self, category_code: str) -> AssetCategory | None:
         """Retrieve an asset category by its code."""
+        pass
+
+    @abstractmethod
+    async def get_subcategory_by_id(self, subcategory_id: str) -> AssetSubcategory | None:
+        """Retrieve an asset subcategory by its ID."""
         pass
 
     @abstractmethod

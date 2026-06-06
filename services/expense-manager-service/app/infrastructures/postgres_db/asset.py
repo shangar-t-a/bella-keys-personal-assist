@@ -67,7 +67,6 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             id=model.id,
             category_id=model.category_id,
             name=model.name,
-            sub_category=model.sub_category,
             subcategory_id=model.subcategory_id,
             invested_value=model.invested_value,
             current_value=model.current_value,
@@ -151,6 +150,14 @@ class PostgresAssetRepository(AssetRepositoryInterface):
 
             return self._to_category_entity(model, subcategories)
 
+    async def get_subcategory_by_id(self, subcategory_id: str) -> AssetSubcategory | None:
+        """Retrieve an asset subcategory by its ID."""
+        async with await self._get_session() as session:
+            stmt = select(AssetSubcategoryModel).where(AssetSubcategoryModel.id == subcategory_id)
+            result = await session.execute(stmt)
+            model = result.scalar_one_or_none()
+            return self._to_subcategory_entity(model) if model else None
+
     async def add_asset(self, asset: Asset) -> Asset:
         """Add a new asset."""
         async with await self._get_session() as session:
@@ -158,7 +165,6 @@ class PostgresAssetRepository(AssetRepositoryInterface):
                 id=asset.id,
                 category_id=asset.category_id,
                 name=asset.name,
-                sub_category=asset.sub_category,
                 subcategory_id=asset.subcategory_id,
                 invested_value=asset.invested_value,
                 current_value=asset.current_value,
@@ -191,7 +197,6 @@ class PostgresAssetRepository(AssetRepositoryInterface):
 
             model.name = asset.name
             model.category_id = asset.category_id
-            model.sub_category = asset.sub_category
             model.subcategory_id = asset.subcategory_id
             model.invested_value = asset.invested_value
             model.current_value = asset.current_value

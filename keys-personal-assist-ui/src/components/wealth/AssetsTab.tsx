@@ -129,9 +129,9 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [editAssetId, setEditAssetId] = useState('');
   const [editName, setEditName] = useState('');
-  const [editSubCategory, setEditSubCategory] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCategoryId, setEditCategoryId] = useState('');
+  const [editSubcategoryId, setEditSubcategoryId] = useState<string | null>(null);
   const [editInterestRate, setEditInterestRate] = useState<string>('');
   const [editInterestCompounding, setEditInterestCompounding] = useState<string>('YEARLY');
   const [editMaturityDate, setEditMaturityDate] = useState<string>('');
@@ -213,9 +213,9 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   const handleOpenEdit = (asset: Asset) => {
     setEditAssetId(asset.id);
     setEditName(asset.name);
-    setEditSubCategory(asset.subCategory || '');
     setEditNotes(asset.notes || '');
     setEditCategoryId(asset.categoryId);
+    setEditSubcategoryId(asset.subcategoryId);
     setEditInterestRate(asset.interestRate != null ? String(asset.interestRate) : '');
     setEditInterestCompounding(asset.interestCompounding || 'YEARLY');
     setEditMaturityDate(asset.maturityDate ? asset.maturityDate.split('T')[0] : '');
@@ -242,13 +242,20 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
     }
 
     const updateData: AssetUpdateRequest = {
-      categoryId: editCategoryId,
-      name: editName.trim(),
-      subCategory: editSubCategory.trim() || null,
-      subcategoryId: editingAsset?.subcategoryId || null,
-      interestRate: editingSubcategory?.hasInterest && editInterestRate ? parseFloat(editInterestRate) : null,
-      interestCompounding: editingSubcategory?.hasInterest ? editInterestCompounding : null,
-      maturityDate: editingSubcategory?.hasMaturity && editMaturityDate ? new Date(editMaturityDate).toISOString() : null,
+      categoryId: editCategoryId || null,
+      name: editName.trim() || null,
+      subcategoryId: editSubcategoryId,
+      interestDetails:
+        editingSubcategory?.hasInterest && editInterestRate
+          ? {
+              interestRate: parseFloat(editInterestRate),
+              compounding: editInterestCompounding as import('@/types/asset').CompoundingFrequency,
+              maturityDate:
+                editingSubcategory?.hasMaturity && editMaturityDate
+                  ? new Date(editMaturityDate).toISOString()
+                  : null,
+            }
+          : null,
       notes: editNotes.trim() || null,
     };
 
@@ -289,11 +296,8 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
 
   // Filter assets
   const filteredAssets = assets.filter((asset) => {
-    const matchesSearch = asset.name.toLowerCase().includes(search.toLowerCase()) || 
-                          (asset.subCategory && asset.subCategory.toLowerCase().includes(search.toLowerCase()));
-    
+    const matchesSearch = asset.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategories.includes(asset.categoryCode);
-    
     return matchesSearch && matchesCategory;
   });
 
@@ -562,7 +566,18 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Chip label={asset.subCategory || 'General'} size="small" sx={{ fontSize: '0.7rem', fontWeight: 500, height: 20 }} />
+                        {(() => {
+                          const sub = categories
+                            .flatMap(c => c.subcategories)
+                            .find(s => s.id === asset.subcategoryId);
+                          return (
+                            <Chip
+                              label={sub?.name || asset.categoryCode}
+                              size="small"
+                              sx={{ fontSize: '0.7rem', fontWeight: 500, height: 20 }}
+                            />
+                          );
+                        })()}
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>{formatCurrency(asset.investedValue)}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600, color: 'primary.main' }}>{formatCurrency(asset.currentValue)}</TableCell>
@@ -629,17 +644,9 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
             <TextField
               fullWidth
-              required
               label="Asset Name"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Subcategory / Type"
-              value={editSubCategory}
-              onChange={(e) => setEditSubCategory(e.target.value)}
-              disabled // Keep it read-only if subcategory table lookup is in use
             />
             
             {/* Conditional Edit Fields for Interest/Compounding */}
@@ -674,8 +681,8 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                         >
                           <MenuItem value="YEARLY">Yearly</MenuItem>
                           <MenuItem value="QUARTERLY">Quarterly</MenuItem>
+                          <MenuItem value="HALF_YEARLY">Half-Yearly</MenuItem>
                           <MenuItem value="MONTHLY">Monthly</MenuItem>
-                          <MenuItem value="SIMPLE">Simple Interest</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>

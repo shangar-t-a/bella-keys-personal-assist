@@ -16,6 +16,15 @@ class ValuationType(StrEnum):
     VALUE_BASED = "VALUE_BASED"
 
 
+class CompoundingFrequency(StrEnum):
+    """Supported interest compounding frequencies."""
+
+    MONTHLY = "MONTHLY"
+    QUARTERLY = "QUARTERLY"
+    HALF_YEARLY = "HALF_YEARLY"
+    YEARLY = "YEARLY"
+
+
 class AssetTransactionType(StrEnum):
     """Types of asset transactions."""
 
@@ -56,12 +65,11 @@ class Asset(BaseEntity):
 
     category_id: str = Field(description="ID of the parent category")
     name: str = Field(description="Name of the asset")
-    sub_category: str | None = Field(default=None, description="Type/Sub-type of the asset")
     subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
     invested_value: float = Field(default=0.0, description="Total invested value in INR")
     current_value: float = Field(default=0.0, description="Current market value in INR")
-    interest_rate: float | None = Field(default=None, description="Actual interest rate (%) of the asset")
-    interest_compounding: str | None = Field(default=None, description="Compounding frequency (e.g. YEARLY)")
+    interest_rate: float | None = Field(default=None, description="Annual interest rate (%) of the asset")
+    interest_compounding: CompoundingFrequency | None = Field(default=None, description="Compounding frequency")
     maturity_date: datetime | None = Field(default=None, description="Maturity date of the asset")
     notes: str | None = Field(default=None, description="Additional notes/remarks")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Time of creation")

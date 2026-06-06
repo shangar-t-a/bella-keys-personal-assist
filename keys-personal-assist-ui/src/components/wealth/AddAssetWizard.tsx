@@ -203,14 +203,22 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     const reqData: AssetRequest = {
       categoryId: selectedCategory!.id,
       name: name.trim(),
-      subCategory: selectedSubcategory?.name || null,
       subcategoryId: selectedSubcategory?.id || null,
       initialAmount: finalInvested,
-      units: isUnitBased ? parseFloat(units) : null,
-      pricePerUnit: isUnitBased ? parseFloat(pricePerUnit) : null,
-      interestRate: selectedSubcategory?.hasInterest && interestRate ? parseFloat(interestRate) : null,
-      interestCompounding: selectedSubcategory?.hasInterest ? interestCompounding : null,
-      maturityDate: selectedSubcategory?.hasMaturity && maturityDate ? new Date(maturityDate).toISOString() : null,
+      unitDetails: isUnitBased
+        ? { units: parseFloat(units), pricePerUnit: parseFloat(pricePerUnit) }
+        : null,
+      interestDetails:
+        selectedSubcategory?.hasInterest && interestRate
+          ? {
+              interestRate: parseFloat(interestRate),
+              compounding: interestCompounding as import('@/types/asset').CompoundingFrequency,
+              maturityDate:
+                selectedSubcategory?.hasMaturity && maturityDate
+                  ? new Date(maturityDate).toISOString()
+                  : null,
+            }
+          : null,
       notes: notes.trim() || null,
     };
 
@@ -223,7 +231,9 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
         await emsClient.addTransactionToAsset(createdAsset.id, {
           transactionType: 'REVALUE',
           amount: finalCurrent,
-          pricePerUnit: isUnitBased ? (parseFloat(currentPricePerUnit) || parseFloat(pricePerUnit)) : null,
+          unitDetails: isUnitBased
+            ? { units: parseFloat(units), pricePerUnit: parseFloat(currentPricePerUnit) || parseFloat(pricePerUnit) }
+            : null,
           description: 'Initial valuation adjustment',
         });
       }
@@ -571,8 +581,8 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                         >
                           <MenuItem value="YEARLY">Yearly</MenuItem>
                           <MenuItem value="QUARTERLY">Quarterly</MenuItem>
+                          <MenuItem value="HALF_YEARLY">Half-Yearly</MenuItem>
                           <MenuItem value="MONTHLY">Monthly</MenuItem>
-                          <MenuItem value="SIMPLE">Simple Interest</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
