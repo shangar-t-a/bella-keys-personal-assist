@@ -9,6 +9,24 @@ export const formatCurrency = (value: number): string => {
   return INDIAN_RUPEE_FORMAT.format(value);
 };
 
+export const formatCompactRupees = (value: number): string => {
+  if (value === 0) return '₹0.00';
+  const isNegative = value < 0;
+  const absVal = Math.abs(value);
+  let result = '';
+
+  if (absVal >= 10000000) {
+    result = `₹${(absVal / 10000000).toFixed(2)} Cr`;
+  } else if (absVal >= 100000) {
+    result = `₹${(absVal / 100000).toFixed(2)}L`;
+  } else {
+    result = formatCurrency(absVal);
+    return isNegative ? `-${result}` : result;
+  }
+  
+  return isNegative ? `-${result}` : result;
+};
+
 export const getMonthName = (monthIndex: number): string => {
   const date = new Date();
   date.setMonth(monthIndex);

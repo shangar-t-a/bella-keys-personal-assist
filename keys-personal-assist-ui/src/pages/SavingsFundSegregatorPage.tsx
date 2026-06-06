@@ -26,6 +26,8 @@ import {
   Chip,
   LinearProgress,
   Tooltip as MuiTooltip,
+  Paper,
+  OutlinedInput,
 } from '@mui/material';
 import { Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -33,9 +35,6 @@ import {
   Add as Plus,
   Edit,
   Delete as Trash2,
-  AccountBalance,
-  AccountBalanceWallet,
-  FolderShared,
   SwapHoriz,
   ArrowUpward,
   ArrowDownward,
@@ -50,7 +49,7 @@ import type {
   SavingsBucketResponse,
   SavingsBucketTransactionResponse,
 } from '@/types/api';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCompactRupees } from '@/utils/formatters';
 
 // Colors for the donut chart
 const COLORS = ['#3b82f6', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#6366f1', '#ef4444'];
@@ -320,29 +319,45 @@ export default function SavingsFundSegregatorPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6 }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        bgcolor: 'background.default',
+        py: 2.5,
+        px: { xs: 2, md: 4 },
+        backgroundImage: (theme) =>
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle at 10% 20%, rgba(30, 41, 59, 0.4) 0%, rgba(17, 24, 39, 0.95) 90%)'
+            : 'none',
+        transition: 'background-color 0.3s ease',
+        minHeight: '100vh',
+      }}
+    >
       <Container maxWidth="xl">
-        {isLoading && <LinearProgress sx={{ mb: 3, borderRadius: 1 }} />}
+        {isLoading && <LinearProgress sx={{ mb: 2, borderRadius: 1 }} />}
+
         {/* Header Block */}
-        <Box sx={{ mb: 6, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 3 }}>
+        <Box sx={{ mb: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
           <Box>
             <Typography
-              variant="h3"
-              sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 1, background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              variant="h5"
+              sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', lineHeight: 1.2 }}
             >
               Savings Envelopes
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Partition and track allocations in your savings accounts for medical, LIC, targets, and goals.
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              Partition and track allocations in your savings accounts for medical, insurance, and goals.
             </Typography>
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FormControl sx={{ minWidth: 240 }} size="small">
-              <InputLabel>Bank Account</InputLabel>
+            <FormControl sx={{ minWidth: 200 }} size="small">
+              <InputLabel id="bank-account-select-label">Bank Account</InputLabel>
               <Select
+                labelId="bank-account-select-label"
                 value={selectedAccountId}
                 label="Bank Account"
+                input={<OutlinedInput label="Bank Account" sx={{ borderRadius: 1.5, fontSize: '0.85rem' }} />}
                 onChange={(e) => {
                   setSelectedAccountId(e.target.value);
                   setPage(0);
@@ -367,82 +382,60 @@ export default function SavingsFundSegregatorPage() {
           </Box>
         </Box>
 
-        {/* ── Metric Cards ── */}
-        <Grid container spacing={3} sx={{ mb: 6 }}>
-          {/* Card 1: Total Savings */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 3, background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)', color: '#6b21a8' }}>
-              <CardContent sx={{ p: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: 'rgba(107, 33, 168, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AccountBalance sx={{ fontSize: 32 }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.8 }}>
-                    Total Savings
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
-                    {formatCurrency(totalSavings)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    Sum of all envelopes
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+        {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
+        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
+          <Grid container>
+            {/* Block 1: Total Savings */}
+            <Grid size={{ xs: 12, md: 4 }} sx={{
+              p: 2.5,
+              borderRight: { xs: 'none', md: '1px solid' },
+              borderRightColor: { xs: 'transparent', md: 'divider' },
+              borderBottom: { xs: '1px solid', md: 'none' },
+              borderBottomColor: { xs: 'divider', md: 'transparent' },
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Total Savings
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'text.primary', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totalSavings)}
+              </Typography>
+            </Grid>
 
-          {/* Card 2: Allocated Funds */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 3, background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)', color: '#0369a1' }}>
-              <CardContent sx={{ p: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: 'rgba(3, 105, 161, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <FolderShared sx={{ fontSize: 32 }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.8 }}>
-                    Allocated Envelopes
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
-                    {formatCurrency(allocatedFunds)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    LIC, Medical, Targets
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+            {/* Block 2: Allocated Envelopes */}
+            <Grid size={{ xs: 12, md: 4 }} sx={{
+              p: 2.5,
+              borderRight: { xs: 'none', md: '1px solid' },
+              borderRightColor: { xs: 'transparent', md: 'divider' },
+              borderBottom: { xs: '1px solid', md: 'none' },
+              borderBottomColor: { xs: 'divider', md: 'transparent' },
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Allocated Envelopes
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'primary.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(allocatedFunds)}
+              </Typography>
+            </Grid>
 
-          {/* Card 3: Savings (Unallocated Pool) */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 3, background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#065f46' }}>
-              <CardContent sx={{ p: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: 'rgba(6, 95, 70, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AccountBalanceWallet sx={{ fontSize: 32 }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.8 }}>
-                    Free Savings (Unallocated)
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
-                    {formatCurrency(unallocatedSavings)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    Primary cash pool
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
+            {/* Block 3: Free Savings */}
+            <Grid size={{ xs: 12, md: 4 }} sx={{ p: 2.5 }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Free Savings (Unallocated)
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(unallocatedSavings)}
+              </Typography>
+            </Grid>
           </Grid>
-        </Grid>
+        </Card>
 
         {/* ── Main Layout: Visual Chart & Bucket List ── */}
-        <Grid container spacing={4} sx={{ mb: 6 }}>
+        <Grid container spacing={3} sx={{ mb: 2 }}>
           {/* Visual Donut Chart */}
           <Grid size={{ xs: 12, lg: 4 }}>
-            <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 2 }}>
-              <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
+            <Card variant="outlined" sx={{ height: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+              <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', mb: 2 }}>
                   Allocation Split
                 </Typography>
                 {chartData.length === 0 ? (
@@ -475,7 +468,7 @@ export default function SavingsFundSegregatorPage() {
                         const pct = ((entry.value / totalSavings) * 100).toFixed(1);
                         return (
                           <Box key={entry.name} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: COLORS[idx % COLORS.length] }} />
+                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS[idx % COLORS.length] }} />
                             <Typography variant="caption" sx={{ fontWeight: 600 }}>
                               {entry.name} ({pct}%)
                             </Typography>
@@ -491,17 +484,31 @@ export default function SavingsFundSegregatorPage() {
 
           {/* Envelopes list */}
           <Grid size={{ xs: 12, lg: 8 }}>
-            <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 2 }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            <Card variant="outlined" sx={{ height: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>
                     My Envelopes
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1.5 }}>
-                    <Button variant="outlined" startIcon={<Plus />} size="small" onClick={() => handleOpenBucketModal()} sx={{ borderRadius: 2 }}>
+                    <Button
+                      variant="outlined"
+                      color="inherit"
+                      size="small"
+                      startIcon={<Plus />}
+                      onClick={() => handleOpenBucketModal()}
+                      sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+                    >
                       Create Bucket
                     </Button>
-                    <Button variant="contained" startIcon={<SwapHoriz />} size="small" onClick={() => handleOpenTxModal('allocate')} sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', '&:hover': { background: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)' } }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<SwapHoriz />}
+                      onClick={() => handleOpenTxModal('allocate')}
+                      sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+                    >
                       Move Money
                     </Button>
                   </Box>
@@ -514,52 +521,56 @@ export default function SavingsFundSegregatorPage() {
 
                     return (
                       <Grid size={{ xs: 12, sm: 6 }} key={b.id}>
-                        <Card variant="outlined" sx={{ borderRadius: 2, p: 2.5, position: 'relative', borderLeft: `5px solid ${isRoot ? '#10b981' : '#6366f1'}` }}>
+                        <Card variant="outlined" sx={{ borderRadius: 2, p: 2, position: 'relative', borderLeft: `4px solid ${isRoot ? '#10b981' : '#6366f1'}`, boxShadow: 'none' }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                             <Box>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700 }}>
                                 {b.name}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                                 {isRoot ? 'General Cash Pool' : 'Special Bucket'}
                               </Typography>
                             </Box>
                             
                             {!isRoot && (
                               <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                <IconButton size="small" color="primary" onClick={() => handleOpenBucketModal(b)}>
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                                <IconButton size="small" color="error" onClick={() => handleDeleteBucket(b.id)}>
-                                  <Trash2 fontSize="small" />
-                                </IconButton>
+                                <MuiTooltip title="Edit">
+                                  <IconButton size="small" color="secondary" onClick={() => handleOpenBucketModal(b)}>
+                                    <Edit fontSize="small" />
+                                  </IconButton>
+                                </MuiTooltip>
+                                <MuiTooltip title="Delete">
+                                  <IconButton size="small" color="error" onClick={() => handleDeleteBucket(b.id)}>
+                                    <Trash2 fontSize="small" />
+                                  </IconButton>
+                                </MuiTooltip>
                               </Box>
                             )}
                           </Box>
 
-                          <Box sx={{ my: 2 }}>
-                            <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          <Box sx={{ my: 1.5 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: '"Space Grotesk", sans-serif' }}>
                               {formatCurrency(b.allocatedAmount)}
                             </Typography>
                             {b.targetAmount && (
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                 Target: {formatCurrency(b.targetAmount)} ({targetPercent.toFixed(0)}%)
                               </Typography>
                             )}
                           </Box>
 
                           {b.targetAmount && (
-                            <Box sx={{ mt: 1.5 }}>
+                            <Box sx={{ mt: 1 }}>
                               <LinearProgress
                                 variant="determinate"
                                 value={targetPercent}
                                 sx={{
-                                  height: 6,
-                                  borderRadius: 3,
+                                  height: 4,
+                                  borderRadius: 2,
                                   bgcolor: 'rgba(99, 102, 241, 0.1)',
                                   '& .MuiLinearProgress-bar': {
                                     bgcolor: '#6366f1',
-                                    borderRadius: 3,
+                                    borderRadius: 2,
                                   },
                                 }}
                               />
@@ -576,147 +587,170 @@ export default function SavingsFundSegregatorPage() {
         </Grid>
 
         {/* ── Transaction Ledger Block ── */}
-        <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Allocation Ledger
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Complete history of allocations, releases, deposits, and transfers.
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <Button variant="outlined" size="small" startIcon={<ArrowUpward />} onClick={() => handleOpenTxModal('deposit')} color="success" sx={{ borderRadius: 2 }}>
-                  Deposit
-                </Button>
-                <Button variant="outlined" size="small" startIcon={<ArrowDownward />} onClick={() => handleOpenTxModal('withdraw')} color="error" sx={{ borderRadius: 2 }}>
-                  Withdrawal
-                </Button>
-              </Box>
+        <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
+          <Box sx={{ p: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>
+                Allocation Ledger
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                Complete history of allocations, releases, deposits, and transfers.
+              </Typography>
             </Box>
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              <Button
+                variant="outlined"
+                color="success"
+                size="small"
+                startIcon={<ArrowUpward />}
+                onClick={() => handleOpenTxModal('deposit')}
+                sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+              >
+                Deposit
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                startIcon={<ArrowDownward />}
+                onClick={() => handleOpenTxModal('withdraw')}
+                sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+              >
+                Withdraw
+              </Button>
+            </Box>
+          </Box>
 
-            <TableContainer>
-              <Table size="medium">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Source Envelope</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Destination Envelope</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="right">Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Comment / Description</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="center">Actions</TableCell>
+          <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
+                <TableRow>
+                  <TableCell sx={{ pl: 3, fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Date</TableCell>
+                  <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Type</TableCell>
+                  <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Source Envelope</TableCell>
+                  <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Destination Envelope</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Amount</TableCell>
+                  <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Comment</TableCell>
+                  <TableCell align="center" sx={{ pr: 3, fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {transactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                      No transactions logged yet
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {transactions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                        No transactions logged yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    transactions.map((t) => {
-                      let typeLabel = t.transactionType.toUpperCase();
-                      let typeColor: 'success' | 'error' | 'warning' | 'primary' | 'info' | 'default' = 'primary';
-                      let amountPrefix = '';
-                      let amountColor = 'text.primary';
+                ) : (
+                  transactions.map((t, idx) => {
+                    let typeLabel = t.transactionType.toUpperCase();
+                    let typeColor: 'success' | 'error' | 'warning' | 'primary' | 'info' | 'default' = 'primary';
+                    let amountPrefix = '';
+                    let amountColor = 'text.primary';
 
-                      if (t.transactionType === 'deposit') {
-                        typeColor = 'success';
-                        amountPrefix = '+';
-                        amountColor = 'success.main';
-                      } else if (t.transactionType === 'withdraw') {
-                        typeColor = 'error';
-                        amountPrefix = '-';
-                        amountColor = 'error.main';
-                      } else if (t.transactionType === 'allocate') {
-                        typeColor = 'warning';
-                        amountColor = 'text.secondary';
-                      } else if (t.transactionType === 'release') {
-                        typeColor = 'info';
-                        amountColor = 'text.secondary';
-                      }
+                    if (t.transactionType === 'deposit') {
+                      typeColor = 'success';
+                      amountPrefix = '+';
+                      amountColor = 'success.main';
+                    } else if (t.transactionType === 'withdraw') {
+                      typeColor = 'error';
+                      amountPrefix = '-';
+                      amountColor = 'error.main';
+                    } else if (t.transactionType === 'allocate') {
+                      typeColor = 'warning';
+                      amountColor = 'text.secondary';
+                    } else if (t.transactionType === 'release') {
+                      typeColor = 'info';
+                      amountColor = 'text.secondary';
+                    }
 
-                      if (t.isCancelled) {
-                        typeColor = 'default';
-                      }
+                    if (t.isCancelled) {
+                      typeColor = 'default';
+                    }
 
-                      return (
-                        <TableRow key={t.id} hover>
-                          <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>
-                            {new Date(t.transactionDate).toLocaleDateString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip label={typeLabel} size="small" color={typeColor} variant="outlined" sx={{ fontWeight: 700 }} />
-                              {t.isCancelled && (
-                                <Chip label="CANCELLED" size="small" color="error" variant="filled" sx={{ fontWeight: 700, fontSize: '0.65rem', height: 20 }} />
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>{getBucketNameById(t.sourceBucketId)}</TableCell>
-                          <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>{getBucketNameById(t.destinationBucketId)}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, color: t.isCancelled ? 'text.disabled' : amountColor, textDecoration: t.isCancelled ? 'line-through' : 'none' }}>
-                            {amountPrefix}{formatCurrency(t.amount)}
-                          </TableCell>
-                          <TableCell sx={{ color: t.isCancelled ? 'text.disabled' : 'text.secondary', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <span style={{ textDecoration: t.isCancelled ? 'line-through' : 'none' }}>{t.description}</span>
+                    return (
+                      <TableRow
+                        key={t.id}
+                        sx={{
+                          '& td': { py: 1 },
+                          bgcolor: idx % 2 === 0
+                            ? 'transparent'
+                            : (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.018)' : 'rgba(0,0,0,0.018)',
+                          '&:hover': { bgcolor: 'action.hover' },
+                        }}
+                      >
+                        <TableCell sx={{ pl: 3, fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>
+                          {new Date(t.transactionDate).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip label={typeLabel} size="small" color={typeColor} variant="outlined" sx={{ fontWeight: 700, fontSize: '0.68rem', height: 20 }} />
                             {t.isCancelled && (
-                              <Typography variant="caption" display="block" color="error" sx={{ fontWeight: 600 }}>
-                                Reason: {t.cancellationReason}
-                              </Typography>
+                              <Chip label="CANCELLED" size="small" color="error" variant="filled" sx={{ fontWeight: 700, fontSize: '0.625rem', height: 18 }} />
                             )}
-                          </TableCell>
-                          <TableCell align="center">
-                            {!t.isCancelled && (
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>{getBucketNameById(t.sourceBucketId)}</TableCell>
+                        <TableCell sx={{ fontWeight: 500, color: t.isCancelled ? 'text.disabled' : 'text.primary' }}>{getBucketNameById(t.destinationBucketId)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: t.isCancelled ? 'text.disabled' : amountColor, textDecoration: t.isCancelled ? 'line-through' : 'none' }}>
+                          {amountPrefix}{formatCurrency(t.amount)}
+                        </TableCell>
+                        <TableCell sx={{ color: t.isCancelled ? 'text.disabled' : 'text.secondary', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ textDecoration: t.isCancelled ? 'line-through' : 'none' }}>{t.description}</span>
+                          {t.isCancelled && (
+                            <Typography variant="caption" display="block" color="error" sx={{ fontWeight: 600 }}>
+                              Reason: {t.cancellationReason}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="center" sx={{ pr: 3 }}>
+                          {!t.isCancelled && (
+                            <MuiTooltip title="Cancel Transaction">
                               <IconButton
                                 size="small"
                                 color="error"
                                 onClick={() => handleOpenCancelModal(t)}
-                                title="Cancel Transaction"
                               >
                                 <Block fontSize="small" />
                               </IconButton>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[10, 25, 50]}
-              component="div"
-              count={totalTxs}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={(_e, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-            />
-          </CardContent>
+                            </MuiTooltip>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50]}
+            component="div"
+            count={totalTxs}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+          />
         </Card>
 
         {/* ── Add/Edit Bucket Dialog ── */}
-        <Dialog open={isBucketModalOpen} onClose={() => setIsBucketModalOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>
+        <Dialog open={isBucketModalOpen} onClose={() => setIsBucketModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
             {bucketEditId ? 'Edit Envelope Details' : 'Create New Envelope'}
           </DialogTitle>
           <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
               <TextField
                 fullWidth
                 label="Envelope Name"
@@ -735,22 +769,23 @@ export default function SavingsFundSegregatorPage() {
               />
             </Box>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setIsBucketModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveBucket} variant="contained">
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsBucketModalOpen(false)} variant="text" color="inherit">Cancel</Button>
+            <Button onClick={handleSaveBucket} variant="contained" color="primary">
               {bucketEditId ? 'Save Changes' : 'Create'}
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* ── Transaction Move Money Dialog ── */}
-        <Dialog open={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>Log Transaction Entry</DialogTitle>
+        <Dialog open={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Log Transaction Entry</DialogTitle>
           <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
               <FormControl fullWidth>
-                <InputLabel>Action Type</InputLabel>
+                <InputLabel id="tx-action-type-label">Action Type</InputLabel>
                 <Select
+                  labelId="tx-action-type-label"
                   value={txType}
                   label="Action Type"
                   onChange={(e) => {
@@ -787,8 +822,9 @@ export default function SavingsFundSegregatorPage() {
               {/* Source Selector */}
               {txType !== 'deposit' && (
                 <FormControl fullWidth>
-                  <InputLabel>Source Envelope</InputLabel>
+                  <InputLabel id="tx-source-envelope-label">Source Envelope</InputLabel>
                   <Select
+                    labelId="tx-source-envelope-label"
                     value={txSourceId}
                     label="Source Envelope"
                     onChange={(e) => setTxSourceId(e.target.value)}
@@ -807,8 +843,9 @@ export default function SavingsFundSegregatorPage() {
               {/* Destination Selector */}
               {txType !== 'withdraw' && (
                 <FormControl fullWidth>
-                  <InputLabel>Destination Envelope</InputLabel>
+                  <InputLabel id="tx-dest-envelope-label">Destination Envelope</InputLabel>
                   <Select
+                    labelId="tx-dest-envelope-label"
                     value={txDestId}
                     label="Destination Envelope"
                     onChange={(e) => setTxDestId(e.target.value)}
@@ -855,19 +892,19 @@ export default function SavingsFundSegregatorPage() {
               />
             </Box>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveTx} variant="contained">
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsTxModalOpen(false)} variant="text" color="inherit">Cancel</Button>
+            <Button onClick={handleSaveTx} variant="contained" color="primary">
               Submit Transaction
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* ── Cancel Transaction Dialog ── */}
-        <Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>Cancel Transaction</DialogTitle>
+        <Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Cancel Transaction</DialogTitle>
           <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
               <Typography variant="body2" color="text.secondary">
                 Are you sure you want to cancel this transaction? This will reverse the balance adjustments in the respective envelopes.
               </Typography>
@@ -883,8 +920,8 @@ export default function SavingsFundSegregatorPage() {
               />
             </Box>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setIsCancelModalOpen(false)}>Cancel</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsCancelModalOpen(false)} variant="text" color="inherit">Cancel</Button>
             <Button onClick={handleConfirmCancel} variant="contained" color="error" disabled={!cancelReason.trim()}>
               Confirm Cancellation
             </Button>
@@ -892,22 +929,20 @@ export default function SavingsFundSegregatorPage() {
         </Dialog>
 
         {/* ── Delete Bucket Confirmation Dialog ── */}
-        <Dialog open={isDeleteBucketModalOpen} onClose={() => setIsDeleteBucketModalOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>Delete Envelope</DialogTitle>
+        <Dialog open={isDeleteBucketModalOpen} onClose={() => setIsDeleteBucketModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Delete Envelope</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete this envelope? Any remaining balance will be automatically refunded back to your main Savings pool.
             </Typography>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setIsDeleteBucketModalOpen(false)}>Cancel</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsDeleteBucketModalOpen(false)} variant="outlined" color="inherit">Cancel</Button>
             <Button onClick={handleConfirmDeleteBucket} variant="contained" color="error">
               Delete Envelope
             </Button>
           </DialogActions>
         </Dialog>
-
-
       </Container>
     </Box>
   );

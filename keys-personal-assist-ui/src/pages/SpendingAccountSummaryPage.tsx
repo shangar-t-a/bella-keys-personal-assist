@@ -4,7 +4,6 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   Button,
   Select,
   MenuItem,
@@ -26,17 +25,14 @@ import {
   TextField,
   OutlinedInput,
   Tooltip,
+  Paper,
+  Grid,
 } from '@mui/material';
-import { Grid } from '@mui/material';
 import {
   Add as Plus,
   Edit,
   Delete as Trash2,
   Refresh as RotateCcw,
-  TrendingDown,
-  AccountBalance,
-  CreditCard,
-  Payments,
   Settings,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +45,7 @@ import type {
   SortOrder,
   SpendingEntrySortField,
 } from '@/types/api';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCompactRupees } from '@/utils/formatters';
 
 type SpendingAccountEntry = SpendingAccountEntryWithCalculatedFieldsResponse;
 
@@ -334,11 +330,28 @@ export default function SpendingAccountSummaryPage() {
     align?: 'left' | 'right' | 'center';
     children: React.ReactNode;
   }) => (
-    <TableCell align={align} sortDirection={sortBy === field ? sortOrder : false}>
+    <TableCell
+      align={align}
+      sortDirection={sortBy === field ? sortOrder : false}
+      sx={{
+        pl: align === 'left' ? 3 : undefined,
+        fontWeight: 700,
+        py: 1.25,
+        fontSize: '0.78rem',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        color: 'text.secondary',
+      }}
+    >
       <TableSortLabel
         active={sortBy === field}
         direction={sortBy === field ? sortOrder : 'asc'}
         onClick={() => handleSort(field)}
+        sx={{
+          '&.MuiTableSortLabel-active': {
+            color: 'text.primary',
+          },
+        }}
       >
         {children}
       </TableSortLabel>
@@ -354,211 +367,200 @@ export default function SpendingAccountSummaryPage() {
     : 'All Accounts';
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        bgcolor: 'background.default',
+        py: 2.5,
+        px: { xs: 2, md: 4 },
+        backgroundImage: (theme) =>
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle at 10% 20%, rgba(30, 41, 59, 0.4) 0%, rgba(17, 24, 39, 0.95) 90%)'
+            : 'none',
+        transition: 'background-color 0.3s ease',
+        minHeight: '100vh',
+      }}
+    >
+      <Container maxWidth="xl">
         {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <Box>
             <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 0.5 }}
+              variant="h5"
+              sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', lineHeight: 1.2 }}
             >
-              Account Balances
+              Spending Accounts
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
               {contextLabel} · {paginationMeta.totalElements} entries
             </Typography>
           </Box>
         </Box>
 
-        {/* ── Metric Cards ─────────────────────────────────────────────────────── */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Card 1 — Starting Balance */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <AccountBalance fontSize="small" color="success" />
-                  <Typography variant="body2" color="text.secondary">
-                    Starting Balance · filtered
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>
-                  {formatCurrency(totalStartingBalance)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Initial money in accounts
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Card 2 — Total Spent */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <TrendingDown fontSize="small" color="error" />
-                  <Typography variant="body2" color="text.secondary">
-                    Total Spent · filtered
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'error.main' }}>
-                  {formatCurrency(totalSpent)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Starting − cash balance
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Card 3 — Current Cash */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Payments fontSize="small" color="info" />
-                  <Typography variant="body2" color="text.secondary">
-                    Current Cash · filtered
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.main' }}>
-                  {formatCurrency(totalCurrentBalance)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Checking and cash balances
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Card 4 — Credit Card Debt & Net Balance */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <CreditCard fontSize="small" color="warning" />
-                  <Typography variant="body2" color="text.secondary">
-                    Credit Card Debt · filtered
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                  {formatCurrency(totalCurrentCredit)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                  Net Balance: {formatCurrency(totalBalanceAfterCredit)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* ── Filter bar ───────────────────────────────────────────────────────── */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Grid container spacing={2} alignItems="center">
-              {/* Account filter */}
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel shrink>Account</InputLabel>
-                    <Select
-                      value={filterAccount}
-                      displayEmpty
-                      input={<OutlinedInput notched label="Account" />}
-                      onChange={(e) => { setFilterAccount(e.target.value); setPage(0); }}
-                      renderValue={(v: string) => v || <em style={{ color: '#9e9e9e' }}>All Accounts</em>}
-                    >
-                      <MenuItem value="">All Accounts</MenuItem>
-                      {accounts.map((a) => (
-                        <MenuItem key={a} value={a}>{a}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <Tooltip title="Manage Accounts">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigate('/settings?tab=accounts')}
-                      color="primary"
-                    >
-                      <Settings fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Grid>
-
-              {/* Month filter */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel shrink>Month</InputLabel>
-                  <Select
-                    value={filterMonth}
-                    displayEmpty
-                    input={<OutlinedInput notched label="Month" />}
-                    onChange={(e) => { setFilterMonth(e.target.value); setPage(0); }}
-                    renderValue={(v: string) =>
-                      v !== '' ? MONTH_NAMES[parseInt(v, 10) - 1] : <em style={{ color: '#9e9e9e' }}>All Months</em>
-                    }
-                  >
-                    <MenuItem value="">All Months</MenuItem>
-                    {MONTH_NAMES.map((name, i) => (
-                      <MenuItem key={name} value={String(i + 1)}>{name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Year filter */}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel shrink>Year</InputLabel>
-                  <Select
-                    value={filterYear}
-                    displayEmpty
-                    input={<OutlinedInput notched label="Year" />}
-                    onChange={(e) => { setFilterYear(e.target.value); setPage(0); }}
-                    renderValue={(v: string) => v || <em style={{ color: '#9e9e9e' }}>All Years</em>}
-                  >
-                    <MenuItem value="">All Years</MenuItem>
-                    {Array.from({ length: 10 }, (_, i) => String(now.getFullYear() - i)).map((y) => (
-                      <MenuItem key={y} value={y}>{y}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Actions */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<RotateCcw />}
-                    onClick={resetFilters}
-                    disabled={activeFilterCount === 0}
-                    sx={{ flexShrink: 0 }}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<Plus />}
-                    onClick={() => { setFormData(DEFAULT_FORM); setIsAddModalOpen(true); }}
-                    fullWidth
-                  >
-                    Add
-                  </Button>
-                </Box>
-              </Grid>
+        {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
+        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
+          <Grid container>
+            {/* Block 1: Starting Balance */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{
+              p: 2.5,
+              borderRight: '1px solid',
+              borderRightColor: 'divider',
+              borderBottom: { xs: '1px solid', md: 'none' },
+              borderBottomColor: { xs: 'divider', md: 'transparent' },
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Starting Balance
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totalStartingBalance)}
+              </Typography>
             </Grid>
-          </CardContent>
+            
+            {/* Block 2: Total Spent */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{
+              p: 2.5,
+              borderRight: { xs: 'none', md: '1px solid' },
+              borderRightColor: { xs: 'transparent', md: 'divider' },
+              borderBottom: { xs: '1px solid', md: 'none' },
+              borderBottomColor: { xs: 'divider', md: 'transparent' },
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Total Spent
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'error.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totalSpent)}
+              </Typography>
+            </Grid>
+            
+            {/* Block 3: Current Cash */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{
+              p: 2.5,
+              borderRight: '1px solid',
+              borderRightColor: 'divider',
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Current Cash
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'info.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totalCurrentBalance)}
+              </Typography>
+            </Grid>
+            
+            {/* Block 4: Credit CC Debt & Net */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{ p: 2.5 }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Credit Card Debt
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'warning.main', fontSize: '1.3rem', mb: 0.5 }}>
+                {formatCompactRupees(totalCurrentCredit)}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                Net: {formatCompactRupees(totalBalanceAfterCredit)}
+              </Typography>
+            </Grid>
+          </Grid>
         </Card>
 
-        {/* ── Table ───────────────────────────────────────────────────────────── */}
-        <Card>
-          <TableContainer>
+        {/* ── Toolbar Card: Filters + Actions ─────────────────────────────────── */}
+        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', px: 2, py: 1.25, mb: 2 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Left: Filters */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FormControl size="small" sx={{ width: 180 }}>
+                  <InputLabel id="filter-account-label" shrink>Account</InputLabel>
+                  <Select
+                    labelId="filter-account-label"
+                    value={filterAccount}
+                    displayEmpty
+                    input={<OutlinedInput notched label="Account" sx={{ borderRadius: 1.5, fontSize: '0.85rem' }} />}
+                    onChange={(e) => { setFilterAccount(e.target.value); setPage(0); }}
+                    renderValue={(v: string) => v || <em style={{ color: '#9e9e9e' }}>All Accounts</em>}
+                  >
+                    <MenuItem value="">All Accounts</MenuItem>
+                    {accounts.map((a) => (
+                      <MenuItem key={a} value={a}>{a}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Manage Accounts">
+                  <IconButton
+                    size="small"
+                    onClick={() => navigate('/settings?tab=accounts')}
+                    color="primary"
+                  >
+                    <Settings fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              <FormControl size="small" sx={{ width: 140 }}>
+                <InputLabel id="filter-month-label" shrink>Month</InputLabel>
+                <Select
+                  labelId="filter-month-label"
+                  value={filterMonth}
+                  displayEmpty
+                  input={<OutlinedInput notched label="Month" sx={{ borderRadius: 1.5, fontSize: '0.85rem' }} />}
+                  onChange={(e) => { setFilterMonth(e.target.value); setPage(0); }}
+                  renderValue={(v: string) =>
+                    v !== '' ? MONTH_NAMES[parseInt(v, 10) - 1] : <em style={{ color: '#9e9e9e' }}>All Months</em>
+                  }
+                >
+                  <MenuItem value="">All Months</MenuItem>
+                  {MONTH_NAMES.map((name, i) => (
+                    <MenuItem key={name} value={String(i + 1)}>{name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ width: 120 }}>
+                <InputLabel id="filter-year-label" shrink>Year</InputLabel>
+                <Select
+                  labelId="filter-year-label"
+                  value={filterYear}
+                  displayEmpty
+                  input={<OutlinedInput notched label="Year" sx={{ borderRadius: 1.5, fontSize: '0.85rem' }} />}
+                  onChange={(e) => { setFilterYear(e.target.value); setPage(0); }}
+                  renderValue={(v: string) => v || <em style={{ color: '#9e9e9e' }}>All Years</em>}
+                >
+                  <MenuItem value="">All Years</MenuItem>
+                  {Array.from({ length: 10 }, (_, i) => String(now.getFullYear() - i)).map((y) => (
+                    <MenuItem key={y} value={y}>{y}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                startIcon={<RotateCcw />}
+                onClick={resetFilters}
+                disabled={activeFilterCount === 0}
+                sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+              >
+                Reset
+              </Button>
+            </Box>
+
+            {/* Right: Add CTA */}
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Plus />}
+              onClick={() => { setFormData(DEFAULT_FORM); setIsAddModalOpen(true); }}
+              sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem', flexShrink: 0 }}
+            >
+              Add Entry
+            </Button>
+          </Box>
+        </Card>
+
+        {/* ── Table Card ──────────────────────────────────────────────────────── */}
+        <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+          <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
             <Table size="small">
-              <TableHead>
+              <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
                 <TableRow>
                   <SortableCell field="account_name">Account</SortableCell>
                   <SortableCell field="month">Month</SortableCell>
@@ -568,7 +570,7 @@ export default function SpendingAccountSummaryPage() {
                   <SortableCell field="current_credit" align="right">Credit Used</SortableCell>
                   <SortableCell field="balance_after_credit" align="right">Net Balance</SortableCell>
                   <SortableCell field="total_spent" align="right">Total Spent</SortableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -579,27 +581,40 @@ export default function SpendingAccountSummaryPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  entries.map((entry) => (
-                    <TableRow key={entry.id} hover>
-                      <TableCell>{entry.accountName}</TableCell>
+                  entries.map((entry, idx) => (
+                    <TableRow
+                      key={entry.id}
+                      sx={{
+                        '& td': { py: 1 },
+                        bgcolor: idx % 2 === 0
+                          ? 'transparent'
+                          : (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.018)' : 'rgba(0,0,0,0.018)',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <TableCell sx={{ fontWeight: 600 }}>{entry.accountName}</TableCell>
                       <TableCell>{MONTH_NAMES[entry.month - 1]}</TableCell>
                       <TableCell>{entry.year}</TableCell>
-                      <TableCell align="right">{formatCurrency(entry.startingBalance)}</TableCell>
-                      <TableCell align="right">{formatCurrency(entry.currentBalance)}</TableCell>
-                      <TableCell align="right">{formatCurrency(entry.currentCredit)}</TableCell>
-                      <TableCell align="right">{formatCurrency(entry.balanceAfterCredit)}</TableCell>
-                      <TableCell align="right">{formatCurrency(entry.totalSpent)}</TableCell>
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={() => openEditModal(entry)} color="primary">
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => { setSelectedEntry(entry); setIsDeleteModalOpen(true); }}
-                          color="error"
-                        >
-                          <Trash2 fontSize="small" />
-                        </IconButton>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>{formatCurrency(entry.startingBalance)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600, color: 'primary.main' }}>{formatCurrency(entry.currentBalance)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500, color: 'warning.main' }}>{formatCurrency(entry.currentCredit)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(entry.balanceAfterCredit)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600, color: 'error.main' }}>{formatCurrency(entry.totalSpent)}</TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                        <Tooltip title="Edit">
+                          <IconButton size="small" onClick={() => openEditModal(entry)} color="secondary">
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            onClick={() => { setSelectedEntry(entry); setIsDeleteModalOpen(true); }}
+                            color="error"
+                          >
+                            <Trash2 fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))
@@ -615,48 +630,47 @@ export default function SpendingAccountSummaryPage() {
             page={page}
             onPageChange={(_e, newPage) => setPage(newPage)}
             onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
           />
         </Card>
 
         {/* ── Add Modal ────────────────────────────────────────────────────────── */}
-        <Dialog open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Add New Entry</DialogTitle>
+        <Dialog open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Add New Entry</DialogTitle>
           <DialogContent>
             <EntryFormFields formData={formData} accounts={accounts} onChange={setFormData} onAddAccountClick={() => setIsQuickAddAccountOpen(true)} />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddEntry} variant="contained">Add Entry</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsAddModalOpen(false)} variant="text" color="inherit">Cancel</Button>
+            <Button onClick={handleAddEntry} variant="contained" color="primary">Add Entry</Button>
           </DialogActions>
         </Dialog>
 
         {/* ── Edit Modal ───────────────────────────────────────────────────────── */}
-        <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Edit Entry</DialogTitle>
+        <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Edit Entry</DialogTitle>
           <DialogContent>
             <EntryFormFields formData={formData} accounts={accounts} onChange={setFormData} onAddAccountClick={() => setIsQuickAddAccountOpen(true)} />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleEditEntry} variant="contained">Update Entry</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsEditModalOpen(false)} variant="text" color="inherit">Cancel</Button>
+            <Button onClick={handleEditEntry} variant="contained" color="primary">Update Entry</Button>
           </DialogActions>
         </Dialog>
 
         {/* ── Delete Modal ─────────────────────────────────────────────────────── */}
-        <Dialog open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-          <DialogTitle>Delete Entry</DialogTitle>
+        <Dialog open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Delete Entry</DialogTitle>
           <DialogContent>
-            <Typography>
+            <Typography variant="body2">
               Are you sure you want to delete this entry? This action cannot be undone.
             </Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsDeleteModalOpen(false)} variant="outlined" color="inherit">Cancel</Button>
             <Button onClick={handleDeleteEntry} variant="contained" color="error">Delete</Button>
           </DialogActions>
         </Dialog>
-
-
 
         {/* Inline Quick-Add Account Dialog */}
         <Dialog
@@ -664,8 +678,9 @@ export default function SpendingAccountSummaryPage() {
           onClose={() => setIsQuickAddAccountOpen(false)}
           maxWidth="xs"
           fullWidth
+          PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
         >
-          <DialogTitle sx={{ fontWeight: 700 }}>Quick Add Account</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Quick Add Account</DialogTitle>
           <DialogContent>
             <TextField
               fullWidth
@@ -684,11 +699,12 @@ export default function SpendingAccountSummaryPage() {
               sx={{ mt: 1 }}
             />
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setIsQuickAddAccountOpen(false)}>Cancel</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsQuickAddAccountOpen(false)} variant="text" color="inherit">Cancel</Button>
             <Button
               onClick={handleQuickAddAccount}
               variant="contained"
+              color="primary"
               disabled={quickAddLoading || !quickAddAccountName.trim()}
             >
               Create

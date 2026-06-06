@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import {
     AutoAwesome as Sparkles,
-    BarChart as BarChart3,
     CalendarMonth,
     Chat as MessageCircle,
     ChevronLeft,
@@ -84,21 +83,14 @@ const getNavSections = (): NavSection[] => {
             section: 'Finance',
             items: [
                 {
-                    name: 'Dashboard',
-                    href: '/dashboard',
-                    icon: BarChart3,
-                    children: [
-                        {
-                            name: 'Account Balances',
-                            href: '/dashboard/accounts',
-                            icon: CreditCard,
-                        },
-                        {
-                            name: 'Savings Envelopes',
-                            href: '/dashboard/envelopes',
-                            icon: AccountBalanceWallet,
-                        },
-                    ],
+                    name: 'Spending Accounts',
+                    href: '/dashboard/accounts',
+                    icon: CreditCard,
+                },
+                {
+                    name: 'Savings Envelopes',
+                    href: '/dashboard/envelopes',
+                    icon: AccountBalanceWallet,
                 },
                 {
                     name: 'Monthly Budget',
@@ -130,7 +122,7 @@ const LINK_STYLE = { textDecoration: 'none', color: 'inherit', display: 'block' 
 export default function AppShell({ children }: { children: ReactNode }) {
     const [open, setOpen] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({ Dashboard: true });
+    const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
     const location = useLocation();
     const { mode, toggleTheme } = useThemeMode();
     const theme = useTheme();

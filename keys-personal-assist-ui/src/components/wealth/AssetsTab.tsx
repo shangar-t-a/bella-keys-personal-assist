@@ -46,7 +46,7 @@ import {
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
 import type { Asset, AssetSummary, AssetUpdateRequest, AssetCategory } from '@/types/asset';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCompactRupees } from '@/utils/formatters';
 import { toast } from 'sonner';
 import AddAssetWizard from './AddAssetWizard';
 import AssetTransactionsModal from './AssetTransactionsModal';
@@ -56,25 +56,6 @@ import AssetTransactionsModal from './AssetTransactionsModal';
 interface AssetsTabProps {
   onAssetsLoad?: (count: number) => void;
 }
-
-// Compact currency formatter for INR
-export const formatCompactRupees = (value: number): string => {
-  if (value === 0) return '₹0.00';
-  const isNegative = value < 0;
-  const absVal = Math.abs(value);
-  let result = '';
-
-  if (absVal >= 10000000) {
-    result = `₹${(absVal / 10000000).toFixed(2)} Cr`;
-  } else if (absVal >= 100000) {
-    result = `₹${(absVal / 100000).toFixed(2)}L`;
-  } else {
-    result = formatCurrency(absVal);
-    return isNegative ? `-${result}` : result;
-  }
-  
-  return isNegative ? `-${result}` : result;
-};
 
 export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   const theme = useTheme();

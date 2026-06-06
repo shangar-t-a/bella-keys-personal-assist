@@ -27,6 +27,9 @@ import {  Box,
   Stack,
   Tab,
   Tabs,
+  Paper,
+  OutlinedInput,
+  Tooltip,
 } from '@mui/material';
 import { Grid } from '@mui/material';
 import {
@@ -45,7 +48,7 @@ import type {
   MonthlyExpenseItem,
   MonthlyExpenseItemRequest,
 } from '@/types/api';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCompactRupees } from '@/utils/formatters';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
 
 const MONTH_NAMES = [
@@ -100,6 +103,8 @@ export default function MonthlyPlannerPage() {
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [expenses, setExpenses] = useState<MonthlyExpenseItem[]>([]);
   const [categories, setCategories] = useState<MonthlyCategory[]>([]);
+  const [isEditingSalary, setIsEditingSalary] = useState(false);
+  const [salaryInputVal, setSalaryInputVal] = useState('');
   
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<MonthlyExpenseItem | null>(null);
@@ -301,24 +306,48 @@ export default function MonthlyPlannerPage() {
     setIsExpenseModalOpen(true);
   };
 
+  const handleSaveSalary = () => {
+    setIsEditingSalary(false);
+    handleUpdateSalary(salaryInputVal);
+  };
+
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 8 }}>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        bgcolor: 'background.default',
+        py: 2.5,
+        px: { xs: 2, md: 4 },
+        backgroundImage: (theme) =>
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle at 10% 20%, rgba(30, 41, 59, 0.4) 0%, rgba(17, 24, 39, 0.95) 90%)'
+            : 'none',
+        transition: 'background-color 0.3s ease',
+        minHeight: '100vh',
+      }}
+    >
+      <Container maxWidth="xl">
         {/* Header */}
-        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'flex-end' }} spacing={2} sx={{ mb: 4 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} spacing={2} sx={{ mb: 2 }}>
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', lineHeight: 1.2 }}>
               Monthly Budget
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Track your monthly budget and expenses checklist
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              Track your monthly budget and expenses checklist.
             </Typography>
           </Box>
           
           <Stack direction="row" spacing={2} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Month</InputLabel>
-              <Select value={selectedMonth} label="Month" onChange={(e) => setSelectedMonth(Number(e.target.value))}>
+              <InputLabel id="budget-month-label">Month</InputLabel>
+              <Select
+                labelId="budget-month-label"
+                value={selectedMonth}
+                label="Month"
+                input={<OutlinedInput label="Month" sx={{ borderRadius: 1.5, fontSize: '0.85rem' }} />}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              >
                 {MONTH_NAMES.map((name, i) => <MenuItem key={i} value={i + 1}>{name}</MenuItem>)}
               </Select>
             </FormControl>
@@ -328,199 +357,313 @@ export default function MonthlyPlannerPage() {
               type="number"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              sx={{ width: 100 }}
+              sx={{ width: 100, '& .MuiOutlinedInput-root': { borderRadius: 1.5, fontSize: '0.85rem' } }}
             />
-            <Button variant="outlined" startIcon={<Settings />} onClick={() => navigate('/settings?tab=categories')}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              size="small"
+              startIcon={<Settings />}
+              onClick={() => navigate('/settings?tab=categories')}
+              sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+            >
               Categories
             </Button>
           </Stack>
         </Stack>
 
-        {/* Overview Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="overline" color="text.secondary">Current Salary</Typography>
-                  <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                    {formatCurrency(summary?.salary || 0)}
-                  </Typography>
-                </Stack>
+        {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
+        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
+          <Grid container>
+            {/* Block 1: Current Salary (Interactive) */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{
+              p: 2.5,
+              borderRight: '1px solid',
+              borderRightColor: 'divider',
+              borderBottom: { xs: '1px solid', md: 'none' },
+              borderBottomColor: { xs: 'divider', md: 'transparent' },
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Current Salary
+              </Typography>
+              {isEditingSalary ? (
                 <TextField
-                  fullWidth
-                  required
-                  variant="standard"
+                  size="small"
                   type="number"
-                  placeholder="Enter amount..."
-                  value={summary?.salary || 0}
-                  onChange={(e) => setSummary(s => s ? { ...s, salary: parseFloat(e.target.value) || 0 } : null)}
-                  onBlur={(e) => handleUpdateSalary(e.target.value)}
-                  slotProps={{ input: { style: { fontSize: '1.2rem', fontWeight: 700, textAlign: 'left' } } }}
+                  autoFocus
+                  value={salaryInputVal}
+                  onChange={(e) => setSalaryInputVal(e.target.value)}
+                  onBlur={handleSaveSalary}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveSalary();
+                    if (e.key === 'Escape') setIsEditingSalary(false);
+                  }}
+                  sx={{
+                    width: '100%',
+                    '& .MuiOutlinedInput-root': { borderRadius: 1.5, fontSize: '1rem', fontWeight: 700 }
+                  }}
                 />
-                <Typography variant="caption" color="text.secondary">Net monthly income (auto-formatted above)</Typography>
-              </CardContent>
-            </Card>
+              ) : (
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+                  onClick={() => { setSalaryInputVal(String(summary?.salary || 0)); setIsEditingSalary(true); }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'primary.main', fontSize: '1.3rem' }}>
+                    {formatCompactRupees(summary?.salary || 0)}
+                  </Typography>
+                  <Edit sx={{ fontSize: 16, color: 'text.secondary', opacity: 0.6, '&:hover': { opacity: 1 } }} />
+                </Box>
+              )}
+            </Grid>
+
+            {/* Block 2: Total Spending */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{
+              p: 2.5,
+              borderRight: { xs: 'none', md: '1px solid' },
+              borderRightColor: { xs: 'transparent', md: 'divider' },
+              borderBottom: { xs: '1px solid', md: 'none' },
+              borderBottomColor: { xs: 'divider', md: 'transparent' },
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Total Spending
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'error.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totals.totalSpending)}
+              </Typography>
+            </Grid>
+
+            {/* Block 3: Total Saving */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{
+              p: 2.5,
+              borderRight: '1px solid',
+              borderRightColor: 'divider',
+            }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Total Saving
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totals.totalSaving)}
+              </Typography>
+            </Grid>
+
+            {/* Block 4: Remaining Balance */}
+            <Grid size={{ xs: 6, md: 3 }} sx={{ p: 2.5 }}>
+              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
+                Remaining Balance
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: totals.balance >= 0 ? 'primary.main' : 'error.main', fontSize: '1.3rem' }}>
+                {formatCompactRupees(totals.balance)}
+              </Typography>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="overline" color="text.secondary">Total Spending</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'error.main' }}>
-                  {formatCurrency(totals.totalSpending)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">Sum of all spending items</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="overline" color="text.secondary">Total Saving</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>
-                  {formatCurrency(totals.totalSaving)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">Investments and savings</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="overline" color="text.secondary">Remaining Balance</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: totals.balance >= 0 ? 'primary.main' : 'error.main' }}>
-                  {formatCurrency(totals.balance)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">Unallocated funds</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        </Card>
 
         {/* Tabs for View */}
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 3 }}>
-          <Tab label="Checklist" />
-          <Tab label="Visuals" />
-        </Tabs>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            sx={{
+              minHeight: 36,
+              '& .MuiTab-root': {
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                textTransform: 'none',
+                minHeight: 36,
+                px: 0,
+                mr: 3,
+                py: 0.5,
+              },
+            }}
+          >
+            <Tab label="Checklist" />
+            <Tab label="Visuals" />
+          </Tabs>
+        </Box>
 
         {activeTab === 0 && (
-          <Card>
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>Expense Checklist</Typography>
-              <Stack direction="row" spacing={1}>
-                <Button size="small" variant="outlined" startIcon={<Sync />} onClick={handleSync}>Sync Previous</Button>
-                <Button size="small" variant="outlined" color="warning" startIcon={<RotateCcw />} onClick={handleReset}>Reset All</Button>
-                <Button size="small" variant="contained" startIcon={<Plus />} onClick={openAddExpense}>Add Item</Button>
-              </Stack>
-            </Box>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">Status</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="center">Recurring</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {expenses.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4 }}>No items found for this month.</TableCell></TableRow>
-                  ) : (
-                    expenses.map((exp) => (
-                      <TableRow
-                        key={exp.id}
-                        hover
-                        sx={{
-                          opacity: exp.status === 'settled' ? 0.4 : 1,
-                          transition: 'opacity 0.3s ease',
-                        }}
-                      >
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={exp.status === 'settled'}
-                            onChange={() => handleToggleStatus(exp)}
-                          />
-                        </TableCell>
-                        <TableCell>{exp.name}</TableCell>
-                        <TableCell>
-                          <Chip label={exp.category_l1 === 'spending' ? 'Spending' : 'Saving'} size="small" color={exp.category_l1 === 'spending' ? 'error' : 'success'} variant="outlined" />
-                        </TableCell>
-                        <TableCell>{exp.category_l2}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(exp.amount)}</TableCell>
-                        <TableCell align="center">
-                          {exp.is_recurring ? <Typography color="primary" variant="body2">Yes</Typography> : '-'}
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" onClick={() => openEditExpense(exp)}><Edit sx={{ fontSize: 18 }} /></IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDeleteExpense(exp.id)}><Trash2 sx={{ fontSize: 18 }} /></IconButton>
+          <>
+            {/* Checklist Toolbar Card */}
+            <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', px: 2, py: 1.25, mb: 2 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>
+                  Expense Checklist
+                </Typography>
+                <Stack direction="row" spacing={1.5}>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    startIcon={<Sync />}
+                    onClick={handleSync}
+                    sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+                  >
+                    Sync Previous
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    size="small"
+                    startIcon={<RotateCcw />}
+                    onClick={handleReset}
+                    sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+                  >
+                    Reset All
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    startIcon={<Plus />}
+                    onClick={openAddExpense}
+                    sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem' }}
+                  >
+                    Add Item
+                  </Button>
+                </Stack>
+              </Box>
+            </Card>
+
+            {/* Checklist Table Card */}
+            <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
+              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
+                    <TableRow>
+                      <TableCell padding="checkbox" sx={{ pl: 3 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Type</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Category</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Amount</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Recurring</TableCell>
+                      <TableCell align="right" sx={{ pr: 3, fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {expenses.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                          No items found for this month.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
+                    ) : (
+                      expenses.map((exp, idx) => (
+                        <TableRow
+                          key={exp.id}
+                          hover
+                          sx={{
+                            opacity: exp.status === 'settled' ? 0.45 : 1,
+                            transition: 'opacity 0.2s ease',
+                            '& td': { py: 1 },
+                            bgcolor: idx % 2 === 0
+                              ? 'transparent'
+                              : (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.018)' : 'rgba(0,0,0,0.018)',
+                            '&:hover': { bgcolor: 'action.hover' },
+                          }}
+                        >
+                          <TableCell padding="checkbox" sx={{ pl: 3 }}>
+                            <Checkbox
+                              checked={exp.status === 'settled'}
+                              onChange={() => handleToggleStatus(exp)}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{exp.name}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={exp.category_l1 === 'spending' ? 'Spending' : 'Saving'}
+                              size="small"
+                              color={exp.category_l1 === 'spending' ? 'error' : 'success'}
+                              variant="outlined"
+                              sx={{ fontWeight: 700, fontSize: '0.68rem', height: 20 }}
+                            />
+                          </TableCell>
+                          <TableCell>{exp.category_l2}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700 }}>{formatCurrency(exp.amount)}</TableCell>
+                          <TableCell align="center">
+                            {exp.is_recurring ? <Typography color="primary.main" variant="body2" sx={{ fontWeight: 600 }}>Yes</Typography> : '-'}
+                          </TableCell>
+                          <TableCell align="right" sx={{ pr: 3, whiteSpace: 'nowrap' }}>
+                            <Tooltip title="Edit">
+                              <IconButton size="small" color="secondary" onClick={() => openEditExpense(exp)}>
+                                <Edit sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton size="small" color="error" onClick={() => handleDeleteExpense(exp.id)}>
+                                <Trash2 sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+          </>
         )}
 
         {activeTab === 1 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ height: 400 }}>
-                <CardContent sx={{ height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>Allocation Type</Typography>
-                  <ResponsiveContainer width="100%" height="90%">
-                      <PieChart>
-                        <Pie
-                          data={chartDataL1}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={5}
-                          dataKey="value"
-                          labelLine={false}
-                          label={renderCustomizedLabel}
-                        >
-                          {chartDataL1.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip content={<CustomTooltip />} />
-                        <Legend />
-                      </PieChart>
+              <Card variant="outlined" sx={{ height: 400, borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+                <CardContent sx={{ height: '100%', p: 3 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', mb: 2 }}>
+                    Allocation Type
+                  </Typography>
+                  <ResponsiveContainer width="100%" height="85%">
+                    <PieChart>
+                      <Pie
+                        data={chartDataL1}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={5}
+                        dataKey="value"
+                        labelLine={false}
+                        label={renderCustomizedLabel}
+                      >
+                        {chartDataL1.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend />
+                    </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ height: 400 }}>
-                <CardContent sx={{ height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>Category Breakdown</Typography>
-                  <ResponsiveContainer width="100%" height="90%">
-                      <PieChart>
-                        <Pie
-                          data={chartDataL2}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={2}
-                          dataKey="value"
-                          labelLine={false}
-                          label={renderCustomizedLabel}
-                        >
-                          {chartDataL2.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip content={<CustomTooltip />} />
-                        <Legend />
-                      </PieChart>
+              <Card variant="outlined" sx={{ height: 400, borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+                <CardContent sx={{ height: '100%', p: 3 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', mb: 2 }}>
+                    Category Breakdown
+                  </Typography>
+                  <ResponsiveContainer width="100%" height="85%">
+                    <PieChart>
+                      <Pie
+                        data={chartDataL2}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="value"
+                        labelLine={false}
+                        label={renderCustomizedLabel}
+                      >
+                        {chartDataL2.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend />
+                    </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
@@ -528,13 +671,13 @@ export default function MonthlyPlannerPage() {
           </Grid>
         )}
 
-
-
         {/* --- Expense Form Modal --- */}
-        <Dialog open={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add Expense'}</DialogTitle>
+        <Dialog open={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
+            {editingExpense ? 'Edit Expense' : 'Add Expense'}
+          </DialogTitle>
           <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack spacing={2.5} sx={{ pt: 1.5 }}>
               <TextField 
                 fullWidth label="Name" required
                 value={expenseForm.name} 
@@ -546,8 +689,9 @@ export default function MonthlyPlannerPage() {
                 onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })} 
               />
               <FormControl fullWidth required>
-                <InputLabel>Type</InputLabel>
+                <InputLabel id="expense-type-label">Type</InputLabel>
                 <Select
+                  labelId="expense-type-label"
                   value={expenseForm.category_l1}
                   label="Type"
                   onChange={(e) => {
@@ -565,8 +709,9 @@ export default function MonthlyPlannerPage() {
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>Category (Optional)</InputLabel>
+                <InputLabel id="expense-category-label">Category (Optional)</InputLabel>
                 <Select
+                  labelId="expense-category-label"
                   value={expenseForm.category_l2}
                   label="Category (Optional)"
                   onChange={(e) => setExpenseForm({ ...expenseForm, category_l2: e.target.value })}
@@ -586,24 +731,24 @@ export default function MonthlyPlannerPage() {
                   checked={expenseForm.is_recurring} 
                   onChange={(e) => setExpenseForm({ ...expenseForm, is_recurring: e.target.checked })} 
                 />
-                <Typography>Recurring every month</Typography>
+                <Typography variant="body2">Recurring every month</Typography>
               </Stack>
             </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsExpenseModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveExpense} variant="contained">Save</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsExpenseModalOpen(false)} variant="text" color="inherit">Cancel</Button>
+            <Button onClick={handleSaveExpense} variant="contained" color="primary">Save</Button>
           </DialogActions>
         </Dialog>
 
         {/* --- Confirm Dialog --- */}
-        <Dialog open={confirmDialog.open} onClose={closeConfirm} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>{confirmDialog.title}</DialogTitle>
+        <Dialog open={confirmDialog.open} onClose={closeConfirm} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>{confirmDialog.title}</DialogTitle>
           <DialogContent>
-            <Typography>{confirmDialog.message}</Typography>
+            <Typography variant="body2">{confirmDialog.message}</Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={closeConfirm}>Cancel</Button>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={closeConfirm} variant="outlined" color="inherit">Cancel</Button>
             <Button
               variant="contained"
               color="error"
