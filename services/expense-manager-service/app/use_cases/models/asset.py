@@ -1,9 +1,10 @@
 """Use case models for Assets."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import Field
 
+from app.entities.models.asset import AssetTransactionType
 from app.use_cases.models.base import BaseEntity
 
 
@@ -39,11 +40,11 @@ class AssetUpdate(BaseEntity):
 class AssetTransactionCreate(BaseEntity):
     """Model for logging a new transaction for an asset."""
 
-    transaction_type: str = Field(description="BUY, SELL, REVALUE")
+    transaction_type: AssetTransactionType = Field(description="BUY, SELL, REVALUE")
     amount: float = Field(description="Total INR amount of the transaction")
     units: float | None = Field(default=None, description="Quantity/Weight")
     price_per_unit: float | None = Field(default=None, description="Price per unit/NAV")
-    transaction_date: datetime = Field(default_factory=datetime.utcnow, description="Transaction timestamp")
+    transaction_date: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Transaction timestamp")
     description: str | None = Field(default=None, description="Audit notes")
 
 

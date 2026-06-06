@@ -8,6 +8,7 @@ from app.entities.models.asset import (
     AssetFilter,
     AssetSort,
     AssetTransaction,
+    AssetTransactionType,
 )
 from app.entities.repositories.asset import AssetRepositoryInterface
 from app.use_cases.models.asset import (
@@ -87,7 +88,7 @@ class AssetService:
         tx = AssetTransaction(
             id=uuid.uuid4().hex,
             asset_id=asset_id,
-            transaction_type="BUY",
+            transaction_type=AssetTransactionType.BUY,
             amount=asset_create.initial_amount,
             units=asset_create.units,
             price_per_unit=asset_create.price_per_unit,
@@ -247,19 +248,23 @@ class AssetService:
             return
 
         # Determine if asset is unit-based (if any transaction contains unit values)
-        is_unit_based = any(t.units is not None for t in transactions if t.transaction_type in ("BUY", "SELL"))
+        is_unit_based = any(
+            t.units is not None
+            for t in transactions
+            if t.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.SELL)
+        )
 
         invested_value = 0.0
         current_value = 0.0
 
         if not is_unit_based:
             # Flat balance tracking
-            buys = sum(t.amount for t in transactions if t.transaction_type == "BUY")
-            sells = sum(t.amount for t in transactions if t.transaction_type == "SELL")
+            buys = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.BUY)
+            sells = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.SELL)
             invested_value = max(0.0, buys - sells)
 
             # Look for the latest REVALUE transaction
-            revalues = [t for t in transactions if t.transaction_type == "REVALUE"]
+            revalues = [t for t in transactions if t.transaction_type == AssetTransactionType.REVALUE]
             current_value = revalues[0].amount if revalues else invested_value
         else:
             # Unit-based tracking
@@ -270,10 +275,10 @@ class AssetService:
                 t_units = t.units or 0.0
                 t_ppu = t.price_per_unit or 0.0
 
-                if t.transaction_type == "BUY":
+                if t.transaction_type == AssetTransactionType.BUY:
                     total_units += t_units
                     invested_cash += t_units * t_ppu
-                elif t.transaction_type == "SELL":
+                elif t.transaction_type == AssetTransactionType.SELL:
                     total_units = max(0.0, total_units - t_units)
                     invested_cash = max(0.0, invested_cash - t_units * t_ppu)
 
@@ -288,7 +293,10 @@ class AssetService:
             else:
                 # Find most recent price_per_unit in transactions (REVALUE or BUY)
                 latest_ppu_txs = [
-                    t for t in transactions if t.price_per_unit is not None and t.transaction_type in ("BUY", "REVALUE")
+                    t
+                    for t in transactions
+                    if t.price_per_unit is not None
+                    and t.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.REVALUE)
                 ]
                 ppu = latest_ppu_txs[0].price_per_unit if latest_ppu_txs else 0.0
 

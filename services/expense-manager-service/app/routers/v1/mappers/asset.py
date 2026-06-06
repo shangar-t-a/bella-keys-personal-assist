@@ -6,6 +6,7 @@ from app.entities.models.asset import (
     AssetCategory,
     AssetSubcategory,
     AssetTransaction,
+    AssetTransactionType,
 )
 from app.routers.v1.schemas.asset import (
     AssetCategoryResponse,
@@ -75,7 +76,7 @@ class AssetTransactionCreateMapper:
         """Convert request payload to use case transaction create model."""
         tx_date = request.transaction_date or datetime.now(UTC)
         return AssetTransactionCreate(
-            transaction_type=request.transaction_type.upper(),
+            transaction_type=AssetTransactionType(request.transaction_type.upper()),
             amount=request.amount,
             units=request.units,
             price_per_unit=request.price_per_unit,

@@ -7,6 +7,7 @@ import pytest
 
 from app.infrastructures.postgres_db.models.asset_category import AssetCategoryModel
 from app.infrastructures.postgres_db.models.asset_subcategory import AssetSubcategoryModel
+from app.entities.models.asset import AssetTransactionType
 from app.use_cases.asset import AssetService
 from app.use_cases.models.asset import AssetCreate, AssetTransactionCreate, AssetUpdate
 
@@ -124,7 +125,7 @@ class TestAssetServiceCRUD:
 
         # Revalue the asset
         reval_tx = AssetTransactionCreate(
-            transaction_type="REVALUE",
+            transaction_type=AssetTransactionType.REVALUE,
             amount=55000.00,
             transaction_date=datetime.now(UTC),
             description="Interest credited FY2026",
@@ -177,7 +178,7 @@ class TestAssetServiceCRUD:
 
         # Log a BUY transaction of 50 more grams at ₹5000 per gram
         buy_tx = AssetTransactionCreate(
-            transaction_type="BUY",
+            transaction_type=AssetTransactionType.BUY,
             amount=250000.00,
             units=50.00,
             price_per_unit=5000.00,
@@ -195,7 +196,7 @@ class TestAssetServiceCRUD:
 
         # Log a SELL transaction of 20 grams
         sell_tx = AssetTransactionCreate(
-            transaction_type="SELL",
+            transaction_type=AssetTransactionType.SELL,
             amount=317263.60,
             units=20.00,
             price_per_unit=15863.18,
@@ -215,7 +216,7 @@ class TestAssetServiceCRUD:
         txs = await asset_service.get_transactions_for_asset(asset.id)
         assert len(txs) == 3
         # First in list is latest due to DESC sort
-        assert txs[0].transaction_type == "SELL"
+        assert txs[0].transaction_type == AssetTransactionType.SELL
 
         # Delete transaction (roll back the sell)
         await asset_service.delete_transaction(txs[0].id)
@@ -260,7 +261,7 @@ class TestAssetServiceSummary:
 
         # Revalue Mutual Fund to 25000
         reval_tx = AssetTransactionCreate(
-            transaction_type="REVALUE",
+            transaction_type=AssetTransactionType.REVALUE,
             amount=25000.00,
         )
         await asset_service.add_transaction(a2.id, reval_tx)
