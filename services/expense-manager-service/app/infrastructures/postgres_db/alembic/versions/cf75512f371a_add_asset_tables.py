@@ -63,16 +63,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_asset_transaction_asset_id'), 'asset_transaction', ['asset_id'], unique=False)
     # ### end Alembic commands ###
 
-    # Seed default categories
-    op.execute(
-        "INSERT INTO asset_category (id, name, code, description, created_at, updated_at) VALUES "
-        "('5d287bc128794c4fae855f75e7a9e6b1', 'Equity', 'EQUITY', 'Stocks, Mutual Funds, ETFs', NOW(), NOW()), "
-        "('2f4a47da2f174780a424e7561a09d3b4', 'Debt', 'DEBT', 'Fixed Deposits, PPF, Bonds, EPF', NOW(), NOW()), "
-        "('e439bb7f10b741008d5b88c426f6e522', 'Real Estate', 'REAL_ESTATE', 'Land, Residential/Commercial Properties', NOW(), NOW()), "
-        "('a434c382103b417e914e9f7823f6e111', 'Commodities', 'COMMODITIES', 'Physical/Digital Gold, Silver', NOW(), NOW()), "
-        "('c831c382123b417e914e9f7823f6e222', 'Cash / Bank', 'CASH_BANK', 'Savings accounts, Cash', NOW(), NOW())"
-    )
-
 
 def downgrade() -> None:
     """Downgrade schema."""

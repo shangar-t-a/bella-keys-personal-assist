@@ -56,7 +56,7 @@ async def get_categories_map(asset_service):
                         description="Savings accounts, Cash",
                     ),
                     AssetSubcategoryModel(
-                        id="sub_stock_id",
+                        id="b76e3bb81d914dcc8efee7ebaab729e3",
                         category_id="5d287bc128794c4fae855f75e7a9e6b1",
                         name="Stock",
                         code="STOCK",
@@ -66,7 +66,7 @@ async def get_categories_map(asset_service):
                         has_maturity=False,
                     ),
                     AssetSubcategoryModel(
-                        id="sub_ppf_id",
+                        id="504bdb52c67c43558f901550cc05fdac",
                         category_id="2f4a47da2f174780a424e7561a09d3b4",
                         name="PPF",
                         code="PPF",

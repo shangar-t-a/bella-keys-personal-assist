@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/l
 COPY --from=builder /app/.venv ./.venv
 
 COPY app ./app
+COPY scripts/db/data ./scripts/db/data
 COPY entrypoint.sh /app/
 
 # Normalize line endings to LF and make entrypoint executable

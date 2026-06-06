@@ -29,6 +29,10 @@ alembic -c app/infrastructures/postgres_db/alembic.ini heads
 echo "Running database migrations..."
 alembic -c app/infrastructures/postgres_db/alembic.ini upgrade head
 
+# Seed/update data to database
+echo "Seeding/updating data to the database..."
+python scripts/db/data/manager.py
+
 # Show final migration version after upgrade
 echo "Database migration version after upgrade:"
 alembic -c app/infrastructures/postgres_db/alembic.ini current
