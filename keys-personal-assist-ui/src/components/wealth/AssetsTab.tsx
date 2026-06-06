@@ -26,6 +26,8 @@ import {
   FormControl,
   InputLabel,
   InputAdornment,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -49,14 +51,7 @@ import { toast } from 'sonner';
 import AddAssetWizard from './AddAssetWizard';
 import AssetTransactionsModal from './AssetTransactionsModal';
 
-// Category configurations
-const CATEGORY_META = {
-  EQUITY: { label: 'Equity', color: '#108cc6', icon: EquityIcon, bg: 'rgba(16, 140, 198, 0.1)' },
-  DEBT: { label: 'Debt', color: '#1e5067', icon: DebtIcon, bg: 'rgba(30, 80, 103, 0.1)' },
-  REAL_ESTATE: { label: 'Real Estate', color: '#f59e0b', icon: RealEstateIcon, bg: 'rgba(245, 158, 11, 0.1)' },
-  COMMODITIES: { label: 'Commodities', color: '#fbbf24', icon: CommoditiesIcon, bg: 'rgba(251, 191, 36, 0.1)' },
-  CASH_BANK: { label: 'Cash & Bank', color: '#10b981', icon: CashBankIcon, bg: 'rgba(16, 185, 129, 0.1)' },
-};
+
 
 interface AssetsTabProps {
   onAssetsLoad?: (count: number) => void;
@@ -82,6 +77,44 @@ export const formatCompactRupees = (value: number): string => {
 };
 
 export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
+  const theme = useTheme();
+  const mode = theme.palette.mode;
+  const isDark = mode === 'dark';
+
+  // Category configurations driven dynamically by the theme palette
+  const CATEGORY_META = {
+    EQUITY: {
+      label: 'Equity',
+      color: isDark ? theme.palette.primary.main : theme.palette.secondary.main,
+      icon: EquityIcon,
+      bg: alpha(isDark ? theme.palette.primary.main : theme.palette.secondary.main, 0.1),
+    },
+    DEBT: {
+      label: 'Debt',
+      color: isDark ? theme.palette.secondary.main : theme.palette.primary.main,
+      icon: DebtIcon,
+      bg: alpha(isDark ? theme.palette.secondary.main : theme.palette.primary.main, 0.15),
+    },
+    REAL_ESTATE: {
+      label: 'Real Estate',
+      color: isDark ? theme.palette.warning.dark : theme.palette.warning.main,
+      icon: RealEstateIcon,
+      bg: alpha(isDark ? theme.palette.warning.dark : theme.palette.warning.main, 0.1),
+    },
+    COMMODITIES: {
+      label: 'Commodities',
+      color: isDark ? theme.palette.warning.main : theme.palette.warning.light,
+      icon: CommoditiesIcon,
+      bg: alpha(isDark ? theme.palette.warning.main : theme.palette.warning.light, 0.1),
+    },
+    CASH_BANK: {
+      label: 'Cash & Bank',
+      color: theme.palette.success.main,
+      icon: CashBankIcon,
+      bg: alpha(theme.palette.success.main, 0.1),
+    },
+  };
+
   const [assets, setAssets] = useState<Asset[]>([]);
   const [summary, setSummary] = useState<AssetSummary | null>(null);
   const [loading, setLoading] = useState(true);
