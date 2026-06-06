@@ -2,12 +2,17 @@
 
 from datetime import UTC, datetime
 
-from app.entities.models.asset import AssetCategory, AssetTransaction
+from app.entities.models.asset import (
+    AssetCategory,
+    AssetSubcategory,
+    AssetTransaction,
+)
 from app.routers.v1.schemas.asset import (
     AssetCategoryResponse,
     AssetCategorySummaryResponse,
     AssetRequest,
     AssetResponse,
+    AssetSubcategoryResponse,
     AssetSummaryResponse,
     AssetTransactionRequest,
     AssetTransactionResponse,
@@ -33,9 +38,13 @@ class AssetCreateMapper:
             category_id=request.category_id,
             name=request.name,
             sub_category=request.sub_category,
+            subcategory_id=request.subcategory_id,
             initial_amount=request.initial_amount,
             units=request.units,
             price_per_unit=request.price_per_unit,
+            interest_rate=request.interest_rate,
+            interest_compounding=request.interest_compounding,
+            maturity_date=request.maturity_date,
             notes=request.notes,
         )
 
@@ -50,6 +59,10 @@ class AssetUpdateMapper:
             category_id=request.category_id,
             name=request.name,
             sub_category=request.sub_category,
+            subcategory_id=request.subcategory_id,
+            interest_rate=request.interest_rate,
+            interest_compounding=request.interest_compounding,
+            maturity_date=request.maturity_date,
             notes=request.notes,
         )
 
@@ -84,8 +97,12 @@ class AssetResponseMapper:
             category_code=asset.category_code,
             name=asset.name,
             sub_category=asset.sub_category,
+            subcategory_id=asset.subcategory_id,
             invested_value=asset.invested_value,
             current_value=asset.current_value,
+            interest_rate=asset.interest_rate,
+            interest_compounding=asset.interest_compounding,
+            maturity_date=asset.maturity_date,
             notes=asset.notes,
             absolute_returns=asset.absolute_returns,
             percentage_returns=asset.percentage_returns,
@@ -98,13 +115,32 @@ class AssetCategoryResponseMapper:
     """Mapper for category list response conversion."""
 
     @staticmethod
+    def _to_subcategory_response(sub: AssetSubcategory) -> AssetSubcategoryResponse:
+        """Map domain subcategory model to response model."""
+        return AssetSubcategoryResponse(
+            id=sub.id,
+            category_id=sub.category_id,
+            name=sub.name,
+            code=sub.code,
+            description=sub.description,
+            valuation_type=sub.valuation_type,
+            has_interest=sub.has_interest,
+            has_maturity=sub.has_maturity,
+        )
+
+    @staticmethod
     def to_response_model(category: AssetCategory) -> AssetCategoryResponse:
         """Map domain category model to response model."""
+        subcategories = [
+            AssetCategoryResponseMapper._to_subcategory_response(sub)
+            for sub in category.subcategories
+        ]
         return AssetCategoryResponse(
             id=category.id,
             name=category.name,
             code=category.code,
             description=category.description,
+            subcategories=subcategories,
         )
 
 

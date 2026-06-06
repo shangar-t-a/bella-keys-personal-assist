@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 import pytest
 
 from app.infrastructures.postgres_db.models.asset_category import AssetCategoryModel
+from app.infrastructures.postgres_db.models.asset_subcategory import AssetSubcategoryModel
 from app.use_cases.asset import AssetService
 from app.use_cases.models.asset import AssetCreate, AssetTransactionCreate, AssetUpdate
 
@@ -53,6 +54,26 @@ async def get_categories_map(asset_service):
                         name="Cash / Bank",
                         code="CASH_BANK",
                         description="Savings accounts, Cash",
+                    ),
+                    AssetSubcategoryModel(
+                        id="sub_stock_id",
+                        category_id="5d287bc128794c4fae855f75e7a9e6b1",
+                        name="Stock",
+                        code="STOCK",
+                        description="Stocks/mutual funds unit-based valuation details",
+                        valuation_type="UNIT_BASED",
+                        has_interest=False,
+                        has_maturity=False,
+                    ),
+                    AssetSubcategoryModel(
+                        id="sub_ppf_id",
+                        category_id="2f4a47da2f174780a424e7561a09d3b4",
+                        name="PPF",
+                        code="PPF",
+                        description="PPF value-based valuation details with interest",
+                        valuation_type="VALUE_BASED",
+                        has_interest=True,
+                        has_maturity=True,
                     ),
                 ]
             )

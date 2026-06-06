@@ -19,6 +19,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -31,7 +35,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
-import type { AssetCategory, AssetRequest } from '@/types/asset';
+import type { AssetCategory, AssetSubcategory, AssetRequest } from '@/types/asset';
 import { toast } from 'sonner';
 
 interface AddAssetWizardProps {
@@ -44,15 +48,17 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
   const [step, setStep] = useState<1 | 2>(1);
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null);
-  const [selectedSubtype, setSelectedSubtype] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<AssetSubcategory | null>(null);
 
   // Step 2 Form States
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
+  const [interestRate, setInterestRate] = useState<string>('');
+  const [interestCompounding, setInterestCompounding] = useState<string>('YEARLY');
+  const [maturityDate, setMaturityDate] = useState<string>('');
   // Specific toggles
   const [metalType, setMetalType] = useState<'Gold' | 'Silver'>('Gold');
   const [purity, setPurity] = useState<'24K' | '22K'>('24K');
-  const [equityType, setEquityType] = useState<'Stock' | 'Mutual Fund' | 'ETF'>('Stock');
 
   // Input value states
   const [units, setUnits] = useState<string>('');
@@ -81,7 +87,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
 
   const resetWizard = () => {
     setStep(1);
-    setSelectedSubtype('');
+    setSelectedSubcategory(null);
     setName('');
     setNotes('');
     setUnits('');
@@ -89,29 +95,14 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     setCurrentPricePerUnit('');
     setCurrentValueInput('');
     setTotalInvestedInput('');
+    setInterestRate('');
+    setInterestCompounding('YEARLY');
+    setMaturityDate('');
     setMetalType('Gold');
     setPurity('24K');
-    setEquityType('Stock');
   };
 
-  const getSubtypesForCategory = (code: string) => {
-    switch (code) {
-      case 'EQUITY':
-        return ['Stock', 'Mutual Fund', 'ETF', 'NPS', 'Other Equity'];
-      case 'DEBT':
-        return ['PPF', 'EPF / VPF', 'NPS', 'SSY', 'Govt. Savings Scheme', 'Fixed Deposit', 'Bonds', 'Other Debt'];
-      case 'REAL_ESTATE':
-        return ['Residential Property', 'Commercial Property', 'Plot', 'REIT', 'Other Property'];
-      case 'COMMODITIES':
-        return ['Physical Gold / Silver', 'Digital (ETF / SGB / MF)'];
-      case 'CASH_BANK':
-        return ['Savings Account', 'Current Account', 'Cash in Hand', 'Other Cash'];
-      default:
-        return [];
-    }
-  };
-
-  const isUnitBased = selectedCategory?.code === 'EQUITY' || selectedCategory?.code === 'COMMODITIES';
+  const isUnitBased = selectedSubcategory?.valuationType === 'UNIT_BASED';
 
   // Dynamic automatic calculation triggers
   useEffect(() => {
@@ -138,13 +129,13 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     }
   }, [units, pricePerUnit, currentPricePerUnit, isUnitBased]);
 
-  const handleSubtypeSelect = (subtype: string) => {
-    setSelectedSubtype(subtype);
+  const handleSubcategorySelect = (subcategory: AssetSubcategory) => {
+    setSelectedSubcategory(subcategory);
     // Setup defaults
-    if (selectedCategory?.code === 'COMMODITIES' && subtype === 'Physical Gold / Silver') {
+    if (selectedCategory?.code === 'COMMODITIES' && subcategory.code === 'PHYSICAL_GOLD_SILVER') {
       setName('Gold Jewelry');
     } else {
-      setName(subtype);
+      setName(subcategory.name);
     }
     setStep(2);
   };
@@ -183,6 +174,15 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
         return false;
       }
     }
+
+    if (selectedSubcategory?.hasInterest && interestRate) {
+      const r = parseFloat(interestRate);
+      if (isNaN(r) || r < 0) {
+        toast.error('Interest rate must be a non-negative number');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -203,10 +203,14 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
     const reqData: AssetRequest = {
       categoryId: selectedCategory!.id,
       name: name.trim(),
-      subCategory: selectedSubtype,
+      subCategory: selectedSubcategory?.name || null,
+      subcategoryId: selectedSubcategory?.id || null,
       initialAmount: finalInvested,
       units: isUnitBased ? parseFloat(units) : null,
       pricePerUnit: isUnitBased ? parseFloat(pricePerUnit) : null,
+      interestRate: selectedSubcategory?.hasInterest && interestRate ? parseFloat(interestRate) : null,
+      interestCompounding: selectedSubcategory?.hasInterest ? interestCompounding : null,
+      maturityDate: selectedSubcategory?.hasMaturity && maturityDate ? new Date(maturityDate).toISOString() : null,
       notes: notes.trim() || null,
     };
 
@@ -227,13 +231,16 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
       toast.success(`Asset "${name}" logged successfully`);
 
       if (addAnother) {
-        // Reset states keeping Category / Subtype for quick entry
-        setName(selectedSubtype);
+        // Reset states keeping Category / Subcategory for quick entry
+        setName(selectedSubcategory?.name || '');
         setUnits('');
         setPricePerUnit('');
         setCurrentPricePerUnit('');
         setCurrentValueInput('');
         setTotalInvestedInput('');
+        setInterestRate('');
+        setInterestCompounding('YEARLY');
+        setMaturityDate('');
         setNotes('');
         setStep(2);
       } else {
@@ -277,7 +284,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
             Add Asset
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Step {step} of 2: {step === 1 ? 'Select asset type' : selectedSubtype}
+            Step {step} of 2: {step === 1 ? 'Select asset type' : selectedSubcategory?.name || ''}
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
@@ -336,8 +343,8 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                   Select Sub Type
                 </Typography>
                 <Grid container spacing={2}>
-                  {selectedCategory && getSubtypesForCategory(selectedCategory.code).map((sub) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sub}>
+                  {selectedCategory && (selectedCategory.subcategories || []).map((sub) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sub.id}>
                       <Card
                         variant="outlined"
                         sx={{
@@ -351,9 +358,9 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                           }
                         }}
                       >
-                        <CardActionArea onClick={() => handleSubtypeSelect(sub)} sx={{ p: 2.5, textAlign: 'center' }}>
+                        <CardActionArea onClick={() => handleSubcategorySelect(sub)} sx={{ p: 2.5, textAlign: 'center' }}>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {sub}
+                            {sub.name}
                           </Typography>
                         </CardActionArea>
                       </Card>
@@ -373,7 +380,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                   Select Asset Type
                 </Typography>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                  {selectedCategory?.name} &gt; {selectedSubtype}
+                  {selectedCategory?.name} &gt; {selectedSubcategory?.name || ''}
                 </Typography>
               </Box>
               <Button 
@@ -396,7 +403,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                   </Typography>
 
                   {/* Commodities Toggles */}
-                  {selectedCategory?.code === 'COMMODITIES' && selectedSubtype === 'Physical Gold / Silver' && (
+                  {selectedCategory?.code === 'COMMODITIES' && selectedSubcategory?.code === 'PHYSICAL_GOLD_SILVER' && (
                     <Box sx={{ display: 'flex', gap: 3, mb: 1 }}>
                       <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
@@ -434,25 +441,7 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                     </Box>
                   )}
 
-                  {/* Equity type segment toggles */}
-                  {selectedCategory?.code === 'EQUITY' && (
-                    <Box sx={{ mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
-                        Asset Type
-                      </Typography>
-                      <ToggleButtonGroup
-                        value={equityType}
-                        exclusive
-                        onChange={(_e, v) => v && setEquityType(v)}
-                        size="small"
-                        fullWidth
-                      >
-                        <ToggleButton value="Stock" sx={{ fontWeight: 600 }}>Stock</ToggleButton>
-                        <ToggleButton value="Mutual Fund" sx={{ fontWeight: 600 }}>Mutual Fund</ToggleButton>
-                        <ToggleButton value="ETF" sx={{ fontWeight: 600 }}>ETF</ToggleButton>
-                      </ToggleButtonGroup>
-                    </Box>
-                  )}
+
 
                   {/* Name input */}
                   <TextField
@@ -558,6 +547,49 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                     />
                   )}
 
+                  {/* Interest Fields */}
+                  {selectedSubcategory?.hasInterest && (
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Interest Rate (%)"
+                        type="number"
+                        value={interestRate}
+                        onChange={(e) => setInterestRate(e.target.value)}
+                        inputProps={{ step: 'any', min: '0' }}
+                        InputProps={{
+                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                        }}
+                      />
+                      <FormControl fullWidth>
+                        <InputLabel id="interest-compounding-label">Compounding Frequency</InputLabel>
+                        <Select
+                          labelId="interest-compounding-label"
+                          value={interestCompounding}
+                          label="Compounding Frequency"
+                          onChange={(e) => setInterestCompounding(e.target.value)}
+                        >
+                          <MenuItem value="YEARLY">Yearly</MenuItem>
+                          <MenuItem value="QUARTERLY">Quarterly</MenuItem>
+                          <MenuItem value="MONTHLY">Monthly</MenuItem>
+                          <MenuItem value="SIMPLE">Simple Interest</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
+
+                  {/* Maturity Field */}
+                  {selectedSubcategory?.hasMaturity && (
+                    <TextField
+                      fullWidth
+                      label="Maturity Date"
+                      type="date"
+                      value={maturityDate}
+                      onChange={(e) => setMaturityDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+
                   {/* Collapsible notes section */}
                   <Accordion variant="outlined" sx={{ borderRadius: '6px !important', mt: 1 }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -601,15 +633,16 @@ export default function AddAssetWizard({ open, onClose, onSuccess }: AddAssetWiz
                       Valuation Method Details
                     </Typography>
                     
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {isUnitBased 
-                        ? 'This category calculates assets dynamically based on quantity/weight held. The initial invested value will be computed automatically as (Units × Price per unit).' 
-                        : 'This category tracks flat balance accounts (e.g. Bank Accounts, PPF). You supply the initial invested value and current value directly.'}
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary">
-                      Logging different Invested and Current Values will record a revaluation adjustments history transaction in the ledger.
-                    </Typography>
+                    {(selectedSubcategory?.description || '').split('\n\n').map((paragraph, idx) => (
+                      <Typography
+                        key={idx}
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: idx === 0 ? 1.5 : 0 }}
+                      >
+                        {paragraph}
+                      </Typography>
+                    ))}
                   </Card>
                 </Box>
               </Grid>

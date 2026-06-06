@@ -11,7 +11,7 @@ export default function WealthPage() {
       sx={{
         flexGrow: 1,
         bgcolor: 'background.default',
-        py: 4,
+        py: 2.5,
         px: { xs: 2, md: 4 },
         backgroundImage: (theme) =>
           theme.palette.mode === 'dark'
@@ -22,40 +22,44 @@ export default function WealthPage() {
     >
       <Container maxWidth="xl">
         {/* Page Header */}
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ mb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography
-              variant="h4"
+              variant="h5"
               sx={{
                 fontWeight: 700,
                 fontFamily: '"Space Grotesk", sans-serif',
                 color: 'text.primary',
+                lineHeight: 1.2,
               }}
             >
               Assets
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {assetCount !== null ? `${assetCount} assets` : 'Loading assets...'}
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              {assetCount !== null ? `${assetCount} assets tracked` : 'Loading…'}
             </Typography>
           </Box>
         </Box>
 
         {/* Tab Selection */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
           <Tabs
             value={activeTab}
             onChange={(_e, newValue) => setActiveTab(newValue)}
             indicatorColor="primary"
             textColor="primary"
             sx={{
+              minHeight: 36,
               '& .MuiTab-root': {
                 fontFamily: '"Space Grotesk", sans-serif',
                 fontWeight: 600,
-                fontSize: '0.95rem',
+                fontSize: '0.875rem',
                 textTransform: 'none',
-                minWidth: 100,
-                px: 1,
+                minWidth: 80,
+                minHeight: 36,
+                px: 0,
                 mr: 3,
+                py: 0.5,
               },
             }}
           >
@@ -72,3 +76,4 @@ export default function WealthPage() {
     </Box>
   );
 }
+

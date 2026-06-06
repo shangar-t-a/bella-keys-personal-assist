@@ -12,10 +12,14 @@ class AssetCreate(BaseEntity):
 
     category_id: str = Field(description="ID of the parent category")
     name: str = Field(description="Name of the asset")
-    sub_category: str | None = Field(default=None, description="Subcategory type")
+    sub_category: str | None = Field(default=None, description="Legacy subcategory type")
+    subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
     initial_amount: float = Field(description="Initial asset value or transaction amount in INR")
     units: float | None = Field(default=None, description="Quantity/Weight if unit-based")
     price_per_unit: float | None = Field(default=None, description="Price per unit/NAV if unit-based")
+    interest_rate: float | None = Field(default=None, description="Actual interest rate (%) of the asset")
+    interest_compounding: str | None = Field(default=None, description="Compounding frequency (e.g. YEARLY)")
+    maturity_date: datetime | None = Field(default=None, description="Maturity date of the asset")
     notes: str | None = Field(default=None, description="Notes")
 
 
@@ -24,7 +28,11 @@ class AssetUpdate(BaseEntity):
 
     category_id: str = Field(description="ID of the parent category")
     name: str = Field(description="Name of the asset")
-    sub_category: str | None = Field(default=None, description="Subcategory type")
+    sub_category: str | None = Field(default=None, description="Legacy subcategory type")
+    subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
+    interest_rate: float | None = Field(default=None, description="Actual interest rate (%) of the asset")
+    interest_compounding: str | None = Field(default=None, description="Compounding frequency (e.g. YEARLY)")
+    maturity_date: datetime | None = Field(default=None, description="Maturity date of the asset")
     notes: str | None = Field(default=None, description="Notes")
 
 
@@ -47,9 +55,13 @@ class AssetWithCalc(BaseEntity):
     category_name: str = Field(description="Name of the category")
     category_code: str = Field(description="Code of the category")
     name: str = Field(description="Name of the asset")
-    sub_category: str | None = Field(default=None, description="Subcategory type")
+    sub_category: str | None = Field(default=None, description="Legacy subcategory type")
+    subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
     invested_value: float = Field(description="Invested value in INR")
     current_value: float = Field(description="Current value in INR")
+    interest_rate: float | None = Field(default=None, description="Actual interest rate (%) of the asset")
+    interest_compounding: str | None = Field(default=None, description="Compounding frequency (e.g. YEARLY)")
+    maturity_date: datetime | None = Field(default=None, description="Maturity date of the asset")
     notes: str | None = Field(default=None, description="Notes")
     absolute_returns: float = Field(description="Absolute gains/losses in INR")
     percentage_returns: float = Field(description="Return percentage")

@@ -1,8 +1,20 @@
+export interface AssetSubcategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  code: string;
+  description: string | null;
+  valuationType: 'UNIT_BASED' | 'VALUE_BASED';
+  hasInterest: boolean;
+  hasMaturity: boolean;
+}
+
 export interface AssetCategory {
   id: string;
   name: string;
   code: 'EQUITY' | 'DEBT' | 'REAL_ESTATE' | 'COMMODITIES' | 'CASH_BANK';
   description: string | null;
+  subcategories: AssetSubcategory[];
 }
 
 export interface Asset {
@@ -12,8 +24,12 @@ export interface Asset {
   categoryCode: 'EQUITY' | 'DEBT' | 'REAL_ESTATE' | 'COMMODITIES' | 'CASH_BANK';
   name: string;
   subCategory: string | null;
+  subcategoryId: string | null;
   investedValue: number;
   currentValue: number;
+  interestRate: number | null;
+  interestCompounding: string | null;
+  maturityDate: string | null;
   notes: string | null;
   absoluteReturns: number;
   percentageReturns: number;
@@ -25,9 +41,13 @@ export interface AssetRequest {
   categoryId: string;
   name: string;
   subCategory?: string | null;
+  subcategoryId?: string | null;
   initialAmount: number;
   units?: number | null;
   pricePerUnit?: number | null;
+  interestRate?: number | null;
+  interestCompounding?: string | null;
+  maturityDate?: string | null;
   notes?: string | null;
 }
 
@@ -35,6 +55,10 @@ export interface AssetUpdateRequest {
   categoryId: string;
   name: string;
   subCategory?: string | null;
+  subcategoryId?: string | null;
+  interestRate?: number | null;
+  interestCompounding?: string | null;
+  maturityDate?: string | null;
   notes?: string | null;
 }
 

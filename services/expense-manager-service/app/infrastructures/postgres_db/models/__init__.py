@@ -3,6 +3,7 @@
 from .account import AccountModel
 from .asset import AssetModel
 from .asset_category import AssetCategoryModel
+from .asset_subcategory import AssetSubcategoryModel
 from .asset_transaction import AssetTransactionModel
 from .monthly_planner import (
     MonthlyCategoryModel,
@@ -23,6 +24,7 @@ __all__ = [
     "SavingsBucketModel",
     "SavingsBucketTransactionModel",
     "AssetCategoryModel",
+    "AssetSubcategoryModel",
     "AssetModel",
     "AssetTransactionModel",
 ]

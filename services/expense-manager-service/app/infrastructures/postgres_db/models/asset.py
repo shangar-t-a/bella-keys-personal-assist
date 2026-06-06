@@ -20,8 +20,14 @@ class AssetModel(Base):
     )
     name: Mapped[str] = mapped_column(String, nullable=False, index=True)
     sub_category: Mapped[str | None] = mapped_column(String, nullable=True)
+    subcategory_id: Mapped[str | None] = mapped_column(
+        String, ForeignKey("asset_subcategory.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
     invested_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     current_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    interest_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    interest_compounding: Mapped[str | None] = mapped_column(String, nullable=True)
+    maturity_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(

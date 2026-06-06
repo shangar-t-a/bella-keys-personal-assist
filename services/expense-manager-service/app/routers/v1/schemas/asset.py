@@ -20,10 +20,14 @@ class AssetRequest(BaseSchema):
 
     category_id: str = Field(description="ID of the parent category")
     name: str = Field(description="Name of the asset")
-    sub_category: str | None = Field(default=None, description="Subcategory type")
+    sub_category: str | None = Field(default=None, description="Legacy subcategory type")
+    subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
     initial_amount: float = Field(description="Initial asset value or transaction amount in INR")
     units: float | None = Field(default=None, description="Quantity/Weight if unit-based")
     price_per_unit: float | None = Field(default=None, description="Price per unit/NAV if unit-based")
+    interest_rate: float | None = Field(default=None, description="Actual interest rate (%) of the asset")
+    interest_compounding: str | None = Field(default=None, description="Compounding frequency (e.g. YEARLY)")
+    maturity_date: datetime | None = Field(default=None, description="Maturity date of the asset")
     notes: str | None = Field(default=None, description="Notes")
 
 
@@ -32,7 +36,11 @@ class AssetUpdateRequest(BaseSchema):
 
     category_id: str = Field(description="ID of the parent category")
     name: str = Field(description="Name of the asset")
-    sub_category: str | None = Field(default=None, description="Subcategory type")
+    sub_category: str | None = Field(default=None, description="Legacy subcategory type")
+    subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
+    interest_rate: float | None = Field(default=None, description="Actual interest rate (%) of the asset")
+    interest_compounding: str | None = Field(default=None, description="Compounding frequency (e.g. YEARLY)")
+    maturity_date: datetime | None = Field(default=None, description="Maturity date of the asset")
     notes: str | None = Field(default=None, description="Notes")
 
 
@@ -47,6 +55,19 @@ class AssetTransactionRequest(BaseSchema):
     description: str | None = Field(default=None, description="Audit notes")
 
 
+class AssetSubcategoryResponse(BaseSchema):
+    """Response schema for asset subcategory."""
+
+    id: str
+    category_id: str
+    name: str
+    code: str
+    description: str | None = Field(default=None)
+    valuation_type: str
+    has_interest: bool
+    has_maturity: bool
+
+
 class AssetCategoryResponse(BaseSchema):
     """Response schema for asset category."""
 
@@ -54,6 +75,7 @@ class AssetCategoryResponse(BaseSchema):
     name: str
     code: str
     description: str | None
+    subcategories: list[AssetSubcategoryResponse] = Field(default_factory=list)
 
 
 class AssetResponse(BaseSchema):
@@ -65,8 +87,12 @@ class AssetResponse(BaseSchema):
     category_code: str
     name: str
     sub_category: str | None
+    subcategory_id: str | None
     invested_value: float
     current_value: float
+    interest_rate: float | None
+    interest_compounding: str | None
+    maturity_date: datetime | None
     notes: str | None
     absolute_returns: float
     percentage_returns: float

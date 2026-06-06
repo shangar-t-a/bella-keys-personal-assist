@@ -9,6 +9,7 @@ from app.entities.models.asset import (
     AssetFilter,
     AssetSort,
     AssetSortField,
+    AssetSubcategory,
     AssetTransaction,
 )
 from app.entities.models.sort import SortOrder
@@ -16,6 +17,7 @@ from app.entities.repositories.asset import AssetRepositoryInterface
 from app.infrastructures.postgres_db.database import get_async_session
 from app.infrastructures.postgres_db.models.asset import AssetModel
 from app.infrastructures.postgres_db.models.asset_category import AssetCategoryModel
+from app.infrastructures.postgres_db.models.asset_subcategory import AssetSubcategoryModel
 from app.infrastructures.postgres_db.models.asset_transaction import AssetTransactionModel
 
 
@@ -30,13 +32,29 @@ class PostgresAssetRepository(AssetRepositoryInterface):
         """Get a new database session."""
         return self.session_factory()
 
-    def _to_category_entity(self, model: AssetCategoryModel) -> AssetCategory:
+    def _to_subcategory_entity(self, model: AssetSubcategoryModel) -> AssetSubcategory:
+        """Map DB model to Domain entity."""
+        return AssetSubcategory(
+            id=model.id,
+            category_id=model.category_id,
+            name=model.name,
+            code=model.code,
+            description=model.description,
+            valuation_type=model.valuation_type,
+            has_interest=model.has_interest,
+            has_maturity=model.has_maturity,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
+        )
+
+    def _to_category_entity(self, model: AssetCategoryModel, subcategories: list[AssetSubcategory] | None = None) -> AssetCategory:
         """Map DB model to Domain entity."""
         return AssetCategory(
             id=model.id,
             name=model.name,
             code=model.code,
             description=model.description,
+            subcategories=subcategories or [],
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
@@ -48,8 +66,12 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             category_id=model.category_id,
             name=model.name,
             sub_category=model.sub_category,
+            subcategory_id=model.subcategory_id,
             invested_value=model.invested_value,
             current_value=model.current_value,
+            interest_rate=model.interest_rate,
+            interest_compounding=model.interest_compounding,
+            maturity_date=model.maturity_date,
             notes=model.notes,
             created_at=model.created_at,
             updated_at=model.updated_at,
@@ -72,10 +94,20 @@ class PostgresAssetRepository(AssetRepositoryInterface):
     async def get_all_categories(self) -> list[AssetCategory]:
         """Retrieve all asset categories."""
         async with await self._get_session() as session:
-            stmt = select(AssetCategoryModel).order_by(AssetCategoryModel.name.asc())
-            result = await session.execute(stmt)
-            models = result.scalars().all()
-            return [self._to_category_entity(m) for m in models]
+            cat_stmt = select(AssetCategoryModel).order_by(AssetCategoryModel.name.asc())
+            cat_result = await session.execute(cat_stmt)
+            cat_models = cat_result.scalars().all()
+
+            sub_stmt = select(AssetSubcategoryModel).order_by(AssetSubcategoryModel.name.asc())
+            sub_result = await session.execute(sub_stmt)
+            sub_models = sub_result.scalars().all()
+
+            sub_map = {}
+            for s in sub_models:
+                entity = self._to_subcategory_entity(s)
+                sub_map.setdefault(s.category_id, []).append(entity)
+
+            return [self._to_category_entity(m, sub_map.get(m.id, [])) for m in cat_models]
 
     async def get_category_by_id(self, category_id: str) -> AssetCategory | None:
         """Retrieve an asset category by its ID."""
@@ -83,7 +115,15 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             stmt = select(AssetCategoryModel).where(AssetCategoryModel.id == category_id)
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
-            return self._to_category_entity(model) if model else None
+            if not model:
+                return None
+
+            sub_stmt = select(AssetSubcategoryModel).where(AssetSubcategoryModel.category_id == category_id).order_by(AssetSubcategoryModel.name.asc())
+            sub_result = await session.execute(sub_stmt)
+            sub_models = sub_result.scalars().all()
+            subcategories = [self._to_subcategory_entity(s) for s in sub_models]
+
+            return self._to_category_entity(model, subcategories)
 
     async def get_category_by_code(self, category_code: str) -> AssetCategory | None:
         """Retrieve an asset category by its code."""
@@ -91,7 +131,15 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             stmt = select(AssetCategoryModel).where(AssetCategoryModel.code == category_code.upper())
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
-            return self._to_category_entity(model) if model else None
+            if not model:
+                return None
+
+            sub_stmt = select(AssetSubcategoryModel).where(AssetSubcategoryModel.category_id == model.id).order_by(AssetSubcategoryModel.name.asc())
+            sub_result = await session.execute(sub_stmt)
+            sub_models = sub_result.scalars().all()
+            subcategories = [self._to_subcategory_entity(s) for s in sub_models]
+
+            return self._to_category_entity(model, subcategories)
 
     async def add_asset(self, asset: Asset) -> Asset:
         """Add a new asset."""
@@ -101,8 +149,12 @@ class PostgresAssetRepository(AssetRepositoryInterface):
                 category_id=asset.category_id,
                 name=asset.name,
                 sub_category=asset.sub_category,
+                subcategory_id=asset.subcategory_id,
                 invested_value=asset.invested_value,
                 current_value=asset.current_value,
+                interest_rate=asset.interest_rate,
+                interest_compounding=asset.interest_compounding,
+                maturity_date=asset.maturity_date,
                 notes=asset.notes,
             )
             session.add(model)
@@ -138,8 +190,12 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             model.name = asset.name
             model.category_id = asset.category_id
             model.sub_category = asset.sub_category
+            model.subcategory_id = asset.subcategory_id
             model.invested_value = asset.invested_value
             model.current_value = asset.current_value
+            model.interest_rate = asset.interest_rate
+            model.interest_compounding = asset.interest_compounding
+            model.maturity_date = asset.maturity_date
             model.notes = asset.notes
 
             await session.commit()
