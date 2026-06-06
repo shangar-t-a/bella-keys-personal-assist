@@ -1,10 +1,15 @@
-"""Conftest for expense-manager-service integration tests."""
+import os
+
+# Set JWT_SECRET environment variable before importing app to ensure JWTAuthMiddleware is initialized with it.
+os.environ["JWT_SECRET"] = "test_secret_for_integration_testing"
 
 from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from jose import jwt
+from pydantic import SecretStr
 from pytest_asyncio import is_async_test
 
 from app import settings
@@ -42,6 +47,7 @@ async def patch_settings():
         APP_ENV="test",
         STORAGE_TYPE="postgresql",
         DATABASE_URL="postgresql+asyncpg://ems_test_user:test123@localhost:5432/expense_manager_test",
+        JWT_SECRET=SecretStr("test_secret_for_integration_testing"),
     )
     settings.get_settings = MagicMock()
     settings.get_settings.return_value = unit_test_settings
@@ -65,7 +71,10 @@ async def init_and_drop_db(patch_settings):
 @pytest_asyncio.fixture(scope="session")
 async def client(patch_settings, init_and_drop_db) -> AsyncClient:
     """Provide an httpx AsyncClient wired to the FastAPI app."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    # Generate a mock JWT token using the configured secret key
+    token = jwt.encode({"sub": "test_user"}, "test_secret_for_integration_testing", algorithm="HS256")
+    headers = {"Authorization": f"Bearer {token}"}
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", headers=headers) as ac:
         yield ac
 
 
