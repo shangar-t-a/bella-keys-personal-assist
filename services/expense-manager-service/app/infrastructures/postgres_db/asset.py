@@ -47,7 +47,9 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             updated_at=model.updated_at,
         )
 
-    def _to_category_entity(self, model: AssetCategoryModel, subcategories: list[AssetSubcategory] | None = None) -> AssetCategory:
+    def _to_category_entity(
+        self, model: AssetCategoryModel, subcategories: list[AssetSubcategory] | None = None
+    ) -> AssetCategory:
         """Map DB model to Domain entity."""
         return AssetCategory(
             id=model.id,
@@ -118,7 +120,11 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             if not model:
                 return None
 
-            sub_stmt = select(AssetSubcategoryModel).where(AssetSubcategoryModel.category_id == category_id).order_by(AssetSubcategoryModel.name.asc())
+            sub_stmt = (
+                select(AssetSubcategoryModel)
+                .where(AssetSubcategoryModel.category_id == category_id)
+                .order_by(AssetSubcategoryModel.name.asc())
+            )
             sub_result = await session.execute(sub_stmt)
             sub_models = sub_result.scalars().all()
             subcategories = [self._to_subcategory_entity(s) for s in sub_models]
@@ -134,7 +140,11 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             if not model:
                 return None
 
-            sub_stmt = select(AssetSubcategoryModel).where(AssetSubcategoryModel.category_id == model.id).order_by(AssetSubcategoryModel.name.asc())
+            sub_stmt = (
+                select(AssetSubcategoryModel)
+                .where(AssetSubcategoryModel.category_id == model.id)
+                .order_by(AssetSubcategoryModel.name.asc())
+            )
             sub_result = await session.execute(sub_stmt)
             sub_models = sub_result.scalars().all()
             subcategories = [self._to_subcategory_entity(s) for s in sub_models]

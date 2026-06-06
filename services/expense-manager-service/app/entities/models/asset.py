@@ -15,7 +15,9 @@ class AssetSubcategory(BaseEntity):
     category_id: str = Field(description="ID of the parent category")
     name: str = Field(description="Name of the subcategory")
     code: str = Field(description="Unique code code of the subcategory")
-    description: str | None = Field(default=None, description="Description/hints of valuation details for the subcategory")
+    description: str | None = Field(
+        default=None, description="Description/hints of valuation details for the subcategory"
+    )
     valuation_type: str = Field(description="Valuation model (UNIT_BASED, VALUE_BASED)")
     has_interest: bool = Field(default=False, description="Whether interest tracking is supported")
     has_maturity: bool = Field(default=False, description="Whether maturity date tracking is supported")
