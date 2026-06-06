@@ -180,14 +180,6 @@ class PostgresAssetRepository(AssetRepositoryInterface):
             model = result.scalar_one_or_none()
             return self._to_asset_entity(model) if model else None
 
-    async def get_asset_by_name(self, name: str) -> Asset | None:
-        """Retrieve an asset by its name."""
-        async with await self._get_session() as session:
-            stmt = select(AssetModel).where(AssetModel.name == name)
-            result = await session.execute(stmt)
-            model = result.scalar_one_or_none()
-            return self._to_asset_entity(model) if model else None
-
     async def edit_asset(self, asset_id: str, asset: Asset) -> Asset:
         """Edit an existing asset details."""
         async with await self._get_session() as session:

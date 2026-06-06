@@ -40,11 +40,6 @@ class AssetRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_asset_by_name(self, name: str) -> Asset | None:
-        """Retrieve an asset by its name."""
-        pass
-
-    @abstractmethod
     async def edit_asset(self, asset_id: str, asset: Asset) -> Asset:
         """Edit an existing asset details."""
         pass
