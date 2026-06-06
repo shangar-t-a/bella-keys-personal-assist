@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Expense Manager Service",
-    "version": "3.0.0"
+    "version": "1.1.0"
   },
   "paths": {
     "/v1/account/get_or_create": {
@@ -1800,6 +1800,426 @@
         }
       }
     },
+    "/v1/assets/categories": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get All Categories",
+        "description": "Retrieve list of all pre-seeded categories.",
+        "operationId": "get_all_categories_v1_assets_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AssetCategoryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get All Categories V1 Assets Categories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets": {
+      "post": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Create Asset",
+        "description": "Create a new asset and log its initial balance transaction.",
+        "operationId": "create_asset_v1_assets_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "List Assets",
+        "description": "Retrieve list of assets, optionally filtered by category or search term.",
+        "operationId": "list_assets_v1_assets_get",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssetResponse"
+                  },
+                  "title": "Response List Assets V1 Assets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets/summary": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get Asset Summary",
+        "description": "Get aggregate wealth calculations and category breakdowns.",
+        "operationId": "get_asset_summary_v1_assets_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets/{id}": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get Asset By Id",
+        "description": "Retrieve details of a single asset by its ID.",
+        "operationId": "get_asset_by_id_v1_assets__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Update Asset",
+        "description": "Update metadata fields of an existing asset.",
+        "operationId": "update_asset_v1_assets__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Delete Asset",
+        "description": "Delete an asset and all its historical transactions.",
+        "operationId": "delete_asset_v1_assets__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets/{id}/transactions": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get Transactions For Asset",
+        "description": "Retrieve the transaction history ledger for a specific asset.",
+        "operationId": "get_transactions_for_asset_v1_assets__id__transactions_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssetTransactionResponse"
+                  },
+                  "title": "Response Get Transactions For Asset V1 Assets  Id  Transactions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Add Transaction",
+        "description": "Add a new buy, sell, or revaluation transaction to the asset's ledger.",
+        "operationId": "add_transaction_v1_assets__id__transactions_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTransactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets/transactions/{tx_id}": {
+      "delete": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Delete Transaction",
+        "description": "Delete a transaction from the ledger and trigger parent valuation recalculation.",
+        "operationId": "delete_transaction_v1_assets_transactions__tx_id__delete",
+        "parameters": [
+          {
+            "name": "tx_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tx Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -1910,6 +2330,645 @@
         "title": "AccountUpdateRequest",
         "description": "Schema for account update requests."
       },
+      "AssetCategoryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#/components/schemas/AssetSubcategoryResponse"
+            },
+            "type": "array",
+            "title": "Subcategories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "code",
+          "description"
+        ],
+        "title": "AssetCategoryResponse",
+        "description": "Response schema for asset category."
+      },
+      "AssetCategorySummaryResponse": {
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid"
+          },
+          "categoryName": {
+            "type": "string",
+            "title": "Categoryname"
+          },
+          "categoryCode": {
+            "type": "string",
+            "title": "Categorycode"
+          },
+          "totalInvested": {
+            "type": "number",
+            "title": "Totalinvested"
+          },
+          "totalCurrent": {
+            "type": "number",
+            "title": "Totalcurrent"
+          },
+          "totalReturns": {
+            "type": "number",
+            "title": "Totalreturns"
+          },
+          "percentageReturns": {
+            "type": "number",
+            "title": "Percentagereturns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryId",
+          "categoryName",
+          "categoryCode",
+          "totalInvested",
+          "totalCurrent",
+          "totalReturns",
+          "percentageReturns"
+        ],
+        "title": "AssetCategorySummaryResponse",
+        "description": "Response schema for category aggregate summary."
+      },
+      "AssetInterestDetailsSchema": {
+        "properties": {
+          "interestRate": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Interestrate",
+            "description": "Annual interest rate (%)"
+          },
+          "compounding": {
+            "$ref": "#/components/schemas/CompoundingFrequency",
+            "description": "Compounding frequency"
+          },
+          "maturityDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maturitydate",
+            "description": "Maturity date of the asset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interestRate",
+          "compounding"
+        ],
+        "title": "AssetInterestDetailsSchema",
+        "description": "Schema for interest-bearing asset fields."
+      },
+      "AssetRequest": {
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid",
+            "description": "ID of the parent category"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the asset"
+          },
+          "subcategoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategoryid",
+            "description": "ID of the subcategory"
+          },
+          "initialAmount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Initialamount",
+            "description": "Amount for the initial BUY transaction (INR)"
+          },
+          "unitDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetUnitDetailsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unit-based fields. Required for UNIT_BASED subcategories."
+          },
+          "interestDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetInterestDetailsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Interest fields. Required for interest-bearing subcategories."
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Additional notes/remarks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryId",
+          "name",
+          "initialAmount"
+        ],
+        "title": "AssetRequest",
+        "description": "Schema for adding a new asset."
+      },
+      "AssetResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid"
+          },
+          "categoryName": {
+            "type": "string",
+            "title": "Categoryname"
+          },
+          "categoryCode": {
+            "type": "string",
+            "title": "Categorycode"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "subcategoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategoryid"
+          },
+          "investedValue": {
+            "type": "number",
+            "title": "Investedvalue"
+          },
+          "currentValue": {
+            "type": "number",
+            "title": "Currentvalue"
+          },
+          "interestRate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interestrate"
+          },
+          "interestCompounding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompoundingFrequency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maturityDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maturitydate"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "absoluteReturns": {
+            "type": "number",
+            "title": "Absolutereturns"
+          },
+          "percentageReturns": {
+            "type": "number",
+            "title": "Percentagereturns"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "categoryId",
+          "categoryName",
+          "categoryCode",
+          "name",
+          "subcategoryId",
+          "investedValue",
+          "currentValue",
+          "interestRate",
+          "interestCompounding",
+          "maturityDate",
+          "notes",
+          "absoluteReturns",
+          "percentageReturns",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "AssetResponse",
+        "description": "Response schema for asset details."
+      },
+      "AssetSubcategoryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "valuationType": {
+            "type": "string",
+            "title": "Valuationtype"
+          },
+          "hasInterest": {
+            "type": "boolean",
+            "title": "Hasinterest"
+          },
+          "hasMaturity": {
+            "type": "boolean",
+            "title": "Hasmaturity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "categoryId",
+          "name",
+          "code",
+          "valuationType",
+          "hasInterest",
+          "hasMaturity"
+        ],
+        "title": "AssetSubcategoryResponse",
+        "description": "Response schema for asset subcategory."
+      },
+      "AssetSummaryResponse": {
+        "properties": {
+          "totalInvested": {
+            "type": "number",
+            "title": "Totalinvested"
+          },
+          "totalCurrent": {
+            "type": "number",
+            "title": "Totalcurrent"
+          },
+          "totalReturns": {
+            "type": "number",
+            "title": "Totalreturns"
+          },
+          "percentageReturns": {
+            "type": "number",
+            "title": "Percentagereturns"
+          },
+          "categoryBreakdowns": {
+            "items": {
+              "$ref": "#/components/schemas/AssetCategorySummaryResponse"
+            },
+            "type": "array",
+            "title": "Categorybreakdowns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalInvested",
+          "totalCurrent",
+          "totalReturns",
+          "percentageReturns",
+          "categoryBreakdowns"
+        ],
+        "title": "AssetSummaryResponse",
+        "description": "Response schema for full wealth dashboard overview."
+      },
+      "AssetTransactionRequest": {
+        "properties": {
+          "transactionType": {
+            "$ref": "#/components/schemas/AssetTransactionType",
+            "description": "Transaction type: BUY, SELL, or REVALUE"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Amount",
+            "description": "Total INR amount of the transaction"
+          },
+          "unitDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetUnitDetailsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unit-based fields. Required for BUY/SELL on unit-based assets."
+          },
+          "transactionDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactiondate",
+            "description": "Transaction timestamp"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Audit remark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transactionType",
+          "amount"
+        ],
+        "title": "AssetTransactionRequest",
+        "description": "Schema for logging a new transaction."
+      },
+      "AssetTransactionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "assetId": {
+            "type": "string",
+            "title": "Assetid"
+          },
+          "transactionType": {
+            "$ref": "#/components/schemas/AssetTransactionType"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "pricePerUnit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priceperunit"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Transactiondate"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "assetId",
+          "transactionType",
+          "amount",
+          "units",
+          "pricePerUnit",
+          "transactionDate",
+          "description"
+        ],
+        "title": "AssetTransactionResponse",
+        "description": "Response schema for asset transaction."
+      },
+      "AssetTransactionType": {
+        "type": "string",
+        "enum": [
+          "BUY",
+          "SELL",
+          "REVALUE"
+        ],
+        "title": "AssetTransactionType",
+        "description": "Types of asset transactions."
+      },
+      "AssetUnitDetailsSchema": {
+        "properties": {
+          "units": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Units",
+            "description": "Quantity/Weight of units purchased"
+          },
+          "pricePerUnit": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Priceperunit",
+            "description": "Price per unit/NAV at time of transaction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "units",
+          "pricePerUnit"
+        ],
+        "title": "AssetUnitDetailsSchema",
+        "description": "Schema for unit-based asset fields."
+      },
+      "AssetUpdateRequest": {
+        "properties": {
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryid",
+            "description": "ID of the parent category"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the asset"
+          },
+          "subcategoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategoryid",
+            "description": "ID of the subcategory"
+          },
+          "interestDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetInterestDetailsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Updated interest fields. Pass null to clear interest tracking."
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Additional notes/remarks"
+          }
+        },
+        "type": "object",
+        "title": "AssetUpdateRequest",
+        "description": "Schema for partially updating asset metadata (PATCH)."
+      },
       "CategoryL1": {
         "type": "string",
         "enum": [
@@ -1918,6 +2977,17 @@
         ],
         "title": "CategoryL1",
         "description": "Level 1 categories for expenses."
+      },
+      "CompoundingFrequency": {
+        "type": "string",
+        "enum": [
+          "MONTHLY",
+          "QUARTERLY",
+          "HALF_YEARLY",
+          "YEARLY"
+        ],
+        "title": "CompoundingFrequency",
+        "description": "Supported interest compounding frequencies."
       },
       "ExpenseStatus": {
         "type": "string",
