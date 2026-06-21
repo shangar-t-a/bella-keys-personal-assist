@@ -27,6 +27,7 @@ class LiabilityModel(Base):
     interest_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
     interest_compounding: Mapped[str | None] = mapped_column(String, nullable=True)
     emi_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    emi_start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     maturity_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

@@ -50,6 +50,7 @@ def _simulate_amortization(
     emi_amount: float,
     transactions: list[LiabilityTransaction],
     up_to_date: datetime,
+    emi_start_date: datetime | None = None,
 ) -> dict[str, tuple[float, float, float]]:
     """Core amortization simulation engine (single source of truth).
 
@@ -69,6 +70,7 @@ def _simulate_amortization(
         emi_amount: Scheduled monthly EMI in INR.
         transactions: Full chronological ledger of transactions.
         up_to_date: Simulate up to (and including) this date's month.
+        emi_start_date: Optional date from which EMI payments should start auto-applying.
 
     Returns:
         Dict of ``"YYYY-MM"`` → ``(balance, cumulative_interest, cumulative_repaid)`` at
@@ -88,6 +90,8 @@ def _simulate_amortization(
         start_date = start_date.replace(tzinfo=UTC)
     if up_to_date.tzinfo is None:
         up_to_date = up_to_date.replace(tzinfo=UTC)
+    if emi_start_date and emi_start_date.tzinfo is None:
+        emi_start_date = emi_start_date.replace(tzinfo=UTC)
 
     # Group all transactions by YYYY-MM
     txs_by_month: dict[str, list[LiabilityTransaction]] = {}
@@ -101,7 +105,7 @@ def _simulate_amortization(
     snapshots: dict[str, tuple[float, float, float]] = {}
 
     # Month 0: Disbursal month
-    p = original_value  # opening balance after all borrows
+    p = first_borrow.amount  # opening balance from first borrow
     accum_interest = 0.0
     accum_repaid = 0.0
 
@@ -134,16 +138,16 @@ def _simulate_amortization(
         date_m = add_months(start_date, m)
         m_str = date_m.strftime("%Y-%m")
 
-        if p <= 0.0:
-            # Loan already paid off — record zero balance going forward
-            snapshots[m_str] = (0.0, round(accum_interest, 2), round(accum_repaid, 2))
-            continue
-
         # Step 1 — Gather any manual transactions in this month
         month_txs = txs_by_month.get(m_str, [])
         borrows_m = sum(t.amount for t in month_txs if t.transaction_type == LiabilityTransactionType.BORROW)
         repays_m = sum(t.amount for t in month_txs if t.transaction_type == LiabilityTransactionType.REPAY)
         revals_m = [t for t in month_txs if t.transaction_type == LiabilityTransactionType.REVALUE]
+
+        if p <= 0.0 and borrows_m == 0.0 and not revals_m:
+            # Loan already paid off — record zero balance going forward
+            snapshots[m_str] = (0.0, round(accum_interest, 2), round(accum_repaid, 2))
+            continue
 
         if revals_m:
             # REVALUE month: the bank's official closing balance is the authoritative truth.
@@ -165,7 +169,10 @@ def _simulate_amortization(
         else:
             # Normal month: accrue interest, apply scheduled EMI + any manual repayments
             interest_m = p * monthly_rate
-            auto_emi = min(emi, p + interest_m)
+            if emi_start_date and date_m < emi_start_date:
+                auto_emi = 0.0
+            else:
+                auto_emi = min(emi, p + interest_m)
             total_repayment = auto_emi + repays_m
             p = max(0.0, p + interest_m + borrows_m - total_repayment)
             accum_interest += interest_m
@@ -182,6 +189,7 @@ def calculate_current_outstanding(
     emi_amount: float | None,
     transactions: list[LiabilityTransaction],
     today: datetime | None = None,
+    emi_start_date: datetime | None = None,
 ) -> dict[str, float]:
     """Calculate the dynamic outstanding balance, total repaid, and accumulated interest as of today.
 
@@ -236,6 +244,7 @@ def calculate_current_outstanding(
         emi_amount=emi_amount,
         transactions=transactions,
         up_to_date=today,
+        emi_start_date=emi_start_date,
     )
 
     if not snapshots:
@@ -278,6 +287,7 @@ class LiabilityService:
             emi_amount=liability.emi_amount,
             transactions=transactions,
             today=datetime.now(UTC),
+            emi_start_date=liability.emi_start_date,
         )
         dynamic_current_value = calcs["current_value"]
         total_repaid = calcs["total_repaid"]
@@ -300,6 +310,7 @@ class LiabilityService:
             interest_rate=liability.interest_rate,
             interest_compounding=liability.interest_compounding,
             emi_amount=liability.emi_amount,
+            emi_start_date=liability.emi_start_date,
             maturity_date=liability.maturity_date,
             notes=liability.notes,
             total_repaid=round(total_repaid, 2),
@@ -318,6 +329,7 @@ class LiabilityService:
             liability_create.interest_details.compounding if liability_create.interest_details else None
         )
         emi_amount = liability_create.interest_details.emi_amount if liability_create.interest_details else None
+        emi_start_date = liability_create.interest_details.emi_start_date if liability_create.interest_details else None
         maturity_date = liability_create.interest_details.maturity_date if liability_create.interest_details else None
 
         liability = Liability(
@@ -330,6 +342,7 @@ class LiabilityService:
             interest_rate=interest_rate,
             interest_compounding=interest_compounding,
             emi_amount=emi_amount,
+            emi_start_date=emi_start_date,
             maturity_date=maturity_date,
             notes=liability_create.notes,
         )
@@ -385,6 +398,11 @@ class LiabilityService:
                 liability_update.interest_details.emi_amount
                 if liability_update.interest_details
                 else existing_liability.emi_amount
+            ),
+            emi_start_date=(
+                liability_update.interest_details.emi_start_date
+                if liability_update.interest_details
+                else existing_liability.emi_start_date
             ),
             maturity_date=(
                 liability_update.interest_details.maturity_date
@@ -545,6 +563,7 @@ class LiabilityService:
             emi_amount=liability.emi_amount,
             transactions=transactions,
             today=datetime.now(UTC),
+            emi_start_date=liability.emi_start_date,
         )
         current_value = calcs["current_value"]
 
@@ -559,6 +578,7 @@ class LiabilityService:
             interest_rate=liability.interest_rate,
             interest_compounding=liability.interest_compounding,
             emi_amount=liability.emi_amount,
+            emi_start_date=liability.emi_start_date,
             maturity_date=liability.maturity_date,
             notes=liability.notes,
             created_at=liability.created_at,
@@ -619,12 +639,16 @@ class LiabilityService:
 
         while p_ideal > 0 and n_ideal < 360:
             n_ideal += 1
+            date_m = add_months(start_date, n_ideal)
             interest_m = p_ideal * monthly_rate
-            payment = min(emi, p_ideal + interest_m)
+            if liability.emi_start_date and date_m < liability.emi_start_date:
+                payment = 0.0
+            else:
+                payment = min(emi, p_ideal + interest_m)
             p_ideal = max(0.0, p_ideal + interest_m - payment)
             total_interest_ideal += interest_m
 
-            n_str = add_months(start_date, n_ideal).strftime("%Y-%m")
+            n_str = date_m.strftime("%Y-%m")
             ideal_points[n_str] = round(p_ideal, 2)
             ideal_interest_points[n_str] = round(total_interest_ideal, 2)
             if p_ideal <= 0:
@@ -640,6 +664,7 @@ class LiabilityService:
             emi_amount=liability.emi_amount,
             transactions=transactions,
             up_to_date=today,
+            emi_start_date=liability.emi_start_date,
         )
 
         actual_points: dict[str, float] = {}
@@ -675,13 +700,17 @@ class LiabilityService:
             cum_int_proj = total_interest_historical
             while p_proj > 0 and k_projected < 360:
                 k_projected += 1
+                date_m = add_months(today, k_projected)
                 interest_m = p_proj * monthly_rate
-                payment = min(emi, p_proj + interest_m)
+                if liability.emi_start_date and date_m < liability.emi_start_date:
+                    payment = 0.0
+                else:
+                    payment = min(emi, p_proj + interest_m)
                 p_proj = max(0.0, p_proj + interest_m - payment)
                 total_interest_projected_future += interest_m
                 cum_int_proj += interest_m
 
-                k_str = add_months(today, k_projected).strftime("%Y-%m")
+                k_str = date_m.strftime("%Y-%m")
                 projected_future_points[k_str] = round(p_proj, 2)
                 projected_future_interest_points[k_str] = round(cum_int_proj, 2)
                 if p_proj <= 0:

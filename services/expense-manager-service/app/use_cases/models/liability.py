@@ -19,6 +19,7 @@ class LiabilityInterestDetails(BaseInput):
     interest_rate: float = Field(gt=0, description="Annual interest rate (%) of the liability")
     compounding: CompoundingFrequency = Field(description="Compounding frequency")
     emi_amount: float | None = Field(default=None, gt=0, description="Scheduled monthly EMI amount (INR)")
+    emi_start_date: datetime | None = Field(default=None, description="Date when EMI repayments officially begin")
     maturity_date: datetime | None = Field(default=None, description="Maturity date of the liability")
 
 
@@ -79,6 +80,7 @@ class LiabilityWithCalc(BaseEntity):
     interest_rate: float | None = Field(default=None, description="Annual interest rate (%)")
     interest_compounding: CompoundingFrequency | None = Field(default=None, description="Compounding frequency")
     emi_amount: float | None = Field(default=None, description="Scheduled monthly EMI amount (INR)")
+    emi_start_date: datetime | None = Field(default=None, description="Date when EMI repayments officially begin")
     maturity_date: datetime | None = Field(default=None, description="Maturity date of the liability")
     notes: str | None = Field(default=None, description="Additional notes")
     total_repaid: float = Field(default=0.0, description="Total amount repaid so far")

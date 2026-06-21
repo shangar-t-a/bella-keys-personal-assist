@@ -73,6 +73,7 @@ class Liability(BaseEntity):
     interest_rate: float | None = Field(default=None, description="Annual interest rate (%) of the liability")
     interest_compounding: CompoundingFrequency | None = Field(default=None, description="Compounding frequency")
     emi_amount: float | None = Field(default=None, description="Scheduled monthly EMI amount in INR")
+    emi_start_date: datetime | None = Field(default=None, description="Date when EMI repayments officially begin")
     maturity_date: datetime | None = Field(default=None, description="Maturity/Closure date of the liability")
     notes: str | None = Field(default=None, description="Additional notes/remarks")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Time of creation")

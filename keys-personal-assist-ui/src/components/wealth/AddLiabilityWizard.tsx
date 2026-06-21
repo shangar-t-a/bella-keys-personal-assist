@@ -55,6 +55,7 @@ export default function AddLiabilityWizard({ open, onClose, onSuccess }: AddLiab
   const [interestRate, setInterestRate] = useState<string>('');
   const [interestCompounding, setInterestCompounding] = useState<string>('MONTHLY');
   const [emiAmount, setEmiAmount] = useState<string>('');
+  const [emiStartDate, setEmiStartDate] = useState<string>('');
   const [maturityDate, setMaturityDate] = useState<string>('');
   const [initialDate, setInitialDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
@@ -90,6 +91,7 @@ export default function AddLiabilityWizard({ open, onClose, onSuccess }: AddLiab
     setInterestRate('');
     setInterestCompounding('MONTHLY');
     setEmiAmount('');
+    setEmiStartDate('');
     setMaturityDate('');
     setInitialDate(new Date().toISOString().split('T')[0]);
   };
@@ -158,6 +160,7 @@ export default function AddLiabilityWizard({ open, onClose, onSuccess }: AddLiab
               interestRate: parseFloat(interestRate),
               compounding: interestCompounding as import('@/types/asset').CompoundingFrequency,
               emiAmount: emiAmount ? parseFloat(emiAmount) : null,
+              emiStartDate: emiStartDate ? new Date(emiStartDate).toISOString() : null,
               maturityDate:
                 selectedSubcategory?.hasMaturity && maturityDate
                   ? new Date(maturityDate).toISOString()
@@ -190,6 +193,7 @@ export default function AddLiabilityWizard({ open, onClose, onSuccess }: AddLiab
         setInterestRate('');
         setInterestCompounding('MONTHLY');
         setEmiAmount('');
+        setEmiStartDate('');
         setMaturityDate('');
         setInitialDate(new Date().toISOString().split('T')[0]);
         setNotes('');
@@ -436,6 +440,15 @@ export default function AddLiabilityWizard({ open, onClose, onSuccess }: AddLiab
                           startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                         }}
                         placeholder="Scheduled monthly payment"
+                      />
+                      <TextField
+                        fullWidth
+                        label="EMI Start Date"
+                        type="date"
+                        value={emiStartDate}
+                        onChange={(e) => setEmiStartDate(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        helperText="The date when EMI payments officially began/begins"
                       />
                     </Box>
                   )}

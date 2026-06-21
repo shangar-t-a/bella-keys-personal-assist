@@ -162,6 +162,7 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
   const [editInterestRate, setEditInterestRate] = useState<string>('');
   const [editInterestCompounding, setEditInterestCompounding] = useState<string>('MONTHLY');
   const [editEmiAmount, setEditEmiAmount] = useState<string>('');
+  const [editEmiStartDate, setEditEmiStartDate] = useState<string>('');
   const [editMaturityDate, setEditMaturityDate] = useState<string>('');
 
   // Custom Confirm Dialog State
@@ -242,6 +243,7 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
     setEditInterestRate(liability.interestRate != null ? String(liability.interestRate) : '');
     setEditInterestCompounding(liability.interestCompounding || 'MONTHLY');
     setEditEmiAmount(liability.emiAmount != null ? String(liability.emiAmount) : '');
+    setEditEmiStartDate(liability.emiStartDate ? liability.emiStartDate.split('T')[0] : '');
     setEditMaturityDate(liability.maturityDate ? liability.maturityDate.split('T')[0] : '');
     setEditOpen(true);
   };
@@ -284,6 +286,7 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
               interestRate: editInterestRate ? parseFloat(editInterestRate) : 0,
               compounding: editInterestCompounding as import('@/types/asset').CompoundingFrequency,
               emiAmount: editEmiAmount ? parseFloat(editEmiAmount) : null,
+              emiStartDate: editEmiStartDate ? new Date(editEmiStartDate).toISOString() : null,
               maturityDate:
                 editingSubcategory?.hasMaturity && editMaturityDate
                   ? new Date(editMaturityDate).toISOString()
@@ -981,6 +984,15 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
                           startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                         }}
                         placeholder="Scheduled monthly payment"
+                      />
+                      <TextField
+                        fullWidth
+                        label="EMI Start Date"
+                        type="date"
+                        value={editEmiStartDate}
+                        onChange={(e) => setEditEmiStartDate(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        helperText="The date when EMI payments officially began/begins"
                       />
                     </Box>
                   )}
