@@ -153,10 +153,7 @@ class AssetCategoryResponseMapper:
     @staticmethod
     def to_response_model(category: AssetCategory) -> AssetCategoryResponse:
         """Map domain category model to response model."""
-        subcategories = [
-            AssetCategoryResponseMapper._to_subcategory_response(sub)
-            for sub in category.subcategories
-        ]
+        subcategories = [AssetCategoryResponseMapper._to_subcategory_response(sub) for sub in category.subcategories]
         return AssetCategoryResponse(
             id=category.id,
             name=category.name,

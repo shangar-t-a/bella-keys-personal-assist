@@ -69,9 +69,7 @@ class AssetService:
 
         # Unpack optional sub-model fields
         interest_rate = asset_create.interest_details.interest_rate if asset_create.interest_details else None
-        interest_compounding = (
-            asset_create.interest_details.compounding if asset_create.interest_details else None
-        )
+        interest_compounding = asset_create.interest_details.compounding if asset_create.interest_details else None
         maturity_date = asset_create.interest_details.maturity_date if asset_create.interest_details else None
         units = asset_create.unit_details.units if asset_create.unit_details else None
         price_per_unit = asset_create.unit_details.price_per_unit if asset_create.unit_details else None
@@ -166,9 +164,7 @@ class AssetService:
             raise ValueError(f"Asset with ID {asset_id} not found.")
         return await self._to_calc_model(asset)
 
-    async def list_assets(
-        self, category_id: str | None = None, search: str | None = None
-    ) -> list[AssetWithCalc]:
+    async def list_assets(self, category_id: str | None = None, search: str | None = None) -> list[AssetWithCalc]:
         """List assets matching criteria with return parameters."""
         filters = AssetFilter(category_id=category_id, search=search)
         sort = AssetSort(sort_by="name", sort_order="asc")
