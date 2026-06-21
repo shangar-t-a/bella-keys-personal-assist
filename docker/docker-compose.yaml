@@ -87,7 +87,7 @@ services:
       # Ollama Settings
       - OLLAMA_URL=${OLLAMA_URL}
       # QDRANT Settings
-      - QDRANT_URL=${QDRANT_URL:-http://host.docker.internal:6333}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
       # Keys Personal Wiki Agent Settings
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
       # EMS MCP Server Settings
