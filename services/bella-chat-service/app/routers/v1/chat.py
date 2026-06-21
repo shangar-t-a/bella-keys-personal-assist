@@ -28,9 +28,12 @@ async def stream_response(
     """
     query = chat_request.message.strip()
     conversation_id = chat_request.conversation_id
+    auth_header = request.headers.get("Authorization")
 
     orchestrator_agent: OrchestratorAgent = request.app.state.orchestrator_agent
     _logger.info(f"Orchestrator processing query: {query}")
 
-    response_gen = orchestrator_agent.stream_response(user_input=query, conversation_id=conversation_id)
+    response_gen = orchestrator_agent.stream_response(
+        user_input=query, conversation_id=conversation_id, auth_header=auth_header
+    )
     return StreamingResponse(response_gen, media_type="text/event-stream")

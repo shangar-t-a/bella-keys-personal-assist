@@ -5,7 +5,9 @@ These dependencies should not be used inside agents to avoid circular imports.
 
 from contextlib import asynccontextmanager
 from functools import lru_cache
+from typing import Any
 
+import httpx
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
@@ -14,11 +16,25 @@ from app.agents import (
     RAGAgent,
     SimpleChatAgent,
 )
+from app.core.context import current_auth_header
 from app.dependencies.ai_dependencies import get_app_synthesis_llm_client
 from app.settings import get_settings
 from utilities.logger import GetAppLogger
 
 _logger = GetAppLogger().get_logger()
+
+
+def make_http_client(
+    headers: dict[str, str] | None = None,
+    timeout: Any = None,
+    auth: Any = None,
+) -> httpx.AsyncClient:
+    """Create an httpx.AsyncClient with the propagated user auth header."""
+    current_headers = dict(headers or {})
+    token = current_auth_header.get()
+    if token:
+        current_headers["Authorization"] = token
+    return httpx.AsyncClient(headers=current_headers, timeout=timeout, auth=auth)
 
 
 @lru_cache(maxsize=1)
@@ -58,6 +74,7 @@ async def create_orchestrator_agent():
                 "ems": {
                     "url": settings.EMS_MCP_SERVER_URL,
                     "transport": "streamable_http",
+                    "httpx_client_factory": make_http_client,
                 }
             }
         )

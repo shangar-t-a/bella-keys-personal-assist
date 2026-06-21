@@ -1,6 +1,5 @@
 """Google embeddings client implementation."""
 
-
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from app.core.embeddings.clients.base import EmbeddingsClientInterface

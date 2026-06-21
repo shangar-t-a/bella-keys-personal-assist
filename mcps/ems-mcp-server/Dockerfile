@@ -10,6 +10,7 @@ ENV UV_LINK_MODE=copy \
     UV_NO_DEV=1
 
 COPY pyproject.toml uv.lock .python-version README.md ./
+COPY py_dependencies ./py_dependencies
 COPY app/__init__.py ./app/
 
 RUN --mount=type=cache,target=/root/.cache/uv \

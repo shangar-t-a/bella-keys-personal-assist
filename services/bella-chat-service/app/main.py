@@ -46,7 +46,7 @@ def setup_middlewares(app: FastAPI, settings) -> None:
     # Add JWT Auth Middleware for protecting endpoints
     app.add_middleware(
         JWTAuthMiddleware,
-        secret_key=settings.JWT_SECRET.get_secret_value() if hasattr(settings, "JWT_SECRET") else None
+        secret_key=settings.JWT_SECRET.get_secret_value() if hasattr(settings, "JWT_SECRET") else None,
     )
 
 

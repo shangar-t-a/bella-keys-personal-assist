@@ -15,6 +15,16 @@ Configure the server via environment variables or a `.env` file:
 * `HOST`: The host to bind the server to (default: `0.0.0.0`).
 * `PORT`: The port to run the server on (default: `8001`).
 * `EMS_BASE_URL`: The URL of the running Expense Manager Service (default: `http://localhost:8000`).
+* `AUTH_SERVICE_URL`: The URL of the running Authentication Service (default: `http://localhost:8002`).
+
+## Authentication
+
+When running over HTTP-based transports (like `streamable-http` or `sse`), the server secures its endpoints using token validation middleware:
+1. It intercepts incoming requests and extracts the `Authorization: Bearer <token>` header.
+2. It queries `AUTH_SERVICE_URL/me` to authenticate the user and verify token validity.
+3. Once validated, the request is processed, and the token is forwarded dynamically to the EMS backend.
+
+For local execution and debugging using the `stdio` transport, the authentication middleware is bypassed automatically.
 
 ## Running the Server
 
