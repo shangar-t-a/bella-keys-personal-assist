@@ -32,6 +32,7 @@ from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
 
 from app.agents.orchestrator_agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
+from app.core.context import current_auth_header
 from utilities.logger import GetAppLogger
 
 if TYPE_CHECKING:
@@ -143,33 +144,40 @@ class OrchestratorAgent:
 
         return cls(agent=agent, max_iterations=max_iterations)
 
-    async def get_response(self, user_input: str, conversation_id: UUID) -> str:
+    async def get_response(self, user_input: str, conversation_id: UUID, auth_header: str | None = None) -> str:
         """Non-streaming invoke — call the agent directly and return the final message."""
-        conv_id = str(conversation_id) if conversation_id else str(uuid4())
-        config = {
-            "configurable": {"thread_id": conv_id},
-            "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
-        }
-        inputs = {"messages": [{"role": "user", "content": user_input}]}
-        result = await self._agent.ainvoke(inputs, config)
-        return _extract_text(result["messages"][-1].content)
+        token_t = current_auth_header.set(auth_header)
+        try:
+            conv_id = str(conversation_id) if conversation_id else str(uuid4())
+            config = {
+                "configurable": {"thread_id": conv_id},
+                "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
+            }
+            inputs = {"messages": [{"role": "user", "content": user_input}]}
+            result = await self._agent.ainvoke(inputs, config)
+            return _extract_text(result["messages"][-1].content)
+        finally:
+            current_auth_header.reset(token_t)
 
-    async def stream_response(self, user_input: str, conversation_id: UUID) -> AsyncGenerator[str]:
+    async def stream_response(
+        self, user_input: str, conversation_id: UUID, auth_header: str | None = None
+    ) -> AsyncGenerator[str]:
         r"""Stream all orchestration steps as SSE events.
 
         Uses LangGraph v2 streaming with stream_mode=["messages", "updates"] and maps each StreamPart to the
         appropriate SSE event type.
         """
-        conv_id = str(conversation_id) if conversation_id else str(uuid4())
-        _logger.info(f"Orchestrator: conversation={conv_id}, query={user_input!r}")
-
-        config = {
-            "configurable": {"thread_id": conv_id},
-            "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
-        }
-        inputs = {"messages": [{"role": "user", "content": user_input}]}
-
+        token_t = current_auth_header.set(auth_header)
         try:
+            conv_id = str(conversation_id) if conversation_id else str(uuid4())
+            _logger.info(f"Orchestrator: conversation={conv_id}, query={user_input!r}")
+
+            config = {
+                "configurable": {"thread_id": conv_id},
+                "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
+            }
+            inputs = {"messages": [{"role": "user", "content": user_input}]}
+
             # Separate sets: tool_call IDs already emitted vs tool_result IDs
             # already emitted. Must be kept separate — a tool_call ID is added
             # when the call event fires; if we re-used it for results the result
@@ -190,6 +198,8 @@ class OrchestratorAgent:
         except Exception as exc:
             _logger.exception(f"Orchestrator error for conversation {conv_id}")
             yield _sse("error", content=str(exc))
+        finally:
+            current_auth_header.reset(token_t)
 
         yield _sse("done")
 

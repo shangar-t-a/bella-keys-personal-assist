@@ -21,6 +21,9 @@ class EMSMCPSettings(BaseSettings):
     # EMS base URL
     EMS_BASE_URL: str = "http://localhost:8000"
 
+    # Auth Service URL
+    AUTH_SERVICE_URL: str = "http://localhost:8002"
+
     # Client Settings
     EMS_CLIENT_TIMEOUT_S: int = 30
 
