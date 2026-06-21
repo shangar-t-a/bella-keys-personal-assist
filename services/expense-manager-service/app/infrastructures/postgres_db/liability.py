@@ -73,6 +73,7 @@ class PostgresLiabilityRepository(LiabilityRepositoryInterface):
             interest_rate=model.interest_rate,
             interest_compounding=model.interest_compounding,
             emi_amount=model.emi_amount,
+            emi_start_date=model.emi_start_date,
             maturity_date=model.maturity_date,
             notes=model.notes,
             created_at=model.created_at,
@@ -170,6 +171,7 @@ class PostgresLiabilityRepository(LiabilityRepositoryInterface):
                 interest_rate=liability.interest_rate,
                 interest_compounding=liability.interest_compounding,
                 emi_amount=liability.emi_amount,
+                emi_start_date=liability.emi_start_date,
                 maturity_date=liability.maturity_date,
                 notes=liability.notes,
             )
@@ -203,6 +205,7 @@ class PostgresLiabilityRepository(LiabilityRepositoryInterface):
             model.interest_rate = liability.interest_rate
             model.interest_compounding = liability.interest_compounding
             model.emi_amount = liability.emi_amount
+            model.emi_start_date = liability.emi_start_date
             model.maturity_date = liability.maturity_date
             model.notes = liability.notes
 

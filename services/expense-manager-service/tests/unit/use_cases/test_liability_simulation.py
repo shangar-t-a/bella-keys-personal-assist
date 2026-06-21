@@ -564,3 +564,108 @@ class TestRealWorldPersonalLoan:
             prev_int = snaps[sorted_keys[i - 1]][1]
             curr_int = snaps[sorted_keys[i]][1]
             assert curr_int >= prev_int - 0.01, f"Interest spike at {sorted_keys[i]}: {prev_int:.2f} → {curr_int:.2f}"
+
+
+class TestEMIStartDate:
+    """Verify that emi_start_date is respected during simulation and calculations."""
+
+    def test_emi_not_applied_before_start_date(self):
+        # Borrow ₹1,00,000 in month 1, emi_start_date in month 5, EMI ₹5,000
+        # Balance should accrue interest but NOT decrease from Month 1 to Month 4
+        principal = 100_000.0
+        txs = [_make_tx(BORROW, principal, 2024, 1)]
+        up_to = datetime(2024, 4, 1, tzinfo=UTC)
+        emi_start = datetime(2024, 5, 1, tzinfo=UTC)
+
+        snaps = _simulate_amortization(
+            original_value=principal,
+            interest_rate=12.0,  # 1% per month
+            emi_amount=5_000.0,
+            transactions=txs,
+            up_to_date=up_to,
+            emi_start_date=emi_start,
+        )
+
+        # In 2024-01, balance = 100,000
+        # In 2024-02, balance = 100,000 + 1,000 (interest) = 101,000
+        # In 2024-03, balance = 101,000 + 1,010 = 102,010
+        # In 2024-04, balance = 102,010 + 1,020.10 = 103,030.10
+        assert snaps["2024-01"][0] == 100_000.0
+        assert abs(snaps["2024-02"][0] - 101_000.0) < 0.01
+        assert abs(snaps["2024-03"][0] - 102_010.0) < 0.01
+        assert abs(snaps["2024-04"][0] - 103_030.10) < 0.01
+
+    def test_emi_applied_on_and_after_start_date(self):
+        # Borrow ₹1,00,000 in month 1, emi_start_date in month 3
+        # Month 2: balance = 100k + 1k = 101k (no EMI applied)
+        # Month 3: balance = 101k + 1.01k (interest) - 5k (EMI) = 97.01k
+        principal = 100_000.0
+        txs = [_make_tx(BORROW, principal, 2024, 1)]
+        up_to = datetime(2024, 3, 1, tzinfo=UTC)
+        emi_start = datetime(2024, 3, 1, tzinfo=UTC)
+
+        snaps = _simulate_amortization(
+            original_value=principal,
+            interest_rate=12.0,
+            emi_amount=5_000.0,
+            transactions=txs,
+            up_to_date=up_to,
+            emi_start_date=emi_start,
+        )
+
+        assert abs(snaps["2024-02"][0] - 101_000.0) < 0.01
+        assert abs(snaps["2024-03"][0] - 97_010.0) < 0.01
+
+
+class TestMultiBorrowOutstanding:
+    """Verify that multi-disbursal loans correctly handle opening balance and future borrows."""
+
+    def test_opening_balance_starts_with_first_borrow_only(self):
+        # Total borrows = 34k + 34k = 68k.
+        # Month 0 (2024-01) should start with 34k only, not 68k.
+        txs = [
+            _make_tx(BORROW, 34_000.0, 2024, 1),
+            _make_tx(BORROW, 34_000.0, 2024, 3),
+        ]
+        up_to = datetime(2024, 3, 1, tzinfo=UTC)
+
+        snaps = _simulate_amortization(
+            original_value=68_000.0,
+            interest_rate=12.0,
+            emi_amount=5_000.0,
+            transactions=txs,
+            up_to_date=up_to,
+        )
+
+        # Month 0: 34,000
+        assert snaps["2024-01"][0] == 34_000.0
+
+
+class TestPaidOffSkipRevival:
+    """Verify that new borrows or revalues revive a loan even if the simulated balance hit 0.0."""
+
+    def test_borrow_revives_paid_off_loan(self):
+        # Borrow ₹5,000 in month 1, EMI ₹6,000.
+        # Month 2: balance goes to 0.0.
+        # Month 3: BORROW ₹10,000 happens. Balance must become 10,000, not stay 0.0.
+        txs = [
+            _make_tx(BORROW, 5_000.0, 2024, 1),
+            _make_tx(BORROW, 10_000.0, 2024, 3),
+        ]
+        up_to = datetime(2024, 3, 1, tzinfo=UTC)
+
+        snaps = _simulate_amortization(
+            original_value=15_000.0,
+            interest_rate=12.0,
+            emi_amount=6_000.0,
+            transactions=txs,
+            up_to_date=up_to,
+        )
+
+        assert snaps["2024-01"][0] == 5_000.0
+        # Month 2: balance 0.0
+        assert snaps["2024-02"][0] == 0.0
+        # Month 3: balance should be 10,000.0 (plus some minor interest or repayments depending on order)
+        assert snaps["2024-03"][0] > 0.0
+        assert abs(snaps["2024-03"][0] - 10_000.0) < 100.0
+

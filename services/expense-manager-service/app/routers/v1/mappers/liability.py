@@ -45,6 +45,7 @@ class LiabilityCreateMapper:
                 interest_rate=request.interest_details.interest_rate,
                 compounding=request.interest_details.compounding,
                 emi_amount=request.interest_details.emi_amount,
+                emi_start_date=request.interest_details.emi_start_date,
                 maturity_date=request.interest_details.maturity_date,
             )
 
@@ -71,6 +72,7 @@ class LiabilityUpdateMapper:
                 interest_rate=request.interest_details.interest_rate,
                 compounding=request.interest_details.compounding,
                 emi_amount=request.interest_details.emi_amount,
+                emi_start_date=request.interest_details.emi_start_date,
                 maturity_date=request.interest_details.maturity_date,
             )
 
@@ -115,6 +117,7 @@ class LiabilityResponseMapper:
             interest_rate=liability.interest_rate,
             interest_compounding=liability.interest_compounding,
             emi_amount=liability.emi_amount,
+            emi_start_date=liability.emi_start_date,
             maturity_date=liability.maturity_date,
             notes=liability.notes,
             total_repaid=liability.total_repaid,

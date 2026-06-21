@@ -48,6 +48,7 @@ All outstanding balance calculations share a single simulation engine (`_simulat
 | $r$ | Annual nominal interest rate (e.g., $0.1195$ for $11.95\%$) |
 | $i$ | Monthly interest rate: $i = r / 12$ |
 | $M$ | Scheduled monthly EMI amount |
+| $d_{\text{emi}}$ | Optional date when repayments/EMIs officially begin |
 
 ### Month 0 — Disbursal
 
@@ -59,7 +60,7 @@ $$P_0 = \text{REVALUE}_{\text{amount}},\quad I_{\text{implied}, 0} = \max\left(0
 ### Months 1 to N — Normal Month (no REVALUE)
 
 $$I_m = P_{m-1} \times i$$
-$$\text{auto\_emi}_m = \min(M,\ P_{m-1} + I_m)$$
+$$\text{auto\_emi}_m = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and month } m < d_{\text{emi}} \\ \min(M,\ P_{m-1} + I_m) & \text{otherwise} \end{cases}$$
 $$\text{total\_payment}_m = \text{auto\_emi}_m + \text{REPAY}_m$$
 $$P_m = \max\left(0,\ P_{m-1} + I_m + \text{BORROW}_m - \text{total\_payment}_m\right)$$
 
@@ -110,7 +111,7 @@ Simulates from disbursal date with no deviations — pure scheduled EMI only.
 
 For each month $n = 1, 2, \ldots$ until $P_n = 0$:
 $$I_n = P_{n-1} \times i$$
-$$\text{payment}_n = \min(M,\ P_{n-1} + I_n)$$
+$$\text{payment}_n = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and month } n < d_{\text{emi}} \\ \min(M,\ P_{n-1} + I_n) & \text{otherwise} \end{cases}$$
 $$P_n = \max\left(0,\ P_{n-1} + I_n - \text{payment}_n\right)$$
 
 - **Ideal tenure $N_{\text{ideal}}$:** Total months until $P_n = 0$.
@@ -126,7 +127,8 @@ $$P_{\text{proj}, 0} = P_{\text{today}},\quad \text{CumInt}_{\text{proj}, 0} = \
 
 For each $k = 1, 2, \ldots$ until $P_{\text{proj}, k} = 0$:
 $$I_k = P_{\text{proj}, k-1} \times i$$
-$$P_{\text{proj}, k} = \max\left(0,\ P_{\text{proj}, k-1} + I_k - \min(M,\ P_{\text{proj}, k-1} + I_k)\right)$$
+$$\text{payment}_k = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and future month } k < d_{\text{emi}} \\ \min(M,\ P_{\text{proj}, k-1} + I_k) & \text{otherwise} \end{cases}$$
+$$P_{\text{proj}, k} = \max\left(0,\ P_{\text{proj}, k-1} + I_k - \text{payment}_k\right)$$
 $$\text{CumInt}_{\text{proj}, k} = \text{CumInt}_{\text{proj}, k-1} + I_k$$
 
 - **Remaining tenure $K_{\text{projected}}$:** Total future months until $P_{\text{proj}, k} = 0$.

@@ -26,6 +26,7 @@ class LiabilityInterestDetailsSchema(BaseSchema):
     interest_rate: float = Field(gt=0, description="Annual interest rate (%)")
     compounding: CompoundingFrequency = Field(description="Compounding frequency")
     emi_amount: float | None = Field(default=None, gt=0, description="Scheduled monthly EMI amount (INR)")
+    emi_start_date: datetime | None = Field(default=None, description="Date when EMI repayments officially begin")
     maturity_date: datetime | None = Field(default=None, description="Maturity date of the liability")
 
 
@@ -107,6 +108,7 @@ class LiabilityResponse(BaseSchema):
     interest_rate: float | None
     interest_compounding: CompoundingFrequency | None
     emi_amount: float | None
+    emi_start_date: datetime | None
     maturity_date: datetime | None
     notes: str | None
     total_repaid: float

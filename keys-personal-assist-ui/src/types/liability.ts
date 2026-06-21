@@ -23,6 +23,7 @@ export interface LiabilityInterestDetails {
   interestRate: number;
   compounding: CompoundingFrequency;
   emiAmount?: number | null;
+  emiStartDate?: string | null;
   maturityDate?: string | null;
 }
 
@@ -38,6 +39,7 @@ export interface Liability {
   interestRate: number | null;
   interestCompounding: CompoundingFrequency | null;
   emiAmount: number | null;
+  emiStartDate: string | null;
   maturityDate: string | null;
   notes: string | null;
   totalRepaid: number;

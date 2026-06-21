@@ -61,6 +61,7 @@ All outstanding balance calculations and projection curves are driven by a singl
 | `original_value` | Sum of all BORROW transaction amounts |
 | `interest_rate` | Annual nominal rate as a percentage (e.g., `11.95` for 11.95%) |
 | `emi_amount` | Scheduled monthly EMI in INR |
+| `emi_start_date` | Optional date when repayments/EMIs officially begin (moratorium support) |
 | `transactions` | Full chronological ledger of all transactions |
 | `up_to_date` | Simulate up to and including this date's calendar month |
 
@@ -80,7 +81,7 @@ If a `REVALUE` exists in the month:
 
 Otherwise (normal month):
 1. Accrue interest: `interest = prev_balance × monthly_rate`
-2. Apply scheduled EMI: `auto_emi = min(emi, prev_balance + interest)`
+2. Apply scheduled EMI: if `emi_start_date` is configured and current month is before `emi_start_date`, `auto_emi` is `0.0`. Otherwise, `auto_emi = min(emi, prev_balance + interest)`.
 3. Apply any extra REPAY: `total_payment = auto_emi + repays`
 4. Close: `balance = max(0, prev_balance + interest + borrows - total_payment)`
 5. Add `interest` to cumulative interest; add `total_payment` to cumulative repaid.
@@ -167,6 +168,7 @@ When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies 
 | `interest_rate` | Float (nullable) | Annual interest rate % |
 | `interest_compounding` | String (nullable) | `MONTHLY`, `QUARTERLY`, `HALF_YEARLY`, `YEARLY` |
 | `emi_amount` | Float (nullable) | Scheduled monthly EMI |
+| `emi_start_date` | DateTime (tz-aware, nullable) | Date when repayments/EMIs officially begin |
 | `maturity_date` | DateTime (tz-aware, nullable) | Contracted end date if applicable |
 | `notes` | String (nullable) | Free text notes |
 | `created_at` / `updated_at` | DateTime (tz-aware) | Audit timestamps |
@@ -193,12 +195,12 @@ Whenever a transaction is added or deleted on a liability, the parent `liability
 
 - **Step 1:** Category and subcategory selection.
 - **Step 2:** Core fields — name, loan amount, start date (used as the BORROW transaction date for backdated entry).
-- **Step 3:** Interest details (only for subcategories with `has_interest = true`) — interest rate, compounding frequency, EMI amount, maturity date.
+- **Step 3:** Interest details (only for subcategories with `has_interest = true`) — interest rate, compounding frequency, EMI amount, EMI start date, maturity date.
 
 ### Dashboard Display (per Liability)
 
 - Current outstanding balance, original loan amount, repayment progress %.
-- EMI amount, start date, projected end date.
+- EMI amount, disbursal date, EMI start date, projected end date.
 - Accumulated interest paid, total repaid.
 - Pending EMIs / remaining tenure.
 
