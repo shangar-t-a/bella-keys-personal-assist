@@ -1,10 +1,22 @@
 import { useState } from 'react';
 import { Box, Container, Typography, Tab, Tabs } from '@mui/material';
 import AssetsTab from '@/components/wealth/AssetsTab';
+import LiabilitiesTab from '@/components/wealth/LiabilitiesTab';
 
 export default function WealthPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [assetCount, setAssetCount] = useState<number | null>(null);
+  const [liabilityCount, setLiabilityCount] = useState<number | null>(null);
+
+  const getSubheaderText = () => {
+    if (activeTab === 0) {
+      return assetCount !== null ? `${assetCount} assets tracked` : 'Loading…';
+    }
+    if (activeTab === 1) {
+      return liabilityCount !== null ? `${liabilityCount} liabilities tracked` : 'Loading…';
+    }
+    return '';
+  };
 
   return (
     <Box
@@ -33,10 +45,10 @@ export default function WealthPage() {
                 lineHeight: 1.2,
               }}
             >
-              Assets
+              Wealth Manager
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {assetCount !== null ? `${assetCount} assets tracked` : 'Loading…'}
+              {getSubheaderText()}
             </Typography>
           </Box>
         </Box>
@@ -64,7 +76,7 @@ export default function WealthPage() {
             }}
           >
             <Tab label="Assets" id="wealth-tab-assets" />
-            <Tab label="Liabilities" disabled id="wealth-tab-liabilities" />
+            <Tab label="Liabilities" id="wealth-tab-liabilities" />
             <Tab label="Net Worth" disabled id="wealth-tab-networth" />
             <Tab label="Allocation" disabled id="wealth-tab-allocation" />
           </Tabs>
@@ -72,8 +84,10 @@ export default function WealthPage() {
 
         {/* Tab Contents */}
         {activeTab === 0 && <AssetsTab onAssetsLoad={setAssetCount} />}
+        {activeTab === 1 && <LiabilitiesTab onLiabilitiesLoad={setLiabilityCount} />}
       </Container>
     </Box>
   );
 }
+
 

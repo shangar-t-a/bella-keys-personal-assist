@@ -29,6 +29,16 @@ import type {
   AssetTransactionRequest,
   AssetSummary,
 } from '@/types/asset';
+import type {
+  LiabilityCategory,
+  Liability,
+  LiabilityRequest,
+  LiabilityUpdateRequest,
+  LiabilityTransaction,
+  LiabilityTransactionRequest,
+  LiabilitySummary,
+  LiabilityProjections,
+} from '@/types/liability';
 import { getEmsBase } from '@/api/config';
 import { fetchWithAuth } from './fetchClient';
 
@@ -460,6 +470,104 @@ class EMSClient {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete transaction');
+  }
+
+  // ── Wealth Manager Liabilities endpoints ───────────────────────────────────
+
+  async getAllLiabilityCategories(): Promise<LiabilityCategory[]> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/categories`);
+    if (!response.ok) throw new Error('Failed to fetch liability categories');
+    return response.json();
+  }
+
+  async listLiabilities(params: { categoryId?: string; search?: string } = {}): Promise<Liability[]> {
+    const qs = new URLSearchParams();
+    if (params.categoryId) qs.set('category_id', params.categoryId);
+    if (params.search) qs.set('search', params.search);
+    const queryString = qs.toString();
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities${queryString ? `?${queryString}` : ''}`);
+    if (!response.ok) throw new Error('Failed to list liabilities');
+    return response.json();
+  }
+
+  async getLiabilitySummary(): Promise<LiabilitySummary> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/summary`);
+    if (!response.ok) throw new Error('Failed to fetch liability summary');
+    return response.json();
+  }
+
+  async getLiabilityById(id: string): Promise<Liability> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch liability details');
+    return response.json();
+  }
+
+  async createLiability(data: LiabilityRequest): Promise<Liability> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to create liability');
+    }
+    return response.json();
+  }
+
+  async updateLiability(id: string, data: LiabilityUpdateRequest): Promise<Liability> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to update liability');
+    }
+    return response.json();
+  }
+
+  async deleteLiability(id: string): Promise<void> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete liability');
+  }
+
+  async getTransactionsForLiability(id: string): Promise<LiabilityTransaction[]> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/${id}/transactions`);
+    if (!response.ok) throw new Error('Failed to fetch liability transactions');
+    return response.json();
+  }
+
+  async addTransactionToLiability(id: string, data: LiabilityTransactionRequest): Promise<LiabilityTransaction> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/${id}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to add transaction');
+    }
+    return response.json();
+  }
+
+  async deleteLiabilityTransaction(txId: string): Promise<void> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/transactions/${txId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete transaction');
+  }
+
+  async getLiabilityProjections(id: string): Promise<LiabilityProjections> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/${id}/projections`);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to fetch liability projections');
+    }
+    return response.json();
   }
 }
 

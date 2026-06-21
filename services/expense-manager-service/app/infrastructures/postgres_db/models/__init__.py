@@ -5,6 +5,10 @@ from .asset import AssetModel
 from .asset_category import AssetCategoryModel
 from .asset_subcategory import AssetSubcategoryModel
 from .asset_transaction import AssetTransactionModel
+from .liability import LiabilityModel
+from .liability_category import LiabilityCategoryModel
+from .liability_subcategory import LiabilitySubcategoryModel
+from .liability_transaction import LiabilityTransactionModel
 from .monthly_planner import (
     MonthlyCategoryModel,
     MonthlyExpenseItemModel,
@@ -27,4 +31,8 @@ __all__ = [
     "AssetSubcategoryModel",
     "AssetModel",
     "AssetTransactionModel",
+    "LiabilityCategoryModel",
+    "LiabilitySubcategoryModel",
+    "LiabilityModel",
+    "LiabilityTransactionModel",
 ]
