@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Expense Manager Service",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "paths": {
     "/v1/account/get_or_create": {
@@ -2220,6 +2220,469 @@
         }
       }
     },
+    "/v1/liabilities/categories": {
+      "get": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Get All Categories",
+        "description": "Retrieve list of all pre-seeded categories.",
+        "operationId": "get_all_categories_v1_liabilities_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LiabilityCategoryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get All Categories V1 Liabilities Categories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/liabilities": {
+      "post": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Create Liability",
+        "description": "Create a new liability and log its initial balance transaction.",
+        "operationId": "create_liability_v1_liabilities_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiabilityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiabilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "List Liabilities",
+        "description": "Retrieve list of liabilities, optionally filtered by category or search term.",
+        "operationId": "list_liabilities_v1_liabilities_get",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LiabilityResponse"
+                  },
+                  "title": "Response List Liabilities V1 Liabilities Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/liabilities/summary": {
+      "get": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Get Liability Summary",
+        "description": "Get aggregate liabilities calculations and category breakdowns.",
+        "operationId": "get_liability_summary_v1_liabilities_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiabilitySummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/liabilities/{id}": {
+      "get": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Get Liability By Id",
+        "description": "Retrieve details of a single liability by its ID.",
+        "operationId": "get_liability_by_id_v1_liabilities__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiabilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Update Liability",
+        "description": "Update metadata fields of an existing liability.",
+        "operationId": "update_liability_v1_liabilities__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiabilityUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiabilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Delete Liability",
+        "description": "Delete a liability and all its historical transactions.",
+        "operationId": "delete_liability_v1_liabilities__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/liabilities/{id}/transactions": {
+      "get": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Get Transactions For Liability",
+        "description": "Retrieve the transaction history ledger for a specific liability.",
+        "operationId": "get_transactions_for_liability_v1_liabilities__id__transactions_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LiabilityTransactionResponse"
+                  },
+                  "title": "Response Get Transactions For Liability V1 Liabilities  Id  Transactions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Add Transaction",
+        "description": "Add a new borrow, repay, or revaluation transaction to the liability's ledger.",
+        "operationId": "add_transaction_v1_liabilities__id__transactions_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiabilityTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiabilityTransactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/liabilities/transactions/{tx_id}": {
+      "delete": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Delete Transaction",
+        "description": "Delete a transaction from the ledger and trigger parent outstanding recalculation.",
+        "operationId": "delete_transaction_v1_liabilities_transactions__tx_id__delete",
+        "parameters": [
+          {
+            "name": "tx_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tx Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/liabilities/{id}/projections": {
+      "get": {
+        "tags": [
+          "liabilities"
+        ],
+        "summary": "Get Liability Projections",
+        "description": "Retrieve ideal and actual amortization projection curves and payoff metrics.",
+        "operationId": "get_liability_projections_v1_liabilities__id__projections_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiabilityProjectionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -3024,6 +3487,749 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "LiabilityCategoryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#/components/schemas/LiabilitySubcategoryResponse"
+            },
+            "type": "array",
+            "title": "Subcategories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "code",
+          "description"
+        ],
+        "title": "LiabilityCategoryResponse",
+        "description": "Response schema for liability category."
+      },
+      "LiabilityCategorySummaryResponse": {
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid"
+          },
+          "categoryName": {
+            "type": "string",
+            "title": "Categoryname"
+          },
+          "categoryCode": {
+            "type": "string",
+            "title": "Categorycode"
+          },
+          "totalOriginal": {
+            "type": "number",
+            "title": "Totaloriginal"
+          },
+          "totalOutstanding": {
+            "type": "number",
+            "title": "Totaloutstanding"
+          },
+          "totalRepaid": {
+            "type": "number",
+            "title": "Totalrepaid"
+          },
+          "accumulatedInterest": {
+            "type": "number",
+            "title": "Accumulatedinterest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryId",
+          "categoryName",
+          "categoryCode",
+          "totalOriginal",
+          "totalOutstanding",
+          "totalRepaid",
+          "accumulatedInterest"
+        ],
+        "title": "LiabilityCategorySummaryResponse",
+        "description": "Response schema for category aggregate summary."
+      },
+      "LiabilityInterestDetailsSchema": {
+        "properties": {
+          "interestRate": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Interestrate",
+            "description": "Annual interest rate (%)"
+          },
+          "compounding": {
+            "$ref": "#/components/schemas/CompoundingFrequency",
+            "description": "Compounding frequency"
+          },
+          "emiAmount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emiamount",
+            "description": "Scheduled monthly EMI amount (INR)"
+          },
+          "maturityDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maturitydate",
+            "description": "Maturity date of the liability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interestRate",
+          "compounding"
+        ],
+        "title": "LiabilityInterestDetailsSchema",
+        "description": "Schema for interest-bearing liability fields."
+      },
+      "LiabilityProjectionMetricsResponse": {
+        "properties": {
+          "idealTenureMonths": {
+            "type": "integer",
+            "title": "Idealtenuremonths"
+          },
+          "remainingTenureMonths": {
+            "type": "integer",
+            "title": "Remainingtenuremonths"
+          },
+          "tenureSavedMonths": {
+            "type": "integer",
+            "title": "Tenuresavedmonths"
+          },
+          "totalInterestIdeal": {
+            "type": "number",
+            "title": "Totalinterestideal"
+          },
+          "totalInterestProjected": {
+            "type": "number",
+            "title": "Totalinterestprojected"
+          },
+          "interestSaved": {
+            "type": "number",
+            "title": "Interestsaved"
+          },
+          "idealEndDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idealenddate"
+          },
+          "projectedEndDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projectedenddate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "idealTenureMonths",
+          "remainingTenureMonths",
+          "tenureSavedMonths",
+          "totalInterestIdeal",
+          "totalInterestProjected",
+          "interestSaved"
+        ],
+        "title": "LiabilityProjectionMetricsResponse",
+        "description": "API response schema for liability payoff projection metrics."
+      },
+      "LiabilityProjectionPointResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "idealBalance": {
+            "type": "number",
+            "title": "Idealbalance"
+          },
+          "actualBalance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actualbalance"
+          },
+          "idealInterestPaid": {
+            "type": "number",
+            "title": "Idealinterestpaid"
+          },
+          "actualInterestPaid": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actualinterestpaid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "idealBalance",
+          "idealInterestPaid"
+        ],
+        "title": "LiabilityProjectionPointResponse",
+        "description": "API response schema for a single projection monthly data point."
+      },
+      "LiabilityProjectionsResponse": {
+        "properties": {
+          "metrics": {
+            "$ref": "#/components/schemas/LiabilityProjectionMetricsResponse"
+          },
+          "projectionPoints": {
+            "items": {
+              "$ref": "#/components/schemas/LiabilityProjectionPointResponse"
+            },
+            "type": "array",
+            "title": "Projectionpoints"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metrics",
+          "projectionPoints"
+        ],
+        "title": "LiabilityProjectionsResponse",
+        "description": "API response schema for complete liability projections."
+      },
+      "LiabilityRequest": {
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid",
+            "description": "ID of the parent category"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the liability"
+          },
+          "subcategoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategoryid",
+            "description": "ID of the subcategory"
+          },
+          "initialAmount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Initialamount",
+            "description": "Amount for the initial BORROW transaction (INR)"
+          },
+          "initialDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initialdate",
+            "description": "Timestamp of initial borrowing"
+          },
+          "interestDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiabilityInterestDetailsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Interest fields. Required for interest-bearing subcategories."
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Additional notes/remarks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryId",
+          "name",
+          "initialAmount"
+        ],
+        "title": "LiabilityRequest",
+        "description": "Schema for adding a new liability."
+      },
+      "LiabilityResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid"
+          },
+          "categoryName": {
+            "type": "string",
+            "title": "Categoryname"
+          },
+          "categoryCode": {
+            "type": "string",
+            "title": "Categorycode"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "subcategoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategoryid"
+          },
+          "originalValue": {
+            "type": "number",
+            "title": "Originalvalue"
+          },
+          "currentValue": {
+            "type": "number",
+            "title": "Currentvalue"
+          },
+          "interestRate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interestrate"
+          },
+          "interestCompounding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompoundingFrequency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "emiAmount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emiamount"
+          },
+          "maturityDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maturitydate"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "totalRepaid": {
+            "type": "number",
+            "title": "Totalrepaid"
+          },
+          "accumulatedInterest": {
+            "type": "number",
+            "title": "Accumulatedinterest"
+          },
+          "progressPct": {
+            "type": "number",
+            "title": "Progresspct"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "categoryId",
+          "categoryName",
+          "categoryCode",
+          "name",
+          "subcategoryId",
+          "originalValue",
+          "currentValue",
+          "interestRate",
+          "interestCompounding",
+          "emiAmount",
+          "maturityDate",
+          "notes",
+          "totalRepaid",
+          "accumulatedInterest",
+          "progressPct",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "LiabilityResponse",
+        "description": "Response schema for liability details."
+      },
+      "LiabilitySubcategoryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "categoryId": {
+            "type": "string",
+            "title": "Categoryid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "valuationType": {
+            "type": "string",
+            "title": "Valuationtype"
+          },
+          "hasInterest": {
+            "type": "boolean",
+            "title": "Hasinterest"
+          },
+          "hasMaturity": {
+            "type": "boolean",
+            "title": "Hasmaturity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "categoryId",
+          "name",
+          "code",
+          "valuationType",
+          "hasInterest",
+          "hasMaturity"
+        ],
+        "title": "LiabilitySubcategoryResponse",
+        "description": "Response schema for liability subcategory."
+      },
+      "LiabilitySummaryResponse": {
+        "properties": {
+          "totalOriginal": {
+            "type": "number",
+            "title": "Totaloriginal"
+          },
+          "totalOutstanding": {
+            "type": "number",
+            "title": "Totaloutstanding"
+          },
+          "totalRepaid": {
+            "type": "number",
+            "title": "Totalrepaid"
+          },
+          "accumulatedInterest": {
+            "type": "number",
+            "title": "Accumulatedinterest"
+          },
+          "categoryBreakdowns": {
+            "items": {
+              "$ref": "#/components/schemas/LiabilityCategorySummaryResponse"
+            },
+            "type": "array",
+            "title": "Categorybreakdowns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalOriginal",
+          "totalOutstanding",
+          "totalRepaid",
+          "accumulatedInterest",
+          "categoryBreakdowns"
+        ],
+        "title": "LiabilitySummaryResponse",
+        "description": "Response schema for full liabilities dashboard overview."
+      },
+      "LiabilityTransactionRequest": {
+        "properties": {
+          "transactionType": {
+            "$ref": "#/components/schemas/LiabilityTransactionType",
+            "description": "Transaction type: BORROW, REPAY, or REVALUE"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Amount",
+            "description": "Total INR amount of the transaction"
+          },
+          "transactionDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactiondate",
+            "description": "Transaction timestamp"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Audit remark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transactionType",
+          "amount"
+        ],
+        "title": "LiabilityTransactionRequest",
+        "description": "Schema for logging a new transaction."
+      },
+      "LiabilityTransactionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "liabilityId": {
+            "type": "string",
+            "title": "Liabilityid"
+          },
+          "transactionType": {
+            "$ref": "#/components/schemas/LiabilityTransactionType"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Transactiondate"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "liabilityId",
+          "transactionType",
+          "amount",
+          "transactionDate",
+          "description"
+        ],
+        "title": "LiabilityTransactionResponse",
+        "description": "Response schema for liability transaction."
+      },
+      "LiabilityTransactionType": {
+        "type": "string",
+        "enum": [
+          "BORROW",
+          "REPAY",
+          "REVALUE"
+        ],
+        "title": "LiabilityTransactionType",
+        "description": "Types of liability transactions."
+      },
+      "LiabilityUpdateRequest": {
+        "properties": {
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryid",
+            "description": "ID of the parent category"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Name of the liability"
+          },
+          "subcategoryId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategoryid",
+            "description": "ID of the subcategory"
+          },
+          "interestDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiabilityInterestDetailsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Updated interest fields. Pass null to clear interest tracking."
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Additional notes/remarks"
+          }
+        },
+        "type": "object",
+        "title": "LiabilityUpdateRequest",
+        "description": "Schema for partially updating liability metadata (PATCH)."
       },
       "MonthlyCategoryBase": {
         "properties": {

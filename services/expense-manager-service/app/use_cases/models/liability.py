@@ -117,7 +117,10 @@ class LiabilityProjectionPoint(BaseModel):
     ideal_balance: float = Field(description="Expected outstanding balance in INR")
     actual_balance: float | None = Field(default=None, description="Actual/projected outstanding balance in INR")
     ideal_interest_paid: float = Field(default=0.0, description="Ideal accumulated interest paid in INR")
-    actual_interest_paid: float | None = Field(default=None, description="Actual/projected accumulated interest paid in INR")
+    actual_interest_paid: float | None = Field(
+        default=None,
+        description="Actual/projected accumulated interest paid in INR",
+    )
 
 
 class LiabilityProjectionMetrics(BaseModel):
