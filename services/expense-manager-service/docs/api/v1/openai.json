@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Expense Manager Service",
-    "version": "1.3.0"
+    "version": "1.5.0"
   },
   "paths": {
     "/v1/account/get_or_create": {
@@ -2683,6 +2683,98 @@
         }
       }
     },
+    "/v1/wealth/summary": {
+      "get": {
+        "tags": [
+          "wealth"
+        ],
+        "summary": "Get Wealth Summary",
+        "description": "Retrieve current wealth summary (total assets, liabilities, and net worth).",
+        "operationId": "get_wealth_summary_v1_wealth_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WealthSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/wealth/history": {
+      "get": {
+        "tags": [
+          "wealth"
+        ],
+        "summary": "Get Historical Net Worth",
+        "description": "Retrieve historical net worth trend for the past N months.",
+        "operationId": "get_historical_net_worth_v1_wealth_history_get",
+        "parameters": [
+          {
+            "name": "months",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 12,
+              "title": "Months"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoricalNetWorthPointResponse"
+                  },
+                  "title": "Response Get Historical Net Worth V1 Wealth History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/wealth/allocation": {
+      "get": {
+        "tags": [
+          "wealth"
+        ],
+        "summary": "Get Wealth Allocation",
+        "description": "Retrieve asset and liability category allocation percentages.",
+        "operationId": "get_wealth_allocation_v1_wealth_allocation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WealthAllocationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -3488,6 +3580,35 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HistoricalNetWorthPointResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "totalAssets": {
+            "type": "number",
+            "title": "Totalassets"
+          },
+          "totalLiabilities": {
+            "type": "number",
+            "title": "Totalliabilities"
+          },
+          "netWorth": {
+            "type": "number",
+            "title": "Networth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "totalAssets",
+          "totalLiabilities",
+          "netWorth"
+        ],
+        "title": "HistoricalNetWorthPointResponse",
+        "description": "Response schema for monthly historical net worth timeline point."
+      },
       "LiabilityCategoryResponse": {
         "properties": {
           "id": {
@@ -3642,11 +3763,25 @@
             "title": "Idealtenuremonths"
           },
           "remainingTenureMonths": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Remainingtenuremonths"
           },
           "tenureSavedMonths": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Tenuresavedmonths"
           },
           "totalInterestIdeal": {
@@ -3689,8 +3824,6 @@
         "type": "object",
         "required": [
           "idealTenureMonths",
-          "remainingTenureMonths",
-          "tenureSavedMonths",
           "totalInterestIdeal",
           "totalInterestProjected",
           "interestSaved"
@@ -3960,6 +4093,18 @@
           "progressPct": {
             "type": "number",
             "title": "Progresspct"
+          },
+          "remainingTenureMonths": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remainingtenuremonths",
+            "description": "Estimated remaining tenure in months"
           },
           "createdAt": {
             "type": "string",
@@ -5110,6 +5255,164 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WealthAllocationResponse": {
+        "properties": {
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/WealthCategoryAllocationResponse"
+            },
+            "type": "array",
+            "title": "Assets"
+          },
+          "liabilities": {
+            "items": {
+              "$ref": "#/components/schemas/WealthCategoryAllocationResponse"
+            },
+            "type": "array",
+            "title": "Liabilities"
+          },
+          "totalAssetsValue": {
+            "type": "number",
+            "title": "Totalassetsvalue"
+          },
+          "totalLiabilitiesValue": {
+            "type": "number",
+            "title": "Totalliabilitiesvalue"
+          },
+          "debtToAssetRatio": {
+            "type": "number",
+            "title": "Debttoassetratio"
+          },
+          "liquidityRatio": {
+            "type": "number",
+            "title": "Liquidityratio"
+          },
+          "equityFinancedPct": {
+            "type": "number",
+            "title": "Equityfinancedpct"
+          },
+          "liabilitiesFinancedPct": {
+            "type": "number",
+            "title": "Liabilitiesfinancedpct"
+          },
+          "leverageStatusLabel": {
+            "type": "string",
+            "title": "Leveragestatuslabel"
+          },
+          "leverageStatusType": {
+            "type": "string",
+            "title": "Leveragestatustype"
+          },
+          "liquidityStatusLabel": {
+            "type": "string",
+            "title": "Liquiditystatuslabel"
+          },
+          "liquidityStatusType": {
+            "type": "string",
+            "title": "Liquiditystatustype"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assets",
+          "liabilities",
+          "totalAssetsValue",
+          "totalLiabilitiesValue",
+          "debtToAssetRatio",
+          "liquidityRatio",
+          "equityFinancedPct",
+          "liabilitiesFinancedPct",
+          "leverageStatusLabel",
+          "leverageStatusType",
+          "liquidityStatusLabel",
+          "liquidityStatusType"
+        ],
+        "title": "WealthAllocationResponse",
+        "description": "Response schema for complete portfolio allocation breakdown."
+      },
+      "WealthCategoryAllocationResponse": {
+        "properties": {
+          "categoryName": {
+            "type": "string",
+            "title": "Categoryname"
+          },
+          "categoryCode": {
+            "type": "string",
+            "title": "Categorycode"
+          },
+          "totalValue": {
+            "type": "number",
+            "title": "Totalvalue"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryName",
+          "categoryCode",
+          "totalValue",
+          "percentage"
+        ],
+        "title": "WealthCategoryAllocationResponse",
+        "description": "Response schema for allocation breakdown by category."
+      },
+      "WealthSummaryResponse": {
+        "properties": {
+          "totalAssets": {
+            "type": "number",
+            "title": "Totalassets"
+          },
+          "totalInvestedAssets": {
+            "type": "number",
+            "title": "Totalinvestedassets"
+          },
+          "totalReturnsAssets": {
+            "type": "number",
+            "title": "Totalreturnsassets"
+          },
+          "percentageReturnsAssets": {
+            "type": "number",
+            "title": "Percentagereturnsassets"
+          },
+          "totalLiabilities": {
+            "type": "number",
+            "title": "Totalliabilities"
+          },
+          "totalOriginalLiabilities": {
+            "type": "number",
+            "title": "Totaloriginalliabilities"
+          },
+          "totalRepaidLiabilities": {
+            "type": "number",
+            "title": "Totalrepaidliabilities"
+          },
+          "accumulatedInterestLiabilities": {
+            "type": "number",
+            "title": "Accumulatedinterestliabilities"
+          },
+          "netWorth": {
+            "type": "number",
+            "title": "Networth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalAssets",
+          "totalInvestedAssets",
+          "totalReturnsAssets",
+          "percentageReturnsAssets",
+          "totalLiabilities",
+          "totalOriginalLiabilities",
+          "totalRepaidLiabilities",
+          "accumulatedInterestLiabilities",
+          "netWorth"
+        ],
+        "title": "WealthSummaryResponse",
+        "description": "Response schema for high-level current wealth aggregation."
       }
     }
   }

@@ -12,7 +12,7 @@ For a full working implementation of these patterns, refer to the canonical refe
 ## 1. Design System & Typography
 
 | Element | Specification |
-|---|---|
+| --- | --- |
 | **Primary Font** | `"Space Grotesk", sans-serif` (for numeric metrics, titles, page headers) |
 | **Body Font** | `DM Sans` (MUI default) for descriptions, body text, table cells |
 | **Page Title** | `variant="h5"`, `fontWeight: 700`, line height `1.2` |
@@ -70,7 +70,7 @@ Every main page tab uses a 3-tier stacked structure:
 For entity-specific cards, chips, or states, use the established palette:
 
 | Category | Primary Color | Light Background (transparency) |
-|---|---|---|
+| --- | --- | --- |
 | **Equity** | `#108cc6` | `rgba(16, 140, 198, 0.1)` |
 | **Debt** | `#1e5067` | `rgba(30, 80, 103, 0.1)` |
 | **Real Estate** | `#f59e0b` | `rgba(245, 158, 11, 0.1)` |

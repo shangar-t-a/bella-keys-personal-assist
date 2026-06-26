@@ -13,6 +13,7 @@ Bella Keys uses a local authentication system designed to keep your data secure 
 ## Session Security & Timeouts
 
 To ensure your data remains secure:
+
 - **Automatic Lock:** Your active session securely expires after **1 hour** of inactivity.
 - **Silent Refresh:** If you are actively using the application, Bella Keys will silently refresh your session in the background so you are not repeatedly asked for your password.
 - **Full Expiration:** If the app is closed or inactive for **7 days**, your background session token fully expires. On your next visit, you will need to log in again.
@@ -20,6 +21,7 @@ To ensure your data remains secure:
 ## Locking the App Manually
 
 If you need to leave your computer and want to secure Bella Keys immediately:
+
 1. Locate the sidebar menu.
 2. Click **Lock App**.
 3. You will immediately be returned to the Lock Screen, requiring a password for the next access.

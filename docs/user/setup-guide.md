@@ -23,6 +23,7 @@ bash scripts/setup.sh
 During the setup process, choose `y` when prompted to initialize the PostgreSQL databases. This runs the SQL schema `scripts/database/init-db.sql` automatically.
 
 If you prefer manual setup:
+
 1. Copy `docker/.env.example` to `docker/.env` and edit it to configure passwords and keys.
 2. Execute `scripts/database/init-db.sql` on your host PostgreSQL instance.
 
@@ -44,8 +45,6 @@ Launch both the backend services and the desktop application using the unified r
 bash scripts/run-desktop-app.sh
 ```
 
-
-
 During startup, select a service profile:
 
 | Profile | Services Running | RAM Required | Description |
@@ -56,9 +55,11 @@ During startup, select a service profile:
 ## Troubleshooting
 
 ### Database Connection Failures
+
 * Ensure PostgreSQL is running on the host machine.
 * Verify that your firewall allows traffic on port `5432`.
 * Check that `EMS_PG_DB_HOST` in `docker/.env` is set to `host.docker.internal`.
 
 ### Port Conflicts
+
 If a port is already allocated, modify the target port in `docker/.env` (e.g., change `EMS_PORT` or `PERSONAL_ASSIST_UI_PORT`).

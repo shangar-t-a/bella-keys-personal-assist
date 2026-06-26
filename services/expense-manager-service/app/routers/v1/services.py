@@ -25,6 +25,7 @@ from app.use_cases.monthly_planner import MonthlyPlannerService
 from app.use_cases.period import PeriodService
 from app.use_cases.savings_bucket import SavingsBucketService
 from app.use_cases.spending_entry import SpendingEntryService
+from app.use_cases.wealth import WealthService
 
 
 class StorageType(StrEnum):
@@ -176,3 +177,12 @@ def get_liability_service() -> LiabilityService:
     """Get the Liability Service."""
     liability_repository = get_liability_repository()
     return LiabilityService(liability_repository=liability_repository)
+
+
+@lru_cache
+def get_wealth_service() -> WealthService:
+    """Get the Wealth Service."""
+    return WealthService(
+        asset_repository=get_asset_repository(),
+        liability_repository=get_liability_repository(),
+    )

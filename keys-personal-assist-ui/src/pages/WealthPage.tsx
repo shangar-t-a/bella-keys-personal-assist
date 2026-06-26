@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Box, Container, Typography, Tab, Tabs } from '@mui/material';
 import AssetsTab from '@/components/wealth/AssetsTab';
 import LiabilitiesTab from '@/components/wealth/LiabilitiesTab';
+import NetWorthTab from '@/components/wealth/NetWorthTab';
+import AllocationTab from '@/components/wealth/AllocationTab';
 
 export default function WealthPage() {
   const [activeTab, setActiveTab] = useState(0);
@@ -14,6 +16,12 @@ export default function WealthPage() {
     }
     if (activeTab === 1) {
       return liabilityCount !== null ? `${liabilityCount} liabilities tracked` : 'Loading…';
+    }
+    if (activeTab === 2) {
+      return 'Portfolio net value analysis';
+    }
+    if (activeTab === 3) {
+      return 'Portfolio distribution details';
     }
     return '';
   };
@@ -77,14 +85,16 @@ export default function WealthPage() {
           >
             <Tab label="Assets" id="wealth-tab-assets" />
             <Tab label="Liabilities" id="wealth-tab-liabilities" />
-            <Tab label="Net Worth" disabled id="wealth-tab-networth" />
-            <Tab label="Allocation" disabled id="wealth-tab-allocation" />
+            <Tab label="Net Worth" id="wealth-tab-networth" />
+            <Tab label="Allocation" id="wealth-tab-allocation" />
           </Tabs>
         </Box>
 
         {/* Tab Contents */}
         {activeTab === 0 && <AssetsTab onAssetsLoad={setAssetCount} />}
         {activeTab === 1 && <LiabilitiesTab onLiabilitiesLoad={setLiabilityCount} />}
+        {activeTab === 2 && <NetWorthTab />}
+        {activeTab === 3 && <AllocationTab />}
       </Container>
     </Box>
   );

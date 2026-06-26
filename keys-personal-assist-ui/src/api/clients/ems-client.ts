@@ -39,6 +39,11 @@ import type {
   LiabilitySummary,
   LiabilityProjections,
 } from '@/types/liability';
+import type {
+  WealthSummary,
+  HistoricalNetWorthPoint,
+  WealthAllocation,
+} from '@/types/wealth';
 import { getEmsBase } from '@/api/config';
 import { fetchWithAuth } from './fetchClient';
 
@@ -567,6 +572,24 @@ class EMSClient {
       const errData = await response.json().catch(() => ({}));
       throw new Error(errData.detail || 'Failed to fetch liability projections');
     }
+    return response.json();
+  }
+
+  async getWealthSummary(): Promise<WealthSummary> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/wealth/summary`);
+    if (!response.ok) throw new Error('Failed to fetch wealth summary');
+    return response.json();
+  }
+
+  async getHistoricalNetWorth(months: number = 12): Promise<HistoricalNetWorthPoint[]> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/wealth/history?months=${months}`);
+    if (!response.ok) throw new Error('Failed to fetch historical net worth');
+    return response.json();
+  }
+
+  async getWealthAllocation(): Promise<WealthAllocation> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/wealth/allocation`);
+    if (!response.ok) throw new Error('Failed to fetch wealth allocation');
     return response.json();
   }
 }

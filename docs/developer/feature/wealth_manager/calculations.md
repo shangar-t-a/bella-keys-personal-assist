@@ -44,7 +44,7 @@ All outstanding balance calculations share a single simulation engine (`_simulat
 ### Parameters
 
 | Symbol | Meaning |
-|---|---|
+| --- | --- |
 | $P_m$ | Principal balance at the close of month $m$ |
 | $I_{\text{acc}, m}$ | Accrued uncompounded interest at the close of month $m$ |
 | $r$ | Annual nominal interest rate (e.g., $0.1195$ for $11.95\%$) |
@@ -185,3 +185,52 @@ Both correctly propagate to higher future interest accrual.
 ### Trajectory Shift
 
 All projections start from the actual current balance. Any missed payments or penalties that increased the balance automatically extend the projected tenure and increase projected interest, making $T_{\text{saved}} < 0$ and $I_{\text{saved}} < 0$ when the user is behind schedule.
+
+---
+
+## 6. Net Worth & Allocation Calculations
+
+### A. Net Worth Calculations
+
+**Current Net Worth ($NW$):**
+$$NW = \sum V_{\text{asset}} - \sum L_{\text{liability}}$$
+
+**Historical Net Worth ($NW_m$):**
+Calculates the historical net worth at the close of month $m$:
+$$NW_m = \sum V_{\text{asset}, m} - \sum L_{\text{liability}, m}$$
+where $V_{\text{asset}, m}$ is the calculated historical value of each asset at the end of month $m$, and $L_{\text{liability}, m}$ is the outstanding balance of each liability.
+
+---
+
+### B. Portfolio Allocations & Health Metrics
+
+**Category Allocations percentage ($A_{\text{pct}}$):**
+For each asset category $c_{\text{asset}}$:
+$$A_{\text{pct}, c} = \left(\frac{\sum_{t \in c_{\text{asset}}} V_{\text{current}, t}}{\sum V_{\text{asset}}}\right) \times 100$$
+For each liability category $c_{\text{liability}}$:
+$$A_{\text{pct}, c} = \left(\frac{\sum_{t \in c_{\text{liability}}} L_{\text{current}, t}}{\sum L_{\text{liability}}}\right) \times 100$$
+
+**Debt-to-Asset Ratio ($R_{\text{debt}}$):**
+Measures total leverage:
+$$R_{\text{debt}} = \left(\frac{\sum L_{\text{liability}}}{\sum V_{\text{asset}}}\right) \times 100$$
+
+- **Health Status thresholds:**
+  - $R_{\text{debt}} < 30\%$: *Low Risk (Healthy)* - Type: `SUCCESS`
+  - $R_{\text{debt}} \le 50\%$: *Moderate Risk (Watch)* - Type: `WARNING`
+  - $R_{\text{debt}} > 50\%$: *High Risk (Leveraged)* - Type: `ERROR`
+
+**Portfolio Liquidity Ratio ($R_{\text{liq}}$):**
+Proportion of liquid assets in the portfolio:
+$$R_{\text{liq}} = \left(\frac{V_{\text{liquid\_assets}}}{\sum V_{\text{asset}}}\right) \times 100$$
+where $V_{\text{liquid\_assets}}$ is the sum of category current values for `EQUITY` and `CASH_BANK` categories.
+
+- **Health Status thresholds:**
+  - $R_{\text{liq}} \ge 15\%$: *Healthy Liquidity* - Type: `SUCCESS`
+  - $R_{\text{liq}} < 15\%$: *Low Liquidity* - Type: `WARNING`
+
+**Financing Leverage Split:**
+
+- **Liabilities Financed Percentage ($Fin_{\text{debt}}$):**
+  $$Fin_{\text{debt}} = \min(100.0,\ R_{\text{debt}})$$
+- **Equity Financed Percentage ($Fin_{\text{equity}}$):**
+  $$Fin_{\text{equity}} = 100.0 - Fin_{\text{debt}}$$
