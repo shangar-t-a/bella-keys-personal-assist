@@ -12,40 +12,29 @@ Automate project setup and dependency synchronization (works on Linux, macOS, an
 bash scripts/setup.sh
 ```
 
-This script copies env file templates, syncs all Python dependencies via `uv`, installs UI packages via `npm`, and can optionally initialize local databases.
+This script copies env file templates, syncs all Python dependencies via `uv`, installs UI packages via `npm`, and optionally initializes local databases.
 
 ### Running Development Services
 
-Use the unified developer launcher to start different development configurations (interactive or via command line arguments: `ems-web`, `bella-web`, `ems-desktop`, `bella-desktop`):
+Start different development configurations (interactive or via command line arguments: `ems-web`, `bella-web`, `ems-desktop`, `bella-desktop`):
 
 ```bash
 bash scripts/run-dev.sh [profile]
 ```
 
-For example, to run the Expense Manager Service with Electron UI:
-```bash
-bash scripts/run-dev.sh ems-desktop
-```
-
 ### Common Developer Tasks
 
-* **Running Migrations:** Run `bash scripts/db-migrate.sh` to apply database schema updates via Alembic.
-* **Running Tests:** Run `bash scripts/run-tests.sh` to execute the pytest suite.
+* **Running Migrations:** `bash scripts/db-migrate.sh` (Alembic database schema updates).
+* **Running Tests:** `bash scripts/run-tests.sh` (Pytest suite).
 
 ---
 
 ## 2. Packaging and Electron Builds
 
-To build production installer binaries:
+Build production installer binaries:
 
-* **Windows:**
-  ```powershell
-  .\scripts\electron\build.bat
-  ```
-* **Linux/macOS:**
-  ```bash
-  bash scripts/electron/build.sh
-  ```
+* **Windows:** `.\scripts\electron\build.bat`
+* **Linux/macOS:** `bash scripts/electron/build.sh`
 
 Output binaries are stored in the `dist/` directory.
 
@@ -55,300 +44,103 @@ Output binaries are stored in the `dist/` directory.
 
 ### Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend SPA | Vite + React 18 + TypeScript + MUI v6 |
-| Backend Services | FastAPI + SQLAlchemy async + Pydantic v2 + Python ≥ 3.13 |
-| Dependency Management | `uv` for Python services; `npm` for the UI |
-| Database | PostgreSQL (via `asyncpg`) |
+* **Frontend SPA:** Vite + React 18 + TypeScript + MUI v6 (Refer to [ui-guidelines.md](ui-guidelines.md) for patterns).
+* **Backend Services:** FastAPI + SQLAlchemy async + Pydantic v2 + Python ≥ 3.13.
+* **Dependency Management:** `uv` (Python) and `npm` (UI).
+* **Database:** PostgreSQL (via `asyncpg`).
 
-### Stateless Containers
-All containerized services must remain stateless.
-1. Do not use Docker-managed named volumes for application data.
-2. Direct all database and system connections to the host PC via `host.docker.internal`.
-3. Bind mounts are permitted only for local engine caches (e.g., Qdrant).
+### Container & Service Rules
 
-### Health Checks
-All services must expose a `/health` endpoint. Configure the container health check in `docker-compose.yaml` using `curl`:
-```yaml
-healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:PORT/health"]
-  interval: 30s
-  timeout: 10s
-  retries: 3
-```
+1. **Stateless Containers:** Do not use Docker-managed named volumes for application data. Direct all DB/system connections to the host PC via `host.docker.internal`.
+2. **Health Checks:** All services must expose a `/health` endpoint. Configure the container health check in `docker-compose.yaml` using `curl` check.
 
-### Clean Architecture — Backend Layer Rules
+### Clean Architecture (Backend Layer Rules)
 
-The backend services strictly follow a layered clean architecture. Each layer may only import from layers below it — **never upward**.
+Backend services follow a strict layered clean architecture. Imports must flow downwards only:
 
 ```
-routers/v1/          ← HTTP boundary (FastAPI)
-  schemas/           ← Pydantic HTTP request/response schemas
-  mappers/           ← Pure static mapper classes (no logic)
-  endpoints/         ← Thin route handlers; delegate to use cases immediately
-use_cases/           ← Business logic and orchestration
-  models/            ← Request/response DTOs for the use case layer
+routers/v1/          ← HTTP boundary (FastAPI schemas, mappers, endpoints)
+use_cases/           ← Business logic and orchestration (Service classes & models)
 entities/            ← Core domain (pure Pydantic models, ABC interfaces)
-  models/            ← Domain models; no DB or framework imports
-  repositories/      ← Abstract ABC repository interfaces only
-infrastructures/     ← Concrete DB implementations (SQLAlchemy)
+infrastructures/     ← Concrete database implementations (SQLAlchemy repositories)
 ```
 
-**Rules:**
-- `entities/models/` — pure Pydantic `BaseModel`. No SQLAlchemy, no FastAPI.
-- `entities/repositories/` — abstract `ABC` interfaces only. One interface per domain entity.
-- `use_cases/` — `*Service` classes importing only from `entities/` and `use_cases/models/`.
-- `routers/v1/mappers/` — static mapper classes with `to_use_case_model()` and `to_response_model()` methods. Zero business logic.
-- `routers/v1/endpoints/` — FastAPI route functions only. Inject services via `Depends()`, call the service, map response, return. No logic.
+* **Entities:** Pure Pydantic models with zero framework imports.
+* **Mappers:** Static mapper classes with zero business logic.
+* **Endpoints:** Thin FastAPI route handlers injecting services via `Depends()`.
 
 ---
 
 ## 4. Backend Coding Standards
 
-### Linting — `ruff check` is mandatory before every commit
+### Linting & Formatting
 
-Run from the service root before staging any Python file:
+Linter rules are configured in `ruff.toml`. Run from the service root before committing:
 
 ```bash
 uv run ruff check
 ```
 
-The enforced rule sets (configured in `ruff.toml`):
+Key constraints:
 
-| Rule Set | Description |
-|---|---|
-| `E` / `W` | pycodestyle errors and warnings |
-| `F` | Pyflakes (unused imports, undefined names) |
-| `I` | isort (import ordering) |
-| `B` | flake8-bugbear (likely bugs) |
-| `C4` | flake8-comprehensions |
-| `D` | pydocstyle — **Google convention** |
-| `N` | pep8-naming |
-| `UP` | pyupgrade (modern Python syntax) |
-| `PL` | Pylint |
-| `SIM` | flake8-simplify |
-| `TC` | flake8-type-checking |
-
-- **Line length:** 120 characters.
-- **Scope:** `app/**/*.py` (Alembic versions and deprecated infra excluded).
+* **Line Length:** 120 characters.
+* **Scope:** `app/**/*.py` (Alembic versions and deprecated infra excluded).
 
 ### Import Ordering
 
-All imports must be at the **top of the file** — never inside functions or class bodies (unless guarding a circular import).
+All imports must be at the **top of the file**. Format: **stdlib → third-party → internal `app.*`**. Group multiple imports from the same parent package.
 
-Order: **stdlib → third-party → internal `app.*`**. Group multiple names from the same module into a single parenthesized block:
+### Code Quality & Docstrings
 
-```python
-# ✅ Correct
-from app.entities.models.asset import (
-    Asset,
-    AssetCategory,
-    AssetFilter,
-    AssetSort,
-    AssetTransaction,
-)
-
-# ❌ Wrong — scattered imports or imports inside functions
-def some_function():
-    from app.entities.models.asset import Asset
-```
-
-### Docstrings — Google Style, Every Public Symbol
-
-Every module, class, and public method must have a Google-style docstring. Enforced by ruff `D` rules.
-
-```python
-"""Module-level docstring describing the module."""
-
-
-class AssetService:
-    """Service handling asset orchestration and financial calculations."""
-
-    async def create_asset(self, asset_create: AssetCreate) -> AssetWithCalc:
-        """Create a new asset and log its initial transaction."""
-```
-
-- One-liner for simple getters/delete operations.
-- Multi-line for methods with non-obvious logic.
-
-### Error Handling in Endpoints
-
-```python
-# ValueError from use case layer → 404
-except ValueError as e:
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-
-# Broad Exception from create/update → 400
-except Exception as e:
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
-```
-
-- Always `raise HTTPException(...) from e` — never bare raise — to preserve the stack trace.
-
-### Other Conventions
-
-- **IDs:** Generate with `uuid.uuid4().hex` (compact hex string, no dashes).
-- **Financial values:** Always `round(value, 2)` before persisting or returning.
-- **Dependency injection:** Use FastAPI `Depends()` in endpoint signatures. Never instantiate services directly inside endpoint logic.
+* **Docstrings:** Use Google-style docstrings for every module, class, and public method.
+* **Top-Level Imports:** All imports must reside at the top of the file. Function-level imports are prohibited unless required to prevent circular dependencies.
+* **Single Responsibility:** Decompose complex functions. Methods exceeding 50 lines must be refactored.
+* **Minimizing Suppressions:** Avoid file-wide or block-wide Ruff suppressions (e.g., `# ruff: noqa: PLR0912, PLR2004`) in source files. Keep suppressions restricted to unit tests.
+* **Error Handling:** Always use `raise HTTPException(...) from e` to preserve the stack trace.
+* **Financial values:** Always `round(value, 2)` before persisting or returning.
 
 ---
 
 ## 5. Backend Testing Standards
 
-### Framework
+All tests are run via `pytest` through `bash scripts/run-tests.sh`.
 
-`pytest` + `pytest-asyncio` + `pytest-cov`. All tests run via:
+### Test Setup
 
-```bash
-bash scripts/run-tests.sh
-```
+* **Test Database:** Tests run against a dedicated PostgreSQL database (`expense_manager_test`), not mocks, verifying the full database integration path.
+* **Async Loop Scope:** Handled session-wide in `conftest.py` — do not mark individual tests.
 
-Async tests automatically receive `asyncio(loop_scope="session")` via the `conftest.py` hook — no manual marking required.
+### Test Coverage Checklist
 
-### Test Database
+Every new feature or use case must cover:
 
-Unit tests in this project connect to a **dedicated test PostgreSQL database** (`expense_manager_test`), not mocks. The `conftest.py` `init_and_drop_db` session fixture initialises and tears down the schema. Tests exercise the full use case → repository → database path.
+* **Happy Paths:** Verify standard CRUD operations return expected models and codes.
+* **Recalculations:** Verify parent models' computed/cached fields (e.g. `current_value`) update correctly when children are added, edited, or deleted.
+* **Edge Cases:** Zero balance, division guards, transaction boundary scenarios, unit vs value-based branching.
+* **Rollbacks:** Ensure transactions that fail or are deleted cleanly rollback parent state.
+* **Cleanup:** Every test must clean up its own created data.
 
-### Test Organization
+### Fixtures Pattern
 
-- Group tests by domain and scenario: `class TestAssetServiceCRUD`, `class TestAssetServiceSummary`, etc.
-- Every test class and method must have a Google-style docstring.
-- Add `# ruff: noqa: PLR2004, E501` at the top of test files to suppress magic-number and line-length warnings (acceptable in test context only).
-
-```python
-# ruff: noqa: PLR2004, E501
-"""Unit tests for the wealth manager assets service use case."""
-```
-
-### Thoroughness Requirements
-
-Every new feature use case must be covered with tests for:
-
-| Scenario | What to verify |
-|---|---|
-| **Happy path** | Create, read, update, delete return correct values |
-| **Recalculation** | Computed/cached fields update correctly after every transaction change |
-| **Edge cases** | Zero invested value (division guard), no transactions (reset to zero), unit-based vs flat-based branching |
-| **Rollback** | Deleting a transaction correctly reverts calculated state on the parent |
-| **Self-cleanup** | Every test deletes its own created data; confirm via `pytest.raises(ValueError)` |
-
-### Fixture Pattern
-
-- Shared repository fixtures: `scope="session"` in `conftest.py`.
-- Per-test service fixtures: default (function) scope, wrapping the session-scoped repo.
-- Seed data helpers: module-level async functions (not fixtures), called inside tests that need them.
-
-```python
-@pytest.fixture
-def asset_service(asset_repo):
-    """Provide an instance of AssetService."""
-    return AssetService(asset_repository=asset_repo)
-```
+Use session-scoped repository fixtures and function-scoped service wrappers in `conftest.py`.
 
 ---
 
-## 6. Frontend Coding Standards
+## 6. Continuous Integration & Release Pipeline
 
-### API Calls — Always Use `fetchWithAuth`
+Conducted via GitHub Actions to build and publish Docker images to GHCR.
 
-Never use raw `fetch` or `axios` for authenticated endpoints. Use `fetchWithAuth` from `src/api/clients/fetchClient.ts`:
-
-```typescript
-// ✅ Correct
-const response = await fetchWithAuth(`${emsBase}/assets`);
-
-// ❌ Wrong
-const response = await fetch(`${emsBase}/assets`, {
-  headers: { Authorization: `Bearer ${token}` },
-});
-```
-
-`fetchWithAuth` automatically attaches the Bearer token, performs **silent token refresh on 401**, and retries the original request.
-
-### Authentication Pattern
-
-`AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React auth state. `localStorage` is the persistence layer only.
-
-**On app mount:**
-1. If a `refresh_token` exists in `localStorage` → call `/refresh`.
-2. On success: store new tokens, update React state.
-3. On network failure: fall back to expiry check of the existing `access_token`.
-4. On no refresh token: log out immediately.
-
-**Cross-layer auth sync** uses a custom window event bus — avoiding any direct import between the fetch layer and React context:
-- `window.dispatchEvent(new Event('auth-logout'))` → triggers `logout()` in `AuthContext`.
-- `window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }))` → syncs new token into `AuthContext` state.
-
-### UI Component Standards
-
-**Never use `window.confirm` or `window.alert`** for destructive actions. Always use a custom in-app MUI `<Dialog>`.
-
-**Custom confirm dialog pattern** (reusable recipe):
-
-```tsx
-const [confirmDialog, setConfirmDialog] = useState<{
-  open: boolean;
-  title: string;
-  message: string;
-  onConfirm: () => void;
-}>({ open: false, title: '', message: '', onConfirm: () => {} });
-
-const openConfirm = (title: string, message: string, onConfirm: () => void) => {
-  setConfirmDialog({ open: true, title, message, onConfirm });
-};
-
-const closeConfirm = () => {
-  setConfirmDialog((prev) => ({ ...prev, open: false }));
-};
-```
-
-Render the dialog at the end of the component JSX (outside any primary dialog if nesting is needed).
-
-**`<DialogContent>` layout fix** — wrap fields in a `<Box>` to prevent MUI floating label clipping:
-
-```tsx
-// ✅ Correct
-<DialogContent>
-  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
-    <TextField ... />
-  </Box>
-</DialogContent>
-
-// ❌ Wrong — applies flex directly on DialogContent, which clips labels
-<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-  <TextField ... />
-</DialogContent>
-```
-
-**Required field labels** — MUI `<TextField required>` auto-appends the asterisk. Do not manually add `*` to the `label` prop.
-
-```tsx
-// ✅ Correct
-<TextField required label="Asset Name" />
-
-// ❌ Wrong
-<TextField required label="Asset Name *" />
-```
-
-### Build Verification — Mandatory Before Committing UI Changes
-
-```bash
-npm run build:web
-```
-
-TypeScript must compile with **zero errors** before staging any UI file. No `any` suppressions without an inline comment justification.
+* **Build Triggers:** Only trigger on `push` to `main` when a service `VERSION` file is modified (e.g., `services/expense-manager-service/VERSION`). Standard commits do not trigger builds.
+* **Security Scanning:** Trivy scans are executed on all generated images before publishing.
 
 ---
 
-## 7. Continuous Integration and Release Pipeline
+## 7. Documentation Guidelines & Reference Mapping
 
-The project utilizes GitHub Actions for building and publishing Docker images to the GitHub Container Registry (GHCR).
+To keep documentation clean and maintainable:
 
-### Build Triggers
-To prevent registry clutter and control costs:
-* Builds do not trigger on standard source code commits.
-* Builds only trigger on `push` to `main` when a service `VERSION` file is modified (e.g., `services/expense-manager-service/VERSION`).
-
-### Security Scanning
-The build pipeline scans all generated images for high and critical vulnerabilities using Trivy before publishing.
+* **Development Workflow & Standards:** [development-workflow.md](development-workflow.md)
+* **UI & Frontend Coding Guidelines:** [ui-guidelines.md](ui-guidelines.md)
+* **Feature Requirements & Specs:** `docs/developer/feature/<module>/<feature>.md` (e.g., [liabilities.md](feature/wealth_manager/liabilities.md))
+* **Mathematical & Calculation Logic:** `docs/developer/feature/<module>/calculations.md` (e.g., [calculations.md](feature/wealth_manager/calculations.md))
+* **Implementation Plans:** Temporary plans live under `.agents/plans/` or `.agents/rules/` to facilitate context discovery.
