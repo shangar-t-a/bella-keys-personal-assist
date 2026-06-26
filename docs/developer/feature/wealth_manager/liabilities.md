@@ -60,44 +60,56 @@ All outstanding balance calculations and projection curves are driven by a singl
 |---|---|
 | `original_value` | Sum of all BORROW transaction amounts |
 | `interest_rate` | Annual nominal rate as a percentage (e.g., `11.95` for 11.95%) |
-| `emi_amount` | Scheduled monthly EMI in INR |
+| `emi_amount` | Optional scheduled monthly EMI in INR (or None/0 for irregular/discretionary repayments) |
 | `emi_start_date` | Optional date when repayments/EMIs officially begin (moratorium support) |
 | `transactions` | Full chronological ledger of all transactions |
 | `up_to_date` | Simulate up to and including this date's calendar month |
+| `compounding` | Compounding frequency (`MONTHLY`, `QUARTERLY`, `HALF_YEARLY`, `YEARLY`) |
+
+### Compounding Frequency & Payment Semantic (Robust Design)
+
+Rather than assuming monthly compounding, the simulation respects the configured compounding frequency:
+
+- The engine tracks two separate balances: **Principal** (`p`) and **Accrued Interest** (`i_acc`).
+- Monthly interest is calculated on the principal: `interest = p × monthly_rate` and added to `i_acc`.
+- Compounding events (adding `i_acc` to `p` and resetting `i_acc = 0`) occur at frequency intervals (e.g., every 3 months for `QUARTERLY`, 12 months for `YEARLY`) relative to the disbursal date.
+- Repayments (scheduled EMIs and manual prepayments) are applied to **Accrued Interest first**. Any remaining repayment amount is then subtracted from the **Principal**.
 
 ### Month-by-Month Logic
 
 **Month 0 (Disbursal Month):**
-- Opening balance = sum of all BORROW amounts.
-- Any extra BORROWs, REPAYs, or REVALUEs in the same month are applied immediately.
+
+- Opening principal = sum of all BORROW amounts; accrued interest = 0.0.
+- Any extra BORROWs in the same month increase principal.
+- Any REPAYs in the same month are applied to accrued interest first (if any), then reduce principal.
 - No interest is accrued in the disbursal month.
 
 **Months 1 to N (up_to_date):**
 
 If a `REVALUE` exists in the month:
-1. Set closing balance = REVALUE amount.
-2. Add `max(0, reval_amount - (prev_balance + borrows))` to cumulative interest.
+
+1. Set principal = REVALUE amount; reset accrued interest `i_acc` = 0.0.
+2. Add `max(0, reval_amount - (prev_principal + prev_i_acc + borrows))` to cumulative interest.
 3. Credit any manual REPAY amounts to cumulative repaid.
 
 Otherwise (normal month):
-1. Accrue interest: `interest = prev_balance × monthly_rate`
-2. Apply scheduled EMI: if `emi_start_date` is configured and current month is before `emi_start_date`, `auto_emi` is `0.0`. Otherwise, `auto_emi = min(emi, prev_balance + interest)`.
+
+1. Accrue interest: `interest_m = principal × monthly_rate`. Add to `i_acc` and cumulative interest.
+2. Apply scheduled EMI: if `emi_start_date` is configured and current month is before `emi_start_date`, `auto_emi` is `0.0`. Otherwise, `auto_emi = min(emi, principal + i_acc)`.
 3. Apply any extra REPAY: `total_payment = auto_emi + repays`
-4. Close: `balance = max(0, prev_balance + interest + borrows - total_payment)`
-5. Add `interest` to cumulative interest; add `total_payment` to cumulative repaid.
+4. Apply repayment to `i_acc` first, then reduce `principal` with the remainder.
+5. Check compounding frequency: if the month index is a multiple of the compounding interval (e.g. `month_idx % 3 == 0` for `QUARTERLY`), add outstanding `i_acc` to `principal` and reset `i_acc = 0.0`.
+6. Add `total_payment` to cumulative repaid.
 
-If balance reaches 0, all subsequent months are recorded as zero (no further accumulation).
-
-### Output
-
-A dictionary of `"YYYY-MM"` → `(balance, cumulative_interest, cumulative_repaid)` snapshots for every month from disbursal to `up_to_date`.
+If balance (`principal + i_acc`) reaches 0, all subsequent months are recorded as zero.
 
 ### Consumers
 
 | Consumer | Usage |
 |---|---|
-| `calculate_current_outstanding()` | Takes the last snapshot. Returns `current_value`, `total_repaid`, `accumulated_interest` for the dashboard. |
-| `get_liability_projections()` | Uses all snapshots for the historical actual curve. Appends a forward projection from today's balance using scheduled EMI only. |
+| `calculate_current_outstanding()` | Takes the last snapshot. Returns `current_value`, `total_repaid`, `accumulated_interest` for the dashboard, respecting the compounding frequency. |
+| `get_liability_projections()` | Uses all snapshots for the historical actual curve. Appends a compounding-aware future projection from today's balance. |
+| `_calculate_remaining_tenure()` | Dynamic backend tenure estimator. Runs a step-by-step projection simulation (capped at 30 years) using resolved EMI and compounding to determine exactly when the loan will be fully paid off. |
 
 ## 5. Projection Curves and Intelligence Metrics
 
@@ -105,26 +117,27 @@ A dictionary of `"YYYY-MM"` → `(balance, cumulative_interest, cumulative_repai
 
 | Curve | Description |
 |---|---|
-| Ideal | Simulates the original loan from disbursal with no deviations — pure scheduled EMI only |
-| Actual (Historical) | Month-by-month actual balances from the simulation engine |
-| Projected (Future) | Continuation from today's balance using scheduled EMI only, until the balance reaches zero |
+| Ideal | Simulates the original loan from disbursal with no deviations — pure scheduled EMI only. If `emi_amount` is missing, resolves the EMI dynamically (from `maturity_date` or elapsed repayments). |
+| Actual (Historical) | Month-by-month actual balances from the simulation engine. |
+| Projected (Future) | Continuation from today's balance using compounding-aware logic with resolved/fallback EMI until the balance reaches zero. Capped at 30 years or negative amortization checks. |
 
 ### Intelligence Metrics
 
 | Metric | Description |
 |---|---|
-| `ideal_tenure_months` | Number of months the loan would have taken with zero deviations |
-| `remaining_tenure_months` | Number of months until full payoff based on today's balance and current EMI |
+| `ideal_tenure_months` | Number of months the loan would have taken with zero deviations (resolved EMI if none configured). |
+| `remaining_tenure_months` | Number of months until full payoff based on today's balance and resolved EMI. Calculated on backend via step-by-step projection simulation; returns `null` if negative amortization occurs. |
 | `tenure_saved_months` | `ideal_tenure - (elapsed + remaining)`. Negative means tenure extension. |
-| `total_interest_ideal` | Total interest that would have accrued under the ideal schedule |
-| `total_interest_projected` | Historical accumulated interest + projected future interest |
+| `total_interest_ideal` | Total interest that would have accrued under the ideal schedule. |
+| `total_interest_projected` | Historical accumulated interest + projected future interest. |
 | `interest_saved` | `total_interest_ideal - total_interest_projected`. Negative means net additional cost. |
-| `ideal_end_date` | Date when the loan would have ended under ideal schedule |
-| `projected_end_date` | Date when the loan will end based on current trajectory |
+| `ideal_end_date` | Date when the loan would have ended under ideal schedule. |
+| `projected_end_date` | Date when the loan will end based on current trajectory. |
 
 ### Missed Payment Modeling
 
 When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies the scheduled EMI. This means:
+
 - Balance reduces as if the payment was made on time.
 - If the user subsequently records a `REVALUE` from their bank statement, the correct real-world balance (which may be higher due to missed EMIs) is reconciled automatically.
 - The difference between the expected-simulated balance and the REVALUE amount is attributed to implied interest charges.

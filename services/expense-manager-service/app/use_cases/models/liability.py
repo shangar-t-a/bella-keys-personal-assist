@@ -86,6 +86,7 @@ class LiabilityWithCalc(BaseEntity):
     total_repaid: float = Field(default=0.0, description="Total amount repaid so far")
     accumulated_interest: float = Field(default=0.0, description="Accumulated interest/charges")
     progress_pct: float = Field(default=0.0, description="Repayment progress percentage")
+    remaining_tenure_months: int | None = Field(default=None, description="Estimated remaining tenure in months")
     created_at: datetime
     updated_at: datetime
 

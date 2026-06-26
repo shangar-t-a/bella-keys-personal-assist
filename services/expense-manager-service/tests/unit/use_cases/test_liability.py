@@ -353,3 +353,116 @@ class TestLiabilityProjections:
 
         # Clean up
         await liability_service.delete_liability(liability.id)
+
+
+class TestLiabilitySimulationAndCompounding:
+    """Unit tests for compounding frequency and irregular repayments simulation."""
+
+    async def test_interest_bearing_loan_no_emi(self, liability_service):
+        """Verify interest-bearing loan with emi_amount=None accrues interest without auto-EMI."""
+        categories_map = await get_categories_map(liability_service)
+        subcategory_map = await get_subcategory_map(liability_service)
+        unsecured_cat_id = categories_map["UNSECURED_LOAN"]
+        personal_sub_id = subcategory_map.get("PERSONAL_LOAN")
+
+        disbursal_date = datetime.now(UTC) - timedelta(days=90)  # ~3 months ago
+
+        # 1. Create a loan of 100,000 at 12% interest, no EMI
+        liability_in = LiabilityCreate(
+            category_id=unsecured_cat_id,
+            name="No-EMI Personal Loan",
+            subcategory_id=personal_sub_id,
+            initial_amount=100000.00,
+            initial_date=disbursal_date,
+            interest_details=LiabilityInterestDetails(
+                interest_rate=12.00,
+                compounding=CompoundingFrequency.MONTHLY,
+                emi_amount=None,  # No scheduled EMI
+            ),
+        )
+        liability = await liability_service.create_liability(liability_in)
+
+        # Since there is no EMI, outstanding balance should grow month-by-month with interest.
+        # ~3 months elapsed. At 1% per month, balance should grow from 100,000 to ~103,030.10
+        updated = await liability_service.get_liability_by_id(liability.id)
+        assert updated.current_value > 100000.00
+        assert updated.accumulated_interest > 0.00
+        assert updated.total_repaid == 0.00
+        assert updated.remaining_tenure_months is not None  # Amortizes via fallback EMI (100k/60 = 1666.67 > 1000.00 monthly interest)
+
+        # Now get projections. Projections should be generated successfully.
+        projections = await liability_service.get_liability_projections(liability.id)
+        assert len(projections.projection_points) > 0
+
+        # Cleanup
+        await liability_service.delete_liability(liability.id)
+
+        # 2. Test negative amortization where interest > fallback EMI
+        liability_in_high_int = LiabilityCreate(
+            category_id=unsecured_cat_id,
+            name="Negative Amortization Personal Loan",
+            subcategory_id=personal_sub_id,
+            initial_amount=100000.00,
+            initial_date=disbursal_date,
+            interest_details=LiabilityInterestDetails(
+                interest_rate=24.00,  # 2% monthly = 2000 interest. Fallback EMI is 1666.67
+                compounding=CompoundingFrequency.MONTHLY,
+                emi_amount=None,
+            ),
+        )
+        liability_high = await liability_service.create_liability(liability_in_high_int)
+        updated_high = await liability_service.get_liability_by_id(liability_high.id)
+        assert updated_high.remaining_tenure_months is None  # Growing balance (interest > EMI), so no end date
+
+        # Cleanup
+        await liability_service.delete_liability(liability_high.id)
+
+    async def test_compounding_frequencies(self, liability_service):
+        """Verify interest calculations reflect monthly vs yearly compounding."""
+        categories_map = await get_categories_map(liability_service)
+        subcategory_map = await get_subcategory_map(liability_service)
+        unsecured_cat_id = categories_map["UNSECURED_LOAN"]
+        personal_sub_id = subcategory_map.get("PERSONAL_LOAN")
+
+        disbursal_date = datetime.now(UTC) - timedelta(days=365)  # 1 year ago
+
+        # Loan A: Monthly Compounding
+        loan_a_in = LiabilityCreate(
+            category_id=unsecured_cat_id,
+            name="Monthly Compounding Loan",
+            subcategory_id=personal_sub_id,
+            initial_amount=100000.00,
+            initial_date=disbursal_date,
+            interest_details=LiabilityInterestDetails(
+                interest_rate=12.00,
+                compounding=CompoundingFrequency.MONTHLY,
+                emi_amount=None,
+            ),
+        )
+        loan_a = await liability_service.create_liability(loan_a_in)
+
+        # Loan B: Yearly Compounding (compounds only at month 12)
+        loan_b_in = LiabilityCreate(
+            category_id=unsecured_cat_id,
+            name="Yearly Compounding Loan",
+            subcategory_id=personal_sub_id,
+            initial_amount=100000.00,
+            initial_date=disbursal_date,
+            interest_details=LiabilityInterestDetails(
+                interest_rate=12.00,
+                compounding=CompoundingFrequency.YEARLY,
+                emi_amount=None,
+            ),
+        )
+        loan_b = await liability_service.create_liability(loan_b_in)
+
+        val_a = await liability_service.get_liability_by_id(loan_a.id)
+        val_b = await liability_service.get_liability_by_id(loan_b.id)
+
+        # Monthly compounding compounding principal grows faster.
+        assert val_a.current_value >= val_b.current_value
+        assert val_a.accumulated_interest >= val_b.accumulated_interest
+
+        # Cleanup
+        await liability_service.delete_liability(loan_a.id)
+        await liability_service.delete_liability(loan_b.id)

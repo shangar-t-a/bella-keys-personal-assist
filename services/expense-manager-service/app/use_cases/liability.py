@@ -6,6 +6,7 @@ import uuid
 from datetime import UTC, datetime
 
 from app.entities.models.liability import (
+    CompoundingFrequency,
     Liability,
     LiabilityCategory,
     LiabilityFilter,
@@ -47,10 +48,11 @@ def add_months(sourcedate: datetime, months: int) -> datetime:
 def _simulate_amortization(
     original_value: float,
     interest_rate: float,
-    emi_amount: float,
+    emi_amount: float | None,
     transactions: list[LiabilityTransaction],
     up_to_date: datetime,
     emi_start_date: datetime | None = None,
+    compounding: CompoundingFrequency | None = None,
 ) -> dict[str, tuple[float, float, float]]:
     """Core amortization simulation engine (single source of truth).
 
@@ -67,17 +69,25 @@ def _simulate_amortization(
     Args:
         original_value: Sum of all BORROW transaction amounts.
         interest_rate: Annual interest rate as a percentage (e.g. 11.95 for 11.95%).
-        emi_amount: Scheduled monthly EMI in INR.
+        emi_amount: Scheduled monthly EMI in INR (or None/0 for irregular repayment).
         transactions: Full chronological ledger of transactions.
         up_to_date: Simulate up to (and including) this date's month.
         emi_start_date: Optional date from which EMI payments should start auto-applying.
+        compounding: Compounding frequency. Defaults to MONTHLY.
 
     Returns:
         Dict of ``"YYYY-MM"`` → ``(balance, cumulative_interest, cumulative_repaid)`` at
         the *closing* of each simulated month. Month 0 (disbursal month) is also included.
     """
+    compounding_months = {
+        CompoundingFrequency.MONTHLY: 1,
+        CompoundingFrequency.QUARTERLY: 3,
+        CompoundingFrequency.HALF_YEARLY: 6,
+        CompoundingFrequency.YEARLY: 12,
+    }.get(compounding, 1)
+
     monthly_rate = (interest_rate / 100.0) / 12.0
-    emi = emi_amount
+    emi = emi_amount or 0.0
 
     sorted_txs = sorted(transactions, key=lambda t: (t.transaction_date, t.created_at or datetime.min))
     borrow_txs = [t for t in sorted_txs if t.transaction_type == LiabilityTransactionType.BORROW]
@@ -105,7 +115,8 @@ def _simulate_amortization(
     snapshots: dict[str, tuple[float, float, float]] = {}
 
     # Month 0: Disbursal month
-    p = first_borrow.amount  # opening balance from first borrow
+    p = first_borrow.amount  # opening principal from first borrow
+    i_acc = 0.0              # accrued uncompounded interest
     accum_interest = 0.0
     accum_repaid = 0.0
 
@@ -118,18 +129,25 @@ def _simulate_amortization(
     revals_0 = [t for t in m0_other if t.transaction_type == LiabilityTransactionType.REVALUE]
 
     p += extra_borrows_0
-    p -= repays_0
-    accum_repaid += repays_0
+    
+    if repays_0 > 0:
+        if repays_0 <= i_acc:
+            i_acc -= repays_0
+        else:
+            p -= (repays_0 - i_acc)
+            i_acc = 0.0
+        accum_repaid += repays_0
 
     if revals_0:
         # REVALUE in disbursal month: snap to official balance, attribute difference as interest
         reval_amount = revals_0[-1].amount
-        interest_adj = reval_amount - p
+        interest_adj = reval_amount - (p + i_acc)
         accum_interest += interest_adj
         p = reval_amount
+        i_acc = 0.0
 
     p = max(0.0, p)
-    snapshots[m0_str] = (round(p, 2), round(accum_interest, 2), round(accum_repaid, 2))
+    snapshots[m0_str] = (round(p + i_acc, 2), round(accum_interest, 2), round(accum_repaid, 2))
 
     # Months 1 … N (up_to_date)
     elapsed = max(0, (up_to_date.year - start_date.year) * 12 + (up_to_date.month - start_date.month))
@@ -144,43 +162,119 @@ def _simulate_amortization(
         repays_m = sum(t.amount for t in month_txs if t.transaction_type == LiabilityTransactionType.REPAY)
         revals_m = [t for t in month_txs if t.transaction_type == LiabilityTransactionType.REVALUE]
 
-        if p <= 0.0 and borrows_m == 0.0 and not revals_m:
+        if p <= 0.0 and i_acc <= 0.0 and borrows_m == 0.0 and not revals_m:
             # Loan already paid off — record zero balance going forward
             snapshots[m_str] = (0.0, round(accum_interest, 2), round(accum_repaid, 2))
             continue
 
         if revals_m:
             # REVALUE month: the bank's official closing balance is the authoritative truth.
-            # It already reflects all interest accrued, EMI payments, and any extra repayments
-            # the bank processed. We do NOT apply auto-EMI separately — that would double-count.
-            #
-            # Interest attribution for this month:
-            #   The balance moved from p_prev → reval_amount.
-            #   The "effective interest" is the difference: reval - (p_prev + borrows).
-            #   This is naturally ≥ 0 for a normal interest-bearing month, but can be slightly
-            #   negative if the bank applied relief/waivers — we floor at 0 for display.
             reval_amount = revals_m[-1].amount
-            implied_interest = reval_amount - (p + borrows_m)
+            implied_interest = reval_amount - (p + i_acc + borrows_m)
             accum_interest += max(0.0, implied_interest)
-            # Manual REPAY entries in same month are additional repayments the user tracked;
-            # they are credited separately (the REVALUE already incorporated them into the balance).
             accum_repaid += repays_m
             p = max(0.0, reval_amount)
+            i_acc = 0.0
         else:
-            # Normal month: accrue interest, apply scheduled EMI + any manual repayments
+            # Normal month: accrue interest, apply payments, compound periodically
             interest_m = p * monthly_rate
+            i_acc += interest_m
+            accum_interest += interest_m
+
             if emi_start_date and date_m < emi_start_date:
                 auto_emi = 0.0
             else:
-                auto_emi = min(emi, p + interest_m)
-            total_repayment = auto_emi + repays_m
-            p = max(0.0, p + interest_m + borrows_m - total_repayment)
-            accum_interest += interest_m
-            accum_repaid += total_repayment
+                auto_emi = min(emi, p + i_acc)
 
-        snapshots[m_str] = (round(p, 2), round(accum_interest, 2), round(accum_repaid, 2))
+            total_repayment = auto_emi + repays_m
+            p += borrows_m
+
+            if total_repayment > 0:
+                if total_repayment <= i_acc:
+                    i_acc -= total_repayment
+                else:
+                    p = max(0.0, p - (total_repayment - i_acc))
+                    i_acc = 0.0
+                accum_repaid += total_repayment
+
+            # Compounding event
+            if m % compounding_months == 0:
+                p += i_acc
+                i_acc = 0.0
+
+        snapshots[m_str] = (round(p + i_acc, 2), round(accum_interest, 2), round(accum_repaid, 2))
 
     return snapshots
+
+
+def _calculate_remaining_tenure(
+    current_value: float,
+    interest_rate: float | None,
+    compounding: CompoundingFrequency | None,
+    emi_amount: float | None,
+    emi_start_date: datetime | None,
+    today: datetime,
+) -> int | None:
+    """Calculate the remaining tenure of a liability in months."""
+    if current_value <= 0:
+        return 0
+
+    if not interest_rate or not emi_amount or emi_amount <= 0:
+        if emi_amount and emi_amount > 0:
+            import math
+            return int(math.ceil(current_value / emi_amount))
+        return None
+
+    p = current_value
+    i_acc = 0.0
+    compounding_months = {
+        CompoundingFrequency.MONTHLY: 1,
+        CompoundingFrequency.QUARTERLY: 3,
+        CompoundingFrequency.HALF_YEARLY: 6,
+        CompoundingFrequency.YEARLY: 12,
+    }.get(compounding, 1)
+
+    monthly_rate = (interest_rate / 100.0) / 12.0
+    months = 0
+    max_months = 360  # Cap at 30 years
+
+    if today.tzinfo is None:
+        today = today.replace(tzinfo=UTC)
+    if emi_start_date and emi_start_date.tzinfo is None:
+        emi_start_date = emi_start_date.replace(tzinfo=UTC)
+
+    while p > 0 and months < max_months:
+        months += 1
+        date_m = add_months(today, months)
+
+        interest_m = p * monthly_rate
+        i_acc += interest_m
+
+        if emi_start_date and date_m < emi_start_date:
+            payment = 0.0
+        else:
+            payment = min(emi_amount, p + i_acc)
+
+        if payment <= 0:
+            return None
+
+        if payment <= i_acc:
+            i_acc -= payment
+        else:
+            p = max(0.0, p - (payment - i_acc))
+            i_acc = 0.0
+
+        if months % compounding_months == 0:
+            p += i_acc
+            i_acc = 0.0
+
+        # Negative amortization check (balance grows instead of shrinks)
+        if p + i_acc >= current_value + 1e-2 and months >= 12:
+            return None
+
+    if p > 0:
+        return None
+    return months
 
 
 def calculate_current_outstanding(
@@ -190,11 +284,12 @@ def calculate_current_outstanding(
     transactions: list[LiabilityTransaction],
     today: datetime | None = None,
     emi_start_date: datetime | None = None,
+    interest_compounding: CompoundingFrequency | None = None,
 ) -> dict[str, float]:
     """Calculate the dynamic outstanding balance, total repaid, and accumulated interest as of today.
 
-    Delegates to ``_simulate_amortization`` for interest-bearing EMI loans.
-    Provides a simplified path for non-EMI or interest-free loans.
+    Delegates to ``_simulate_amortization`` for interest-bearing loans.
+    Provides a simplified path for interest-free loans.
     """
     if today is None:
         today = datetime.now(UTC)
@@ -209,8 +304,8 @@ def calculate_current_outstanding(
 
     total_borrowed = sum(t.amount for t in borrow_txs)
 
-    # Non-EMI / interest-free loans
-    if not interest_rate or not emi_amount:
+    # Interest-free loans
+    if not interest_rate:
         repayments = sum(t.amount for t in sorted_txs if t.transaction_type == LiabilityTransactionType.REPAY)
         revalue_txs = [t for t in sorted_txs if t.transaction_type == LiabilityTransactionType.REVALUE]
         if revalue_txs:
@@ -237,7 +332,7 @@ def calculate_current_outstanding(
                 "accumulated_interest": 0.0,
             }
 
-    # EMI / interest-bearing loans — delegate to simulation engine
+    # Interest-bearing loans — delegate to simulation engine
     snapshots = _simulate_amortization(
         original_value=total_borrowed,
         interest_rate=interest_rate,
@@ -245,6 +340,7 @@ def calculate_current_outstanding(
         transactions=transactions,
         up_to_date=today,
         emi_start_date=emi_start_date,
+        compounding=interest_compounding,
     )
 
     if not snapshots:
@@ -272,6 +368,49 @@ class LiabilityService:
         """Retrieve all liability categories."""
         return await self.liability_repository.get_all_categories()
 
+    def _resolve_emi(self, liability: Liability, transactions: list[LiabilityTransaction]) -> float:
+        """Resolve the EMI to use for projections or tenure estimations."""
+        if liability.emi_amount and liability.emi_amount > 0:
+            return liability.emi_amount
+
+        sorted_txs = sorted(transactions, key=lambda t: (t.transaction_date, t.created_at or datetime.min))
+        borrow_txs = [t for t in sorted_txs if t.transaction_type == LiabilityTransactionType.BORROW]
+
+        # 1. If maturity date is configured, calculate mathematically ideal EMI
+        if liability.maturity_date:
+            first_borrow = borrow_txs[0] if borrow_txs else None
+            start_date = first_borrow.transaction_date if first_borrow else liability.created_at or datetime.now(UTC)
+            if start_date.tzinfo is None:
+                start_date = start_date.replace(tzinfo=UTC)
+            maturity_date = liability.maturity_date
+            if maturity_date.tzinfo is None:
+                maturity_date = maturity_date.replace(tzinfo=UTC)
+
+            n = (maturity_date.year - start_date.year) * 12 + (maturity_date.month - start_date.month)
+            if n > 0:
+                p = sum(t.amount for t in borrow_txs) if borrow_txs else liability.original_value
+                if liability.interest_rate and liability.interest_rate > 0:
+                    r_monthly = (liability.interest_rate / 100.0) / 12.0
+                    return (p * r_monthly * ((1 + r_monthly) ** n)) / (((1 + r_monthly) ** n) - 1)
+                else:
+                    return p / n
+
+        # 2. Fallback to average monthly repayments or 5-year default
+        first_borrow = borrow_txs[0] if borrow_txs else None
+        start_date = first_borrow.transaction_date if first_borrow else liability.created_at or datetime.now(UTC)
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=UTC)
+
+        today = datetime.now(UTC)
+        elapsed_months = max(1, (today.year - start_date.year) * 12 + (today.month - start_date.month))
+
+        total_repaid = sum(t.amount for t in sorted_txs if t.transaction_type == LiabilityTransactionType.REPAY)
+        if total_repaid > 0:
+            return max(1000.0, total_repaid / elapsed_months)
+
+        p = sum(t.amount for t in borrow_txs) if borrow_txs else liability.original_value
+        return max(1000.0, p / 60.0)
+
     async def _to_calc_model(self, liability: Liability) -> LiabilityWithCalc:
         """Add calculated fields and category information to liability model."""
         category = await self.liability_repository.get_category_by_id(liability.category_id)
@@ -288,6 +427,7 @@ class LiabilityService:
             transactions=transactions,
             today=datetime.now(UTC),
             emi_start_date=liability.emi_start_date,
+            interest_compounding=liability.interest_compounding,
         )
         dynamic_current_value = calcs["current_value"]
         total_repaid = calcs["total_repaid"]
@@ -297,6 +437,16 @@ class LiabilityService:
         if liability.original_value > 0:
             # Clamped between 0 and 100
             progress_pct = max(0.0, min(100.0, (1 - dynamic_current_value / liability.original_value) * 100))
+
+        resolved_emi = self._resolve_emi(liability, transactions)
+        remaining_tenure = _calculate_remaining_tenure(
+            current_value=dynamic_current_value,
+            interest_rate=liability.interest_rate,
+            compounding=liability.interest_compounding,
+            emi_amount=resolved_emi,
+            emi_start_date=liability.emi_start_date,
+            today=datetime.now(UTC),
+        )
 
         return LiabilityWithCalc(
             id=liability.id,
@@ -316,6 +466,7 @@ class LiabilityService:
             total_repaid=round(total_repaid, 2),
             accumulated_interest=round(accumulated_interest, 2),
             progress_pct=round(progress_pct, 2),
+            remaining_tenure_months=remaining_tenure,
             created_at=liability.created_at,
             updated_at=liability.updated_at,
         )
@@ -564,6 +715,7 @@ class LiabilityService:
             transactions=transactions,
             today=datetime.now(UTC),
             emi_start_date=liability.emi_start_date,
+            interest_compounding=liability.interest_compounding,
         )
         current_value = calcs["current_value"]
 
@@ -595,16 +747,16 @@ class LiabilityService:
             LiabilityProjections containing comparative metrics and data points.
 
         Raises:
-            ValueError: If the liability doesn't exist, is missing interest/EMI configs,
+            ValueError: If the liability doesn't exist, is missing interest configs,
                         or has no transaction history.
         """
         liability = await self.liability_repository.get_liability_by_id(liability_id)
         if not liability:
             raise ValueError(f"Liability with ID {liability_id} not found.")
 
-        if not liability.interest_rate or not liability.emi_amount:
+        if not liability.interest_rate:
             raise ValueError(
-                f"Liability '{liability.name}' is missing interest rate or scheduled EMI amount configuration."
+                f"Liability '{liability.name}' is missing interest rate configuration."
             )
 
         transactions = await self.liability_repository.get_transactions_for_liability(liability_id)
@@ -624,8 +776,15 @@ class LiabilityService:
         original_value = sum(t.amount for t in borrow_txs)
 
         monthly_rate = (liability.interest_rate / 100.0) / 12.0
-        emi = liability.emi_amount
+        emi = self._resolve_emi(liability, transactions)
         today = datetime.now(UTC)
+
+        compounding_months = {
+            CompoundingFrequency.MONTHLY: 1,
+            CompoundingFrequency.QUARTERLY: 3,
+            CompoundingFrequency.HALF_YEARLY: 6,
+            CompoundingFrequency.YEARLY: 12,
+        }.get(liability.interest_compounding, 1)
 
         # A. Ideal Curve (no prepayments, pure scheduled amortization)
         ideal_points: dict[str, float] = {}
@@ -634,6 +793,7 @@ class LiabilityService:
         ideal_interest_points[start_date.strftime("%Y-%m")] = 0.0
 
         p_ideal = original_value
+        i_acc_ideal = 0.0
         n_ideal = 0
         total_interest_ideal = 0.0
 
@@ -641,17 +801,36 @@ class LiabilityService:
             n_ideal += 1
             date_m = add_months(start_date, n_ideal)
             interest_m = p_ideal * monthly_rate
+            i_acc_ideal += interest_m
+            total_interest_ideal += interest_m
+
             if liability.emi_start_date and date_m < liability.emi_start_date:
                 payment = 0.0
             else:
-                payment = min(emi, p_ideal + interest_m)
-            p_ideal = max(0.0, p_ideal + interest_m - payment)
-            total_interest_ideal += interest_m
+                payment = min(emi, p_ideal + i_acc_ideal)
+
+            if payment <= 0:
+                break
+
+            if payment <= i_acc_ideal:
+                i_acc_ideal -= payment
+            else:
+                p_ideal = max(0.0, p_ideal - (payment - i_acc_ideal))
+                i_acc_ideal = 0.0
+
+            if n_ideal % compounding_months == 0:
+                p_ideal += i_acc_ideal
+                i_acc_ideal = 0.0
 
             n_str = date_m.strftime("%Y-%m")
-            ideal_points[n_str] = round(p_ideal, 2)
+            ideal_points[n_str] = round(p_ideal + i_acc_ideal, 2)
             ideal_interest_points[n_str] = round(total_interest_ideal, 2)
-            if p_ideal <= 0:
+            
+            # Prevent loop from hanging if loan is not amortizing (interest >= emi)
+            if p_ideal + i_acc_ideal >= original_value + 1e-2 and n_ideal >= 12:
+                break
+                
+            if p_ideal <= 0 and i_acc_ideal <= 0:
                 break
 
         ideal_end_date = add_months(start_date, n_ideal)
@@ -665,6 +844,7 @@ class LiabilityService:
             transactions=transactions,
             up_to_date=today,
             emi_start_date=liability.emi_start_date,
+            compounding=liability.interest_compounding,
         )
 
         actual_points: dict[str, float] = {}
@@ -689,7 +869,7 @@ class LiabilityService:
         p_today = max(0.0, p_today)
         total_interest_historical = max(0.0, interest_today)
 
-        # C. Future Projection (from today, scheduled EMI only)
+        # C. Future Projection (from today, scheduled/resolved EMI only)
         k_projected = 0
         total_interest_projected_future = 0.0
         projected_future_points: dict[str, float] = {}
@@ -697,23 +877,43 @@ class LiabilityService:
 
         if p_today > 0:
             p_proj = p_today
+            i_acc_proj = 0.0
             cum_int_proj = total_interest_historical
             while p_proj > 0 and k_projected < 360:
                 k_projected += 1
                 date_m = add_months(today, k_projected)
                 interest_m = p_proj * monthly_rate
-                if liability.emi_start_date and date_m < liability.emi_start_date:
-                    payment = 0.0
-                else:
-                    payment = min(emi, p_proj + interest_m)
-                p_proj = max(0.0, p_proj + interest_m - payment)
+                i_acc_proj += interest_m
                 total_interest_projected_future += interest_m
                 cum_int_proj += interest_m
 
+                if liability.emi_start_date and date_m < liability.emi_start_date:
+                    payment = 0.0
+                else:
+                    payment = min(emi, p_proj + i_acc_proj)
+
+                if payment <= 0:
+                    break
+
+                if payment <= i_acc_proj:
+                    i_acc_proj -= payment
+                else:
+                    p_proj = max(0.0, p_proj - (payment - i_acc_proj))
+                    i_acc_proj = 0.0
+
+                if k_projected % compounding_months == 0:
+                    p_proj += i_acc_proj
+                    i_acc_proj = 0.0
+
                 k_str = date_m.strftime("%Y-%m")
-                projected_future_points[k_str] = round(p_proj, 2)
+                projected_future_points[k_str] = round(p_proj + i_acc_proj, 2)
                 projected_future_interest_points[k_str] = round(cum_int_proj, 2)
-                if p_proj <= 0:
+                
+                # Prevent loops from hanging on negative amortization
+                if p_proj + i_acc_proj >= p_today + 1e-2 and k_projected >= 12:
+                    break
+                    
+                if p_proj <= 0 and i_acc_proj <= 0:
                     break
 
         projected_end_date = add_months(today, k_projected) if p_today > 0 else today

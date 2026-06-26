@@ -123,6 +123,7 @@ class LiabilityResponseMapper:
             total_repaid=liability.total_repaid,
             accumulated_interest=liability.accumulated_interest,
             progress_pct=liability.progress_pct,
+            remaining_tenure_months=liability.remaining_tenure_months,
             created_at=liability.created_at,
             updated_at=liability.updated_at,
         )

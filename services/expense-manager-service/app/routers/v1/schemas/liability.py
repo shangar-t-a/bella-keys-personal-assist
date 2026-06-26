@@ -114,6 +114,7 @@ class LiabilityResponse(BaseSchema):
     total_repaid: float
     accumulated_interest: float
     progress_pct: float
+    remaining_tenure_months: int | None = Field(default=None, description="Estimated remaining tenure in months")
     created_at: datetime
     updated_at: datetime
 

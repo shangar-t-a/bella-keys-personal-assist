@@ -332,37 +332,16 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
   // Remaining Tenure Projection Helper
   const getRemainingTenureText = (liability: Liability) => {
     if (liability.currentValue <= 0) return 'Paid Off';
-
-    if (liability.maturityDate) {
-      const diffTime = new Date(liability.maturityDate).getTime() - new Date().getTime();
-      if (diffTime <= 0) return 'Passed Due';
-      const months = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.4375));
-      const yrs = Math.floor(months / 12);
-      const remainingMonths = months % 12;
-      return yrs > 0 ? `${yrs}y ${remainingMonths}m` : `${months}m`;
-    }
-
-    // Fallback Amortization math
-    if (liability.interestRate) {
-      const P = liability.currentValue;
-      const r = liability.interestRate / 100 / 12;
-      
-      // Use actual emiAmount if specified, otherwise fall back to average repayments estimate
-      const M = liability.emiAmount || (liability.totalRepaid > 0 ? Math.max(1000, liability.totalRepaid / 10) : 0);
-      
-      if (M > P * r) {
-        const num = Math.log(1 - (P * r) / M);
-        const den = Math.log(1 + r);
-        const months = Math.ceil(-num / den);
-        if (!isNaN(months) && isFinite(months)) {
-          const yrs = Math.floor(months / 12);
-          const remainingMonths = months % 12;
-          return yrs > 0 ? `~${yrs}y ${remainingMonths}m` : `~${months}m`;
-        }
-      }
-    }
-
-    return 'No End Date';
+    if (liability.remainingTenureMonths == null) return 'No End Date';
+    
+    const months = liability.remainingTenureMonths;
+    const prefix = liability.maturityDate ? '' : '~';
+    const yrs = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    
+    return yrs > 0 
+      ? `${prefix}${yrs}y ${remainingMonths}m` 
+      : `${prefix}${months}m`;
   };
 
   // Filter
@@ -612,7 +591,7 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
                     const sub = categories
                       .flatMap(c => c.subcategories)
                       .find(s => s.id === liability.subcategoryId);
-                    const canShowProjections = !!(sub?.hasInterest && liability.interestRate != null && liability.emiAmount != null);
+                    const canShowProjections = !!(sub?.hasInterest && liability.interestRate != null);
                     const isExpanded = expandedLiabilityId === liability.id;
 
                     const row1 = (
