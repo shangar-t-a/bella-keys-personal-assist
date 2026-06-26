@@ -16,7 +16,7 @@ Assets are organized under pre-seeded top-level categories and detailed subcateg
 ### Categories
 
 | Code | Name | Description |
-|---|---|---|
+| --- | --- | --- |
 | `EQUITY` | Equity | Stocks, Mutual Funds, ETFs, NPS Equity |
 | `DEBT` | Debt | Fixed Deposits, PPF, Bonds, EPF |
 | `REAL_ESTATE` | Real Estate | Land, residential/commercial properties, REITs |
@@ -28,7 +28,7 @@ Assets are organized under pre-seeded top-level categories and detailed subcateg
 Each subcategory defines the operational rules for its assets:
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `valuation_type` | Enum | `VALUE_BASED` or `UNIT_BASED` — drives the recalculation path |
 | `has_interest` | Boolean | Whether interest rate and compounding apply |
 | `has_maturity` | Boolean | Whether a maturity date is required |
@@ -55,7 +55,7 @@ Represents investments tracked by units held (e.g., Stocks, Mutual Funds, Gold i
 ## 4. Transaction Types
 
 | Type | Applies To | Effect |
-|---|---|---|
+| --- | --- | --- |
 | `BUY` | All | Increases invested value and units held |
 | `SELL` | All | Decreases invested value and units held |
 | `REVALUE` | All | Sets the current market value without changing invested cost |
@@ -65,7 +65,7 @@ Represents investments tracked by units held (e.g., Stocks, Mutual Funds, Gold i
 ### `asset_category`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `name` | String | Display name |
 | `code` | String | Unique uppercase identifier |
@@ -75,7 +75,7 @@ Represents investments tracked by units held (e.g., Stocks, Mutual Funds, Gold i
 ### `asset_subcategory`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `category_id` | String (FK) | References `asset_category.id`, CASCADE delete |
 | `name` | String | Display name |
@@ -89,7 +89,7 @@ Represents investments tracked by units held (e.g., Stocks, Mutual Funds, Gold i
 ### `asset`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `category_id` | String (FK) | References `asset_category.id`, RESTRICT delete |
 | `subcategory_id` | String (FK, nullable) | References `asset_subcategory.id`, RESTRICT delete |
@@ -105,7 +105,7 @@ Represents investments tracked by units held (e.g., Stocks, Mutual Funds, Gold i
 ### `asset_transaction`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `asset_id` | String (FK) | References `asset.id`, CASCADE delete |
 | `transaction_type` | Enum | `BUY`, `SELL`, `REVALUE` |

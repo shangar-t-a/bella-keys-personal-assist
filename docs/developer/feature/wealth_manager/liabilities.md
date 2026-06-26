@@ -17,7 +17,7 @@ Liabilities are organized under pre-seeded top-level categories and detailed sub
 ### Categories
 
 | Code | Name | Description |
-|---|---|---|
+| --- | --- | --- |
 | `SECURED_LOAN` | Secured Loans | Loans backed by collateral (home, vehicle) |
 | `UNSECURED_LOAN` | Unsecured Loans | Loans with no collateral (personal, education) |
 | `REVOLVING_CREDIT` | Revolving Credit | Credit cards, lines of credit |
@@ -26,7 +26,7 @@ Liabilities are organized under pre-seeded top-level categories and detailed sub
 ### Subcategory Configuration
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `has_interest` | Boolean | Whether EMI and interest rate fields are applicable |
 | `has_maturity` | Boolean | Whether a maturity/end date is relevant |
 
@@ -35,7 +35,7 @@ Liabilities are organized under pre-seeded top-level categories and detailed sub
 The entire liability lifecycle is modelled through four chronological event types logged to a ledger.
 
 | Type | Meaning | Effect on Balance |
-|---|---|---|
+| --- | --- | --- |
 | `BORROW` | Funds disbursed or additional loan drawn | Increases outstanding balance |
 | `REPAY` | Extra manual payment on top of scheduled EMI | Reduces outstanding balance; tracked in total repaid |
 | `REVALUE` | Bank's official statement balance for a month | **Authoritative override** — sets closing balance for that month; all interest, EMI, and payments for the month are implicitly absorbed |
@@ -57,7 +57,7 @@ All outstanding balance calculations and projection curves are driven by a singl
 ### Inputs
 
 | Parameter | Description |
-|---|---|
+| --- | --- |
 | `original_value` | Sum of all BORROW transaction amounts |
 | `interest_rate` | Annual nominal rate as a percentage (e.g., `11.95` for 11.95%) |
 | `emi_amount` | Optional scheduled monthly EMI in INR (or None/0 for irregular/discretionary repayments) |
@@ -106,7 +106,7 @@ If balance (`principal + i_acc`) reaches 0, all subsequent months are recorded a
 ### Consumers
 
 | Consumer | Usage |
-|---|---|
+| --- | --- |
 | `calculate_current_outstanding()` | Takes the last snapshot. Returns `current_value`, `total_repaid`, `accumulated_interest` for the dashboard, respecting the compounding frequency. |
 | `get_liability_projections()` | Uses all snapshots for the historical actual curve. Appends a compounding-aware future projection from today's balance. |
 | `_calculate_remaining_tenure()` | Dynamic backend tenure estimator. Runs a step-by-step projection simulation (capped at 30 years) using resolved EMI and compounding to determine exactly when the loan will be fully paid off. |
@@ -116,7 +116,7 @@ If balance (`principal + i_acc`) reaches 0, all subsequent months are recorded a
 ### Curves Generated
 
 | Curve | Description |
-|---|---|
+| --- | --- |
 | Ideal | Simulates the original loan from disbursal with no deviations — pure scheduled EMI only. If `emi_amount` is missing, resolves the EMI dynamically (from `maturity_date` or elapsed repayments). |
 | Actual (Historical) | Month-by-month actual balances from the simulation engine. |
 | Projected (Future) | Continuation from today's balance using compounding-aware logic with resolved/fallback EMI until the balance reaches zero. Capped at 30 years or negative amortization checks. |
@@ -124,7 +124,7 @@ If balance (`principal + i_acc`) reaches 0, all subsequent months are recorded a
 ### Intelligence Metrics
 
 | Metric | Description |
-|---|---|
+| --- | --- |
 | `ideal_tenure_months` | Number of months the loan would have taken with zero deviations (resolved EMI if none configured). |
 | `remaining_tenure_months` | Number of months until full payoff based on today's balance and resolved EMI. Calculated on backend via step-by-step projection simulation; returns `null` if negative amortization occurs. |
 | `tenure_saved_months` | `ideal_tenure - (elapsed + remaining)`. Negative means tenure extension. |
@@ -147,7 +147,7 @@ When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies 
 ### `liability_category`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `name` | String | Display name |
 | `code` | String | Unique uppercase identifier |
@@ -157,7 +157,7 @@ When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies 
 ### `liability_subcategory`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `category_id` | String (FK) | References `liability_category.id`, CASCADE delete |
 | `name` | String | Display name |
@@ -171,7 +171,7 @@ When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies 
 ### `liability`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `category_id` | String (FK) | References `liability_category.id` |
 | `subcategory_id` | String (FK, nullable) | References `liability_subcategory.id` |
@@ -189,7 +189,7 @@ When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies 
 ### `liability_transaction`
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `id` | String (UUID) | Primary key |
 | `liability_id` | String (FK) | References `liability.id`, CASCADE delete |
 | `transaction_type` | Enum | `BORROW`, `REPAY`, `REVALUE` |
