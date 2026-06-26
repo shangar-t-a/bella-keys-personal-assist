@@ -42,6 +42,7 @@ import {
   MoneyOff as UnsecuredIcon,
   MonetizationOn as OtherIcon,
   ShowChart as AnalyticsIcon,
+  InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -441,9 +442,14 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
         <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
           <Box sx={{ display: 'flex' }}>
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Total Borrowed
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Total Borrowed
+                </Typography>
+                <Tooltip title="The total original amount of principal money borrowed across all active liabilities." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'text.primary', fontSize: '1.3rem' }}>
                 {formatCompactRupees(summary.totalOriginal)}
               </Typography>
@@ -451,9 +457,14 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
             <Divider orientation="vertical" flexItem />
             
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Outstanding Balance
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Outstanding Balance
+                </Typography>
+                <Tooltip title="The current unpaid balance remaining on your liabilities." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'error.main', fontSize: '1.3rem' }}>
                 {formatCompactRupees(summary.totalOutstanding)}
               </Typography>
@@ -461,9 +472,14 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
             <Divider orientation="vertical" flexItem />
 
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Total Repaid
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Total Repaid
+                </Typography>
+                <Tooltip title="The total amount of principal and interest you have successfully paid back." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
                 {formatCompactRupees(summary.totalRepaid)}
               </Typography>
@@ -471,9 +487,14 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
             <Divider orientation="vertical" flexItem />
 
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Interest Accrued
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Interest Accrued
+                </Typography>
+                <Tooltip title="The total interest that has accumulated on your interest-bearing liabilities since inception." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'warning.main', fontSize: '1.3rem' }}>
                 {formatCompactRupees(summary.accumulatedInterest)}
               </Typography>

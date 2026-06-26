@@ -43,6 +43,7 @@ import {
   HomeWork as RealEstateIcon,
   MonetizationOn as CommoditiesIcon,
   Savings as CashBankIcon,
+  InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
 import type { Asset, AssetSummary, AssetUpdateRequest, AssetCategory } from '@/types/asset';
@@ -388,9 +389,14 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
           <Box sx={{ display: 'flex' }}>
             {/* Invested */}
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Invested
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Invested
+                </Typography>
+                <Tooltip title="The total amount of principal capital you have contributed to buy or fund your assets." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'text.primary', fontSize: '1.3rem' }}>
                 {formatCompactRupees(summary.totalInvested)}
               </Typography>
@@ -398,9 +404,14 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
             <Divider orientation="vertical" flexItem />
             {/* Current Value */}
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Current Value
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Current Value
+                </Typography>
+                <Tooltip title="The current market value or appraised value of all your assets." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'primary.main', fontSize: '1.3rem' }}>
                 {formatCompactRupees(summary.totalCurrent)}
               </Typography>
@@ -408,9 +419,14 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
             <Divider orientation="vertical" flexItem />
             {/* Returns */}
             <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Total Returns
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
+                  Total Returns
+                </Typography>
+                <Tooltip title="The net absolute return and Percentage Return on Investment (ROI) calculated across your asset portfolio." arrow>
+                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                </Tooltip>
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
                 {renderReturnsText(summary.totalReturns, summary.percentageReturns)}
               </Box>
