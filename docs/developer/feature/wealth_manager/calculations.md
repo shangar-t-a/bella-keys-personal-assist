@@ -15,7 +15,7 @@ Flat-balance accounts where value is a direct INR amount (e.g., Bank Savings, PP
 $$V_{\text{invested}} = \max\left(0.0,\ \sum \text{Amount}_{\text{BUY}} - \sum \text{Amount}_{\text{SELL}}\right)$$
 
 **Current Value ($V_{\text{current}}$):**
-$$V_{\text{current}} = \begin{cases} \text{Amount of latest REVALUE} & \text{if any REVALUE exists} \\ V_{\text{invested}} & \text{otherwise} \end{cases}$$
+$$V_{\text{current}} = \begin{cases} V_{\text{latest\_revalue}} + \sum_{t > t_{\text{reval}}} \text{Amount}_{\text{BUY}, t} - \sum_{t > t_{\text{reval}}} \text{Amount}_{\text{SELL}, t} & \text{if any REVALUE exists} \\ V_{\text{invested}} & \text{otherwise} \end{cases}$$
 
 ### Unit-Based Assets (`UNIT_BASED`)
 
@@ -103,7 +103,7 @@ The bank's statement is the authoritative closing balance (compounding boundary)
 
 $$P_m = \text{REVALUE}_{\text{amount}}$$
 $$I_{\text{acc}, m} = 0.0$$
-$$I_{\text{implied}, m} = \max\left(0,\ \text{REVALUE} - (P_{m-1} + I_{\text{acc}, m-1} + \text{BORROW}_m)\right)$$
+$$I_{\text{implied}, m} = \max\left(0,\ \text{REVALUE} - (P_{m-1} + I_{\text{acc}, m-1} + \text{BORROW}_m - \text{REPAY}_m)\right)$$
 
 Cumulative interest: $\text{CumInt} \mathrel{+}= I_{\text{implied}, m}$
 Cumulative repaid: $\text{CumRepaid} \mathrel{+}= \text{REPAY}_m$ (manual repays only)

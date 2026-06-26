@@ -2,6 +2,7 @@
 """Use cases for Liabilities."""
 
 import calendar
+import math
 import uuid
 from datetime import UTC, datetime
 
@@ -45,6 +46,18 @@ def add_months(sourcedate: datetime, months: int) -> datetime:
     )
 
 
+def _get_compounding_months(compounding: CompoundingFrequency | None) -> int:
+    """Map compounding frequency to the number of months."""
+    return {
+        CompoundingFrequency.MONTHLY: 1,
+        CompoundingFrequency.QUARTERLY: 3,
+        CompoundingFrequency.HALF_YEARLY: 6,
+        CompoundingFrequency.YEARLY: 12,
+    }.get(compounding, 1)
+
+
+
+
 def _simulate_amortization(
     original_value: float,
     interest_rate: float,
@@ -79,12 +92,7 @@ def _simulate_amortization(
         Dict of ``"YYYY-MM"`` → ``(balance, cumulative_interest, cumulative_repaid)`` at
         the *closing* of each simulated month. Month 0 (disbursal month) is also included.
     """
-    compounding_months = {
-        CompoundingFrequency.MONTHLY: 1,
-        CompoundingFrequency.QUARTERLY: 3,
-        CompoundingFrequency.HALF_YEARLY: 6,
-        CompoundingFrequency.YEARLY: 12,
-    }.get(compounding, 1)
+    compounding_months = _get_compounding_months(compounding)
 
     monthly_rate = (interest_rate / 100.0) / 12.0
     emi = emi_amount or 0.0
@@ -170,7 +178,7 @@ def _simulate_amortization(
         if revals_m:
             # REVALUE month: the bank's official closing balance is the authoritative truth.
             reval_amount = revals_m[-1].amount
-            implied_interest = reval_amount - (p + i_acc + borrows_m)
+            implied_interest = reval_amount - (p + i_acc + borrows_m - repays_m)
             accum_interest += max(0.0, implied_interest)
             accum_repaid += repays_m
             p = max(0.0, reval_amount)
@@ -221,18 +229,12 @@ def _calculate_remaining_tenure(
 
     if not interest_rate or not emi_amount or emi_amount <= 0:
         if emi_amount and emi_amount > 0:
-            import math
             return int(math.ceil(current_value / emi_amount))
         return None
 
     p = current_value
     i_acc = 0.0
-    compounding_months = {
-        CompoundingFrequency.MONTHLY: 1,
-        CompoundingFrequency.QUARTERLY: 3,
-        CompoundingFrequency.HALF_YEARLY: 6,
-        CompoundingFrequency.YEARLY: 12,
-    }.get(compounding, 1)
+    compounding_months = _get_compounding_months(compounding)
 
     monthly_rate = (interest_rate / 100.0) / 12.0
     months = 0
@@ -779,12 +781,7 @@ class LiabilityService:
         emi = self._resolve_emi(liability, transactions)
         today = datetime.now(UTC)
 
-        compounding_months = {
-            CompoundingFrequency.MONTHLY: 1,
-            CompoundingFrequency.QUARTERLY: 3,
-            CompoundingFrequency.HALF_YEARLY: 6,
-            CompoundingFrequency.YEARLY: 12,
-        }.get(liability.interest_compounding, 1)
+        compounding_months = _get_compounding_months(liability.interest_compounding)
 
         # A. Ideal Curve (no prepayments, pure scheduled amortization)
         ideal_points: dict[str, float] = {}
@@ -916,16 +913,22 @@ class LiabilityService:
                 if p_proj <= 0 and i_acc_proj <= 0:
                     break
 
-        projected_end_date = add_months(today, k_projected) if p_today > 0 else today
-
         # D. Derived Metrics
         elapsed_months = max(0, (today.year - start_date.year) * 12 + (today.month - start_date.month))
+
+        # Determine if the projection successfully paid off the liability
+        is_paid_off = p_today <= 0 or (p_proj <= 0 and i_acc_proj <= 0)
+
+        remaining_tenure = k_projected if is_paid_off else None
+        projected_end_date = add_months(today, k_projected) if (is_paid_off and p_today > 0) else None
+        tenure_saved = n_ideal - (elapsed_months + k_projected) if is_paid_off else None
+
         total_interest_projected = total_interest_historical + total_interest_projected_future
-        tenure_saved = n_ideal - (elapsed_months + k_projected)
         interest_saved = total_interest_ideal - total_interest_projected
 
         # E. Combine into projection point list
-        max_end_date = max(ideal_end_date, projected_end_date)
+        limit_end_date = add_months(today, k_projected) if p_today > 0 else today
+        max_end_date = max(ideal_end_date, limit_end_date)
         total_span = max(0, (max_end_date.year - start_date.year) * 12 + (max_end_date.month - start_date.month))
 
         projection_points_list: list[LiabilityProjectionPoint] = []
@@ -955,7 +958,7 @@ class LiabilityService:
 
         metrics = LiabilityProjectionMetrics(
             ideal_tenure_months=n_ideal,
-            remaining_tenure_months=k_projected,
+            remaining_tenure_months=remaining_tenure,
             tenure_saved_months=tenure_saved,
             total_interest_ideal=round(max(0.0, total_interest_ideal), 2),
             total_interest_projected=round(max(0.0, total_interest_projected), 2),

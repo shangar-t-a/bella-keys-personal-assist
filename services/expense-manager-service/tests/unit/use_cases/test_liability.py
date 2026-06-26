@@ -414,6 +414,12 @@ class TestLiabilitySimulationAndCompounding:
         updated_high = await liability_service.get_liability_by_id(liability_high.id)
         assert updated_high.remaining_tenure_months is None  # Growing balance (interest > EMI), so no end date
 
+        # Verify projections metrics are also None
+        projections_high = await liability_service.get_liability_projections(liability_high.id)
+        assert projections_high.metrics.remaining_tenure_months is None
+        assert projections_high.metrics.projected_end_date is None
+        assert projections_high.metrics.tenure_saved_months is None
+
         # Cleanup
         await liability_service.delete_liability(liability_high.id)
 

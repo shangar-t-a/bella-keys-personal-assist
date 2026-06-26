@@ -263,6 +263,24 @@ class TestRevalueWithSameMonthRepay:
         # Only the manual REPAY (20000) is tracked in accum_repaid for REVALUE months
         assert abs(cum_repaid - 20_000.0) < 0.01, f"Repaid should be the manual REPAY only: {cum_repaid}"
 
+    def test_revalue_and_repay_same_month_positive_interest(self):
+        """Verify that implied interest is calculated correctly when it is positive and a repayment exists in the same month."""
+        principal = 500_000.0
+        reval_amount = 495_000.0
+        txs = [
+            _make_tx(BORROW, principal, 2024, 1),
+            _make_tx(REPAY, 20_000.0, 2024, 2),
+            _make_tx(REVALUE, reval_amount, 2024, 2),
+        ]
+        up_to = datetime(2024, 2, 1, tzinfo=UTC)
+
+        snaps = _simulate_amortization(principal, 12.0, 15_000.0, txs, up_to)
+        bal, cum_int, cum_repaid = snaps["2024-02"]
+
+        assert abs(bal - reval_amount) < 0.01
+        assert abs(cum_repaid - 20_000.0) < 0.01
+        assert abs(cum_int - 15_000.0) < 0.01, f"Expected implied interest to be 15,000, got {cum_int}"
+
 
 # Scenario 5: Multiple REVALUEs — only latest matters
 

@@ -46,7 +46,7 @@ A `REVALUE` transaction represents the bank's official outstanding balance as of
 
 - The simulation does **not** apply scheduled EMI separately in a REVALUE month (that would double-count).
 - The implied interest for the REVALUE month is:
-  `implied_interest = max(0, revalue_amount - (prev_balance + borrows_this_month))`
+  `implied_interest = max(0, revalue_amount - (prev_balance + borrows_this_month - repays_this_month))`
 - Any `REPAY` transactions recorded in the same month as a `REVALUE` are credited to `accum_repaid` for tracking purposes, but do not additionally adjust the balance (the REVALUE already accounts for them).
 - If `implied_interest < 0` (the REVALUE amount is below the previous balance, meaning the bank applied a net reduction including EMI and payments), the implied interest is floored to 0 — no negative interest is recorded.
 
@@ -89,7 +89,7 @@ Rather than assuming monthly compounding, the simulation respects the configured
 If a `REVALUE` exists in the month:
 
 1. Set principal = REVALUE amount; reset accrued interest `i_acc` = 0.0.
-2. Add `max(0, reval_amount - (prev_principal + prev_i_acc + borrows))` to cumulative interest.
+2. Add `max(0, reval_amount - (prev_principal + prev_i_acc + borrows - repays))` to cumulative interest.
 3. Credit any manual REPAY amounts to cumulative repaid.
 
 Otherwise (normal month):

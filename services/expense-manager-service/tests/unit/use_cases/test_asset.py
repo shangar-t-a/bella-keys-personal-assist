@@ -396,3 +396,63 @@ class TestAssetServiceSummary:
         # Clean up
         await asset_service.delete_asset(a1.id)
         await asset_service.delete_asset(a2.id)
+
+
+class TestAssetPostRevaluation:
+    """Verify that flat-asset current valuations accurately combine revaluations with subsequent buy and sell transactions."""
+
+    async def test_revalue_followed_by_buy_sell(self, asset_service):
+        categories_map = await get_categories_map(asset_service)
+        cb_cat_id = categories_map["CASH_BANK"]
+
+        # Create a simple flat cash asset
+        asset_in = AssetCreate(
+            category_id=cb_cat_id,
+            name="Emergency Fund",
+            initial_amount=100000.00,
+        )
+        asset = await asset_service.create_asset(asset_in)
+
+        assert asset.invested_value == 100000.00
+        assert asset.current_value == 100000.00
+
+        # 1. Revalue to 110,000
+        reval_tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.REVALUE,
+            amount=110000.00,
+            transaction_date=datetime.now(UTC),
+        )
+        await asset_service.add_transaction(asset.id, reval_tx)
+
+        updated1 = await asset_service.get_asset_by_id(asset.id)
+        assert updated1.invested_value == 100000.00
+        assert updated1.current_value == 110000.00
+
+        # 2. Log subsequent BUY of 50,000
+        buy_tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.BUY,
+            amount=50000.00,
+            transaction_date=datetime.now(UTC),
+        )
+        await asset_service.add_transaction(asset.id, buy_tx)
+
+        updated2 = await asset_service.get_asset_by_id(asset.id)
+        assert updated2.invested_value == 150000.00
+        # Expected current value = 110k + 50k = 160k
+        assert updated2.current_value == 160000.00
+
+        # 3. Log subsequent SELL of 20,000
+        sell_tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.SELL,
+            amount=20000.00,
+            transaction_date=datetime.now(UTC),
+        )
+        await asset_service.add_transaction(asset.id, sell_tx)
+
+        updated3 = await asset_service.get_asset_by_id(asset.id)
+        assert updated3.invested_value == 130000.00
+        # Expected current value = 160k - 20k = 140k
+        assert updated3.current_value == 140000.00
+
+        await asset_service.delete_asset(asset.id)
+
