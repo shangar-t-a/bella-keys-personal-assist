@@ -86,6 +86,7 @@ class LiabilityWithCalc(BaseEntity):
     total_repaid: float = Field(default=0.0, description="Total amount repaid so far")
     accumulated_interest: float = Field(default=0.0, description="Accumulated interest/charges")
     progress_pct: float = Field(default=0.0, description="Repayment progress percentage")
+    remaining_tenure_months: int | None = Field(default=None, description="Estimated remaining tenure in months")
     created_at: datetime
     updated_at: datetime
 
@@ -129,8 +130,8 @@ class LiabilityProjectionMetrics(BaseModel):
     """Calculated metrics for liability payoff comparisons."""
 
     ideal_tenure_months: int = Field(description="Total months in ideal schedule")
-    remaining_tenure_months: int = Field(description="Remaining months under projected path")
-    tenure_saved_months: int = Field(description="Months saved by prepayments/revaluations")
+    remaining_tenure_months: int | None = Field(default=None, description="Remaining months under projected path")
+    tenure_saved_months: int | None = Field(default=None, description="Months saved by prepayments/revaluations")
     total_interest_ideal: float = Field(description="Total interest expected under scheduled plan")
     total_interest_projected: float = Field(description="Total interest expected under current trajectory")
     interest_saved: float = Field(description="Interest savings generated (INR)")

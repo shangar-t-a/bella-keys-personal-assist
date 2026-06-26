@@ -114,6 +114,7 @@ class LiabilityResponse(BaseSchema):
     total_repaid: float
     accumulated_interest: float
     progress_pct: float
+    remaining_tenure_months: int | None = Field(default=None, description="Estimated remaining tenure in months")
     created_at: datetime
     updated_at: datetime
 
@@ -165,8 +166,8 @@ class LiabilityProjectionMetricsResponse(BaseSchema):
     """API response schema for liability payoff projection metrics."""
 
     ideal_tenure_months: int
-    remaining_tenure_months: int
-    tenure_saved_months: int
+    remaining_tenure_months: int | None = None
+    tenure_saved_months: int | None = None
     total_interest_ideal: float
     total_interest_projected: float
     interest_saved: float

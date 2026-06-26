@@ -15,7 +15,7 @@ Flat-balance accounts where value is a direct INR amount (e.g., Bank Savings, PP
 $$V_{\text{invested}} = \max\left(0.0,\ \sum \text{Amount}_{\text{BUY}} - \sum \text{Amount}_{\text{SELL}}\right)$$
 
 **Current Value ($V_{\text{current}}$):**
-$$V_{\text{current}} = \begin{cases} \text{Amount of latest REVALUE} & \text{if any REVALUE exists} \\ V_{\text{invested}} & \text{otherwise} \end{cases}$$
+$$V_{\text{current}} = \begin{cases} V_{\text{latest\_revalue}} + \sum_{t > t_{\text{reval}}} \text{Amount}_{\text{BUY}, t} - \sum_{t > t_{\text{reval}}} \text{Amount}_{\text{SELL}, t} & \text{if any REVALUE exists} \\ V_{\text{invested}} & \text{otherwise} \end{cases}$$
 
 ### Unit-Based Assets (`UNIT_BASED`)
 
@@ -31,6 +31,7 @@ $$V_{\text{invested}} = \max\left(0.0,\ \sum_{t \in \text{BUY}} (\text{Units}_t 
 $$V_{\text{current}} = U_{\text{held}} \times P_{\text{current}}$$
 
 Where $P_{\text{current}}$ is resolved in priority order:
+
 1. Live price from `PriceResolverService`.
 2. Most recent price per unit from a `BUY` or `REVALUE` transaction.
 
@@ -38,50 +39,78 @@ Where $P_{\text{current}}$ is resolved in priority order:
 
 ## 2. Liability Simulation Engine
 
-All outstanding balance calculations share a single simulation engine (`_simulate_amortization`). This section documents its exact mathematical model.
+All outstanding balance calculations share a single simulation engine (`_simulate_amortization`), which tracks Principal ($P_m$) and Accrued Interest ($I_{\text{acc}, m}$) separately to support compounding frequencies.
 
 ### Parameters
 
 | Symbol | Meaning |
 |---|---|
-| $P_m$ | Outstanding balance at the close of month $m$ |
+| $P_m$ | Principal balance at the close of month $m$ |
+| $I_{\text{acc}, m}$ | Accrued uncompounded interest at the close of month $m$ |
 | $r$ | Annual nominal interest rate (e.g., $0.1195$ for $11.95\%$) |
 | $i$ | Monthly interest rate: $i = r / 12$ |
-| $M$ | Scheduled monthly EMI amount |
+| $M$ | Scheduled monthly EMI amount (if configured, else resolved dynamically) |
 | $d_{\text{emi}}$ | Optional date when repayments/EMIs officially begin |
+| $C$ | Compounding frequency interval in months (Monthly = 1, Quarterly = 3, Half-Yearly = 6, Yearly = 12) |
 
 ### Month 0 — Disbursal
 
-$$P_0 = \sum \text{BORROW}_{\text{month 0}} - \sum \text{REPAY}_{\text{month 0}}$$
+$$P_0 = \sum \text{BORROW}_{\text{month 0}} - \max\left(0,\ \sum \text{REPAY}_{\text{month 0}}\right)$$
+$$I_{\text{acc}, 0} = 0.0$$
 
 If a REVALUE exists in month 0:
-$$P_0 = \text{REVALUE}_{\text{amount}},\quad I_{\text{implied}, 0} = \max\left(0,\ \text{REVALUE} - P_0^{\text{pre-reval}}\right)$$
+$$P_0 = \text{REVALUE}_{\text{amount}},\quad I_{\text{acc}, 0} = 0.0,\quad I_{\text{implied}, 0} = \max\left(0,\ \text{REVALUE} - P_0^{\text{pre-reval}}\right)$$
 
 ### Months 1 to N — Normal Month (no REVALUE)
 
-$$I_m = P_{m-1} \times i$$
-$$\text{auto\_emi}_m = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and month } m < d_{\text{emi}} \\ \min(M,\ P_{m-1} + I_m) & \text{otherwise} \end{cases}$$
-$$\text{total\_payment}_m = \text{auto\_emi}_m + \text{REPAY}_m$$
-$$P_m = \max\left(0,\ P_{m-1} + I_m + \text{BORROW}_m - \text{total\_payment}_m\right)$$
+1. **Accrue Interest**:
+   $$I_m = P_{m-1} \times i$$
+   $$I_{\text{acc}, m}^{\text{pre}} = I_{\text{acc}, m-1} + I_m$$
+
+2. **Determine Scheduled Auto-EMI**:
+   $$\text{auto\_emi}_m = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and month } m < d_{\text{emi}} \\ \min(M,\ P_{m-1} + I_{\text{acc}, m}^{\text{pre}}) & \text{otherwise} \end{cases}$$
+
+3. **Repayment Application** (applied to accrued interest first, then principal):
+   $$\text{total\_payment}_m = \text{auto\_emi}_m + \text{REPAY}_m$$
+   $$B_m = \text{BORROW}_m$$
+
+   If $\text{total\_payment}_m \le I_{\text{acc}, m}^{\text{pre}}$:
+   $$I_{\text{acc}, m}^{\text{post}} = I_{\text{acc}, m}^{\text{pre}} - \text{total\_payment}_m$$
+   $$P_m^{\text{pre-comp}} = P_{m-1} + B_m$$
+
+   If $\text{total\_payment}_m > I_{\text{acc}, m}^{\text{pre}}$:
+   $$\text{rem\_payment}_m = \text{total\_payment}_m - I_{\text{acc}, m}^{\text{pre}}$$
+   $$I_{\text{acc}, m}^{\text{post}} = 0.0$$
+   $$P_m^{\text{pre-comp}} = \max\left(0.0,\ P_{m-1} + B_m - \text{rem\_payment}_m\right)$$
+
+4. **Periodic Compounding**:
+   If month index $m$ is a multiple of compounding interval $C$ ($m \pmod C == 0$):
+   $$P_m = P_m^{\text{pre-comp}} + I_{\text{acc}, m}^{\text{post}}$$
+   $$I_{\text{acc}, m} = 0.0$$
+
+   Otherwise:
+   $$P_m = P_m^{\text{pre-comp}}$$
+   $$I_{\text{acc}, m} = I_{\text{acc}, m}^{\text{post}}$$
+
+*Note: Total outstanding balance shown on the UI is $P_m + I_{\text{acc}, m}$.*
 
 Cumulative interest: $\text{CumInt} \mathrel{+}= I_m$
 Cumulative repaid: $\text{CumRepaid} \mathrel{+}= \text{total\_payment}_m$
 
 ### Months 1 to N — REVALUE Month
 
-The bank's statement is the authoritative closing balance. Scheduled EMI is **not** applied separately.
+The bank's statement is the authoritative closing balance (compounding boundary). Scheduled EMI is **not** applied separately.
 
 $$P_m = \text{REVALUE}_{\text{amount}}$$
-$$I_{\text{implied}, m} = \max\left(0,\ \text{REVALUE} - (P_{m-1} + \text{BORROW}_m)\right)$$
+$$I_{\text{acc}, m} = 0.0$$
+$$I_{\text{implied}, m} = \max\left(0,\ \text{REVALUE} - (P_{m-1} + I_{\text{acc}, m-1} + \text{BORROW}_m - \text{REPAY}_m)\right)$$
 
 Cumulative interest: $\text{CumInt} \mathrel{+}= I_{\text{implied}, m}$
-Cumulative repaid: $\text{CumRepaid} \mathrel{+}= \text{REPAY}_m$ (manual repays only; EMI is already absorbed by REVALUE)
-
-> Note: If $\text{REVALUE} < (P_{m-1} + \text{BORROW}_m)$, the bank has applied a net reduction (EMI and any extra payments reduced the balance). The implied interest is floored at 0 — no negative interest is recorded.
+Cumulative repaid: $\text{CumRepaid} \mathrel{+}= \text{REPAY}_m$ (manual repays only)
 
 ### Zero Balance Propagation
 
-Once $P_m = 0$, all subsequent months record $(0, \text{CumInt}, \text{CumRepaid})$ with no further accumulation.
+Once $P_m = 0$ and $I_{\text{acc}, m} = 0$, all subsequent months record $(0, \text{CumInt}, \text{CumRepaid})$ with no further accumulation.
 
 ---
 
@@ -89,12 +118,12 @@ Once $P_m = 0$, all subsequent months record $(0, \text{CumInt}, \text{CumRepaid
 
 `calculate_current_outstanding` delegates to `_simulate_amortization` and returns the final snapshot.
 
-$$L_{\text{current}} = P_{\text{today}}$$
+$$L_{\text{current}} = P_{\text{today}} + I_{\text{acc}, \text{today}}$$
 $$L_{\text{repaid}} = \text{CumRepaid}_{\text{today}}$$
 $$L_{\text{interest}} = \text{CumInt}_{\text{today}}$$
 $$P_{\text{progress}} = \text{clamp}\left(0,\ \left(1 - \frac{L_{\text{current}}}{L_{\text{original}}}\right) \times 100,\ 100\right)$$
 
-**Non-EMI / Interest-Free Liabilities** (no interest rate or EMI configured):
+**Interest-Free Liabilities** (no interest rate configured):
 
 $$L_{\text{current}} = \max\left(0,\ L_{\text{original}} - L_{\text{repaid}}\right)$$
 
@@ -103,40 +132,34 @@ $$L_{\text{current}} = \max\left(0,\ V_{\text{latest\_revalue}} + \sum_{t > t_{\
 
 ---
 
-## 4. Liability Projection Curves
+## 4. Liability Projection Curves & Dynamic EMI
+
+For loans where scheduled `emi_amount` is not configured, a dynamic EMI ($M$) is resolved:
+
+1. **With Maturity Date ($d_{\text{maturity}}$)**: Calculates the mathematically ideal amortizing payment to clear disbursal balance by maturity at nominal interest rate:
+   $$M = \frac{P \times i \times (1 + i)^n}{(1 + i)^n - 1}$$
+   where $n$ is months between disbursal and maturity. If $i = 0$, $M = P / n$.
+2. **Without Maturity Date**: Falls back to average past monthly repayments:
+   $$M = \max\left(1000.0,\ \frac{L_{\text{repaid}}}{\text{elapsed\_months}}\right)$$
+   If no repayments have occurred yet, defaults to a 5-year repayment schedule: $M = \max(1000.0, P / 60)$.
 
 ### A. Ideal Amortization Curve
 
-Simulates from disbursal date with no deviations — pure scheduled EMI only.
-
-For each month $n = 1, 2, \ldots$ until $P_n = 0$:
-$$I_n = P_{n-1} \times i$$
-$$\text{payment}_n = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and month } n < d_{\text{emi}} \\ \min(M,\ P_{n-1} + I_n) & \text{otherwise} \end{cases}$$
-$$P_n = \max\left(0,\ P_{n-1} + I_n - \text{payment}_n\right)$$
-
-- **Ideal tenure $N_{\text{ideal}}$:** Total months until $P_n = 0$.
-- **Total ideal interest $I_{\text{ideal}}$:** $\sum_{n=1}^{N_{\text{ideal}}} I_n$
+Simulates from disbursal date using resolved/configured EMI, with no prepayments.
+Calculations follow the compounding-aware simulation engine loop.
 
 ### B. Actual / Projected Curve
 
 **Historical section (start → today):** Directly from `_simulate_amortization` snapshots.
 
-**Future projection section (today → payoff):** Starts from $P_{\text{today}}$, uses scheduled EMI only:
+**Future projection section (today → payoff):** Starts from $P_{\text{today}}$ and $I_{\text{acc}, \text{today}} = 0.0$, running the compounding-aware simulation loop with resolved/configured EMI $M$ until balance reaches zero (capped at 30 years).
 
-$$P_{\text{proj}, 0} = P_{\text{today}},\quad \text{CumInt}_{\text{proj}, 0} = \text{CumInt}_{\text{today}}$$
-
-For each $k = 1, 2, \ldots$ until $P_{\text{proj}, k} = 0$:
-$$I_k = P_{\text{proj}, k-1} \times i$$
-$$\text{payment}_k = \begin{cases} 0.0 & \text{if } d_{\text{emi}} \text{ is set and future month } k < d_{\text{emi}} \\ \min(M,\ P_{\text{proj}, k-1} + I_k) & \text{otherwise} \end{cases}$$
-$$P_{\text{proj}, k} = \max\left(0,\ P_{\text{proj}, k-1} + I_k - \text{payment}_k\right)$$
-$$\text{CumInt}_{\text{proj}, k} = \text{CumInt}_{\text{proj}, k-1} + I_k$$
-
-- **Remaining tenure $K_{\text{projected}}$:** Total future months until $P_{\text{proj}, k} = 0$.
+- **Remaining tenure $K_{\text{projected}}$**: Count of months in future projection.
 
 ### C. Intelligence Metrics
 
 $$T_{\text{saved}} = N_{\text{ideal}} - (M_{\text{elapsed}} + K_{\text{projected}})$$
-$$I_{\text{projected}} = \text{CumInt}_{\text{today}} + \sum_{k=1}^{K_{\text{projected}}} I_k$$
+$$I_{\text{projected}} = \text{CumInt}_{\text{today}} + \sum_{\text{future}} I_k$$
 $$I_{\text{saved}} = I_{\text{ideal}} - I_{\text{projected}}$$
 
 > $T_{\text{saved}} < 0$: Tenure extended (e.g., due to missed payments or penalties).
@@ -153,6 +176,7 @@ When no `REPAY` or `REVALUE` is logged for a month, the simulation auto-applies 
 ### Late Fees and Penalties
 
 Log as either:
+
 - A `BORROW` transaction (increases principal), or
 - A `REVALUE` transaction with a higher-than-expected balance.
 

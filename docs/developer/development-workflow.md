@@ -23,6 +23,7 @@ bash scripts/run-dev.sh [profile]
 ```
 
 For example, to run the Expense Manager Service with Electron UI:
+
 ```bash
 bash scripts/run-dev.sh ems-desktop
 ```
@@ -39,10 +40,13 @@ bash scripts/run-dev.sh ems-desktop
 To build production installer binaries:
 
 * **Windows:**
+
   ```powershell
   .\scripts\electron\build.bat
   ```
+
 * **Linux/macOS:**
+
   ```bash
   bash scripts/electron/build.sh
   ```
@@ -56,20 +60,24 @@ Output binaries are stored in the `dist/` directory.
 ### Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Frontend SPA | Vite + React 18 + TypeScript + MUI v6 |
 | Backend Services | FastAPI + SQLAlchemy async + Pydantic v2 + Python ≥ 3.13 |
 | Dependency Management | `uv` for Python services; `npm` for the UI |
 | Database | PostgreSQL (via `asyncpg`) |
 
 ### Stateless Containers
+
 All containerized services must remain stateless.
+
 1. Do not use Docker-managed named volumes for application data.
 2. Direct all database and system connections to the host PC via `host.docker.internal`.
 3. Bind mounts are permitted only for local engine caches (e.g., Qdrant).
 
 ### Health Checks
+
 All services must expose a `/health` endpoint. Configure the container health check in `docker-compose.yaml` using `curl`:
+
 ```yaml
 healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:PORT/health"]
@@ -82,7 +90,7 @@ healthcheck:
 
 The backend services strictly follow a layered clean architecture. Each layer may only import from layers below it — **never upward**.
 
-```
+```txt
 routers/v1/          ← HTTP boundary (FastAPI)
   schemas/           ← Pydantic HTTP request/response schemas
   mappers/           ← Pure static mapper classes (no logic)
@@ -96,11 +104,12 @@ infrastructures/     ← Concrete DB implementations (SQLAlchemy)
 ```
 
 **Rules:**
-- `entities/models/` — pure Pydantic `BaseModel`. No SQLAlchemy, no FastAPI.
-- `entities/repositories/` — abstract `ABC` interfaces only. One interface per domain entity.
-- `use_cases/` — `*Service` classes importing only from `entities/` and `use_cases/models/`.
-- `routers/v1/mappers/` — static mapper classes with `to_use_case_model()` and `to_response_model()` methods. Zero business logic.
-- `routers/v1/endpoints/` — FastAPI route functions only. Inject services via `Depends()`, call the service, map response, return. No logic.
+
+* `entities/models/` — pure Pydantic `BaseModel`. No SQLAlchemy, no FastAPI.
+* `entities/repositories/` — abstract `ABC` interfaces only. One interface per domain entity.
+* `use_cases/` — `*Service` classes importing only from `entities/` and `use_cases/models/`.
+* `routers/v1/mappers/` — static mapper classes with `to_use_case_model()` and `to_response_model()` methods. Zero business logic.
+* `routers/v1/endpoints/` — FastAPI route functions only. Inject services via `Depends()`, call the service, map response, return. No logic.
 
 ---
 
@@ -117,7 +126,7 @@ uv run ruff check
 The enforced rule sets (configured in `ruff.toml`):
 
 | Rule Set | Description |
-|---|---|
+| --- | --- |
 | `E` / `W` | pycodestyle errors and warnings |
 | `F` | Pyflakes (unused imports, undefined names) |
 | `I` | isort (import ordering) |
@@ -130,8 +139,8 @@ The enforced rule sets (configured in `ruff.toml`):
 | `SIM` | flake8-simplify |
 | `TC` | flake8-type-checking |
 
-- **Line length:** 120 characters.
-- **Scope:** `app/**/*.py` (Alembic versions and deprecated infra excluded).
+* **Line length:** 120 characters.
+* **Scope:** `app/**/*.py` (Alembic versions and deprecated infra excluded).
 
 ### Import Ordering
 
@@ -169,8 +178,8 @@ class AssetService:
         """Create a new asset and log its initial transaction."""
 ```
 
-- One-liner for simple getters/delete operations.
-- Multi-line for methods with non-obvious logic.
+* One-liner for simple getters/delete operations.
+* Multi-line for methods with non-obvious logic.
 
 ### Error Handling in Endpoints
 
@@ -184,13 +193,13 @@ except Exception as e:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 ```
 
-- Always `raise HTTPException(...) from e` — never bare raise — to preserve the stack trace.
+* Always `raise HTTPException(...) from e` — never bare raise — to preserve the stack trace.
 
 ### Other Conventions
 
-- **IDs:** Generate with `uuid.uuid4().hex` (compact hex string, no dashes).
-- **Financial values:** Always `round(value, 2)` before persisting or returning.
-- **Dependency injection:** Use FastAPI `Depends()` in endpoint signatures. Never instantiate services directly inside endpoint logic.
+* **IDs:** Generate with `uuid.uuid4().hex` (compact hex string, no dashes).
+* **Financial values:** Always `round(value, 2)` before persisting or returning.
+* **Dependency injection:** Use FastAPI `Depends()` in endpoint signatures. Never instantiate services directly inside endpoint logic.
 
 ---
 
@@ -212,9 +221,9 @@ Unit tests in this project connect to a **dedicated test PostgreSQL database** (
 
 ### Test Organization
 
-- Group tests by domain and scenario: `class TestAssetServiceCRUD`, `class TestAssetServiceSummary`, etc.
-- Every test class and method must have a Google-style docstring.
-- Add `# ruff: noqa: PLR2004, E501` at the top of test files to suppress magic-number and line-length warnings (acceptable in test context only).
+* Group tests by domain and scenario: `class TestAssetServiceCRUD`, `class TestAssetServiceSummary`, etc.
+* Every test class and method must have a Google-style docstring.
+* Add `# ruff: noqa: PLR2004, E501` at the top of test files to suppress magic-number and line-length warnings (acceptable in test context only).
 
 ```python
 # ruff: noqa: PLR2004, E501
@@ -226,7 +235,7 @@ Unit tests in this project connect to a **dedicated test PostgreSQL database** (
 Every new feature use case must be covered with tests for:
 
 | Scenario | What to verify |
-|---|---|
+| --- | --- |
 | **Happy path** | Create, read, update, delete return correct values |
 | **Recalculation** | Computed/cached fields update correctly after every transaction change |
 | **Edge cases** | Zero invested value (division guard), no transactions (reset to zero), unit-based vs flat-based branching |
@@ -235,9 +244,9 @@ Every new feature use case must be covered with tests for:
 
 ### Fixture Pattern
 
-- Shared repository fixtures: `scope="session"` in `conftest.py`.
-- Per-test service fixtures: default (function) scope, wrapping the session-scoped repo.
-- Seed data helpers: module-level async functions (not fixtures), called inside tests that need them.
+* Shared repository fixtures: `scope="session"` in `conftest.py`.
+* Per-test service fixtures: default (function) scope, wrapping the session-scoped repo.
+* Seed data helpers: module-level async functions (not fixtures), called inside tests that need them.
 
 ```python
 @pytest.fixture
@@ -271,14 +280,16 @@ const response = await fetch(`${emsBase}/assets`, {
 `AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React auth state. `localStorage` is the persistence layer only.
 
 **On app mount:**
+
 1. If a `refresh_token` exists in `localStorage` → call `/refresh`.
 2. On success: store new tokens, update React state.
 3. On network failure: fall back to expiry check of the existing `access_token`.
 4. On no refresh token: log out immediately.
 
 **Cross-layer auth sync** uses a custom window event bus — avoiding any direct import between the fetch layer and React context:
-- `window.dispatchEvent(new Event('auth-logout'))` → triggers `logout()` in `AuthContext`.
-- `window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }))` → syncs new token into `AuthContext` state.
+
+* `window.dispatchEvent(new Event('auth-logout'))` → triggers `logout()` in `AuthContext`.
+* `window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }))` → syncs new token into `AuthContext` state.
 
 ### UI Component Standards
 
@@ -346,9 +357,30 @@ TypeScript must compile with **zero errors** before staging any UI file. No `any
 The project utilizes GitHub Actions for building and publishing Docker images to the GitHub Container Registry (GHCR).
 
 ### Build Triggers
+
 To prevent registry clutter and control costs:
+
 * Builds do not trigger on standard source code commits.
 * Builds only trigger on `push` to `main` when a service `VERSION` file is modified (e.g., `services/expense-manager-service/VERSION`).
 
 ### Security Scanning
+
 The build pipeline scans all generated images for high and critical vulnerabilities using Trivy before publishing.
+
+### Release Notes Standard (Monorepo Unified Changelog)
+
+To manage independent release schedules across different services and applications, the project maintains a single root `CHANGELOG.md` document tracking changes chronologically.
+
+Developers must adhere to the following release notes standards:
+
+1. **Header Format**: Every entry must use the component-prefixed version header format:
+   `## [<component-name>@<version>] - YYYY-MM-DD`
+   Example: `## [expense-manager-service@1.4.0] - 2026-06-26`
+2. **Professional Language**: Do not include emojis in the release notes or titles. Maintain a clean, professional, and industry-standard tone.
+3. **Change Classification**: Categorize changes under the standard Keep a Changelog taxonomy:
+   * `Added` for new features.
+   * `Changed` for modifications of existing behavior.
+   * `Deprecated` for features slated for removal.
+   * `Removed` for deleted features.
+   * `Fixed` for bug resolutions.
+   * `Security` for security patches.

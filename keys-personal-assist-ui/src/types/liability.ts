@@ -47,6 +47,7 @@ export interface Liability {
   // Let's check schemas/liability.py: accumulatedInterest is camelCased due to BaseSchema's alias_generator=to_camel
   accumulatedInterest: number;
   progressPct: number;
+  remainingTenureMonths: number | null;
   createdAt: string; // ISO datetime
   updatedAt: string; // ISO datetime
 }

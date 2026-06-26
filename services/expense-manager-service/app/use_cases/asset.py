@@ -290,9 +290,20 @@ class AssetService:
             sells = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.SELL)
             invested_value = max(0.0, buys - sells)
 
-            # Latest REVALUE sets current value
+            # Latest REVALUE sets the reference point; subsequent BUY/SELLs are applied on top of it.
             revalues = [t for t in transactions if t.transaction_type == AssetTransactionType.REVALUE]
-            current_value = revalues[0].amount if revalues else invested_value
+            if revalues:
+                latest_revalue = revalues[0]
+                revalue_index = transactions.index(latest_revalue)
+                current_val = latest_revalue.amount
+                for t in transactions[:revalue_index][::-1]:
+                    if t.transaction_type == AssetTransactionType.BUY:
+                        current_val += t.amount
+                    elif t.transaction_type == AssetTransactionType.SELL:
+                        current_val = max(0.0, current_val - t.amount)
+                current_value = current_val
+            else:
+                current_value = invested_value
         else:
             # Unit-based tracking
             total_units = 0.0
