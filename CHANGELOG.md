@@ -28,6 +28,23 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [expense-manager-service@1.5.0] - 2026-06-27
+
+### Added
+
+- Portfolio Net Worth API endpoints with support for current summary calculation and historical timeline tracking.
+- Portfolio Allocation API endpoints tracking asset/liability distribution, financing leverage, and health metrics (Debt-to-Asset and Liquidity ratios).
+
+---
+
+## [keys-personal-assist-ui@1.5.0] - 2026-06-27
+
+### Added
+
+- Interactive Net Worth dashboard tab featuring historical composed charts and ledger history.
+- Portfolio Allocation dashboard tab displaying category distributions, financing leverage, and health metric gauges.
+- Interactive explanatory tooltips for financial terms and metrics across all Wealth Manager dashboard tabs.
+
 ---
 
 ## [expense-manager-service@1.4.0] - 2026-06-26
