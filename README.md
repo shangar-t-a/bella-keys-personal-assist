@@ -34,9 +34,10 @@ curl -sSL "https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-ass
 ```
 
 **What this does:**
-- Downloads the necessary configuration files.
-- Prompts you to configure your `.env` secrets interactively or offline.
-- Pulls and starts the latest Docker containers.
+
+* Downloads the necessary configuration files.
+* Prompts you to configure your `.env` secrets interactively or offline.
+* Pulls and starts the latest Docker containers.
 
 **Note:** You must have Docker, PostgreSQL, and Ollama installed natively on your host PC before running this script.
 
