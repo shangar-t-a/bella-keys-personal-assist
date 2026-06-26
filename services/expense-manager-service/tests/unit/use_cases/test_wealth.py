@@ -4,10 +4,9 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.entities.models.asset import AssetTransactionType, CompoundingFrequency
-from app.entities.models.liability import LiabilityTransactionType
 from app.infrastructures.postgres_db.models.asset import AssetModel
 from app.infrastructures.postgres_db.models.asset_category import AssetCategoryModel
 from app.infrastructures.postgres_db.models.asset_subcategory import AssetSubcategoryModel
@@ -19,7 +18,7 @@ from app.infrastructures.postgres_db.models.liability_transaction import Liabili
 from app.use_cases.asset import AssetService
 from app.use_cases.liability import LiabilityService
 from app.use_cases.models.asset import AssetCreate, AssetTransactionCreate
-from app.use_cases.models.liability import LiabilityCreate, LiabilityInterestDetails, LiabilityTransactionCreate
+from app.use_cases.models.liability import LiabilityCreate, LiabilityInterestDetails
 from app.use_cases.wealth import WealthService
 
 
@@ -153,7 +152,6 @@ async def get_liability_maps(wealth_service):
 async def cleanup_db(asset_repo, liability_repo):
     """Remove created assets and liabilities records."""
     async with await asset_repo._get_session() as session:
-        from sqlalchemy import delete
         await session.execute(delete(AssetTransactionModel))
         await session.execute(delete(AssetModel))
         await session.commit()
@@ -181,7 +179,7 @@ async def test_wealth_summary_with_data(wealth_service, asset_service, liability
     """Test wealth summary calculation with active assets and liabilities."""
     await cleanup_db(asset_repo, liability_repo)
     await seed_categories(wealth_service)
-    
+
     asset_cats, asset_subs = await get_asset_maps(wealth_service)
     liab_cats, liab_subs = await get_liability_maps(wealth_service)
 
@@ -262,7 +260,7 @@ async def test_wealth_allocation(wealth_service, asset_service, liability_servic
     )
 
     allocation = await wealth_service.get_portfolio_allocation()
-    
+
     # Check assets allocations
     assert len(allocation.assets) > 0
     debt_alloc = next(c for c in allocation.assets if c.category_code == "DEBT")

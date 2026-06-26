@@ -12,6 +12,12 @@ from app.use_cases.models.wealth import (
     WealthCategoryAllocation,
     WealthSummary,
 )
+from app.use_cases.price_resolver import PriceResolverService
+
+# Threshold Constants for Leverage and Liquidity Ratios
+DEBT_TO_ASSET_HEALTHY_THRESHOLD = 30.0
+DEBT_TO_ASSET_WATCH_THRESHOLD = 50.0
+LIQUIDITY_RATIO_HEALTHY_THRESHOLD = 15.0
 
 
 class WealthService:
@@ -39,7 +45,7 @@ class WealthService:
         )
 
         total_liabilities = 0.0
-        total_original_liabilities = sum(l.original_value for l in liabilities)
+        total_original_liabilities = sum(liab.original_value for liab in liabilities)
         total_repaid_liabilities = 0.0
         accumulated_interest_liabilities = 0.0
 
@@ -88,8 +94,8 @@ class WealthService:
 
         liabilities = await self.liability_repository.get_all_liabilities()
         liability_txs = {}
-        for l in liabilities:
-            liability_txs[l.id] = await self.liability_repository.get_transactions_for_liability(l.id)
+        for liab in liabilities:
+            liability_txs[liab.id] = await self.liability_repository.get_transactions_for_liability(liab.id)
 
         points = []
         for m_str in months_list:
@@ -105,8 +111,8 @@ class WealthService:
 
             # Accumulate historical liability values
             total_liabilities = 0.0
-            for l in liabilities:
-                val = await self._calculate_liability_value_at(l, liability_txs[l.id], end_of_month)
+            for liab in liabilities:
+                val = await self._calculate_liability_value_at(liab, liability_txs[liab.id], end_of_month)
                 total_liabilities += val
 
             points.append(
@@ -165,8 +171,8 @@ class WealthService:
 
         liability_allocations = []
         for cat in liability_categories:
-            cat_liabs = [l for l in liabilities if l.category_id == cat.id]
-            cat_value = sum(liab_current_values[l.id] for l in cat_liabs)
+            cat_liabs = [liab for liab in liabilities if liab.category_id == cat.id]
+            cat_value = sum(liab_current_values[liab.id] for liab in cat_liabs)
             pct = (cat_value / total_liabilities) * 100 if total_liabilities > 0 else 0.0
             liability_allocations.append(
                 WealthCategoryAllocation(
@@ -196,17 +202,17 @@ class WealthService:
         liabilities_financed_pct = round(liabilities_financed_pct, 2)
 
         # 6. Status Labels and Types
-        if debt_to_asset_ratio < 30.0:
+        if debt_to_asset_ratio < DEBT_TO_ASSET_HEALTHY_THRESHOLD:
             leverage_status_label = "Low Risk (Healthy)"
             leverage_status_type = "SUCCESS"
-        elif debt_to_asset_ratio <= 50.0:
+        elif debt_to_asset_ratio <= DEBT_TO_ASSET_WATCH_THRESHOLD:
             leverage_status_label = "Moderate Risk (Watch)"
             leverage_status_type = "WARNING"
         else:
             leverage_status_label = "High Risk (Leveraged)"
             leverage_status_type = "ERROR"
 
-        if liquidity_ratio >= 15.0:
+        if liquidity_ratio >= LIQUIDITY_RATIO_HEALTHY_THRESHOLD:
             liquidity_status_label = "Healthy Liquidity"
             liquidity_status_type = "SUCCESS"
         else:
@@ -228,6 +234,57 @@ class WealthService:
             liquidity_status_type=liquidity_status_type,
         )
 
+    def _calculate_value_based_asset_value(self, txs_chrono: list) -> float:
+        """Calculate the value of a value-based asset chronologically."""
+        buys = sum(t.amount for t in txs_chrono if t.transaction_type == "BUY")
+        sells = sum(t.amount for t in txs_chrono if t.transaction_type == "SELL")
+        invested_value = max(0.0, buys - sells)
+
+        revalues = [t for t in txs_chrono if t.transaction_type == "REVALUE"]
+        if revalues:
+            latest_revalue = revalues[-1]
+            reval_index = txs_chrono.index(latest_revalue)
+            current_val = latest_revalue.amount
+            for t in txs_chrono[reval_index + 1 :]:
+                if t.transaction_type == "BUY":
+                    current_val += t.amount
+                elif t.transaction_type == "SELL":
+                    current_val = max(0.0, current_val - t.amount)
+            return round(current_val, 2)
+        return round(invested_value, 2)
+
+    async def _calculate_unit_based_asset_value(self, asset, txs_chrono: list, as_of: datetime) -> float:
+        """Calculate the value of a unit-based asset chronologically."""
+        total_units = 0.0
+        for t in txs_chrono:
+            t_units = t.units or 0.0
+            if t.transaction_type == "BUY":
+                total_units += t_units
+            elif t.transaction_type == "SELL":
+                total_units = max(0.0, total_units - t_units)
+
+        today_str = datetime.now(UTC).strftime("%Y-%m")
+        as_of_str = as_of.strftime("%Y-%m")
+        ppu = None
+
+        if as_of_str == today_str:
+            ticker_symbol = asset.name
+            if asset.subcategory_id:
+                sub = await self.asset_repository.get_subcategory_by_id(asset.subcategory_id)
+                if sub:
+                    ticker_symbol = sub.code
+            ppu = PriceResolverService.resolve_price(ticker_symbol)
+
+        if ppu is None:
+            latest_ppu_txs = [
+                t
+                for t in txs_chrono
+                if t.price_per_unit is not None and t.transaction_type in ("BUY", "REVALUE")
+            ]
+            ppu = latest_ppu_txs[-1].price_per_unit if latest_ppu_txs else 0.0
+
+        return round(total_units * ppu, 2)
+
     async def _calculate_asset_value_at(self, asset, transactions: list, as_of: datetime) -> float:
         """Calculate the value of an asset as of a specific date."""
         txs = [t for t in transactions if t.transaction_date <= as_of]
@@ -238,54 +295,54 @@ class WealthService:
         is_unit_based = any(t.units is not None for t in txs if t.transaction_type in ("BUY", "SELL"))
 
         if not is_unit_based:
-            buys = sum(t.amount for t in txs if t.transaction_type == "BUY")
-            sells = sum(t.amount for t in txs if t.transaction_type == "SELL")
-            invested_value = max(0.0, buys - sells)
-
-            revalues = [t for t in txs_chrono if t.transaction_type == "REVALUE"]
-            if revalues:
-                latest_revalue = revalues[-1]
-                reval_index = txs_chrono.index(latest_revalue)
-                current_val = latest_revalue.amount
-                for t in txs_chrono[reval_index + 1 :]:
-                    if t.transaction_type == "BUY":
-                        current_val += t.amount
-                    elif t.transaction_type == "SELL":
-                        current_val = max(0.0, current_val - t.amount)
-                return round(current_val, 2)
-            return round(invested_value, 2)
+            return self._calculate_value_based_asset_value(txs_chrono)
         else:
-            total_units = 0.0
-            for t in txs_chrono:
-                t_units = t.units or 0.0
-                if t.transaction_type == "BUY":
-                    total_units += t_units
-                elif t.transaction_type == "SELL":
-                    total_units = max(0.0, total_units - t_units)
+            return await self._calculate_unit_based_asset_value(asset, txs_chrono, as_of)
 
-            today_str = datetime.now(UTC).strftime("%Y-%m")
-            as_of_str = as_of.strftime("%Y-%m")
-            ppu = None
+    def _calculate_interest_bearing_liability_value(self, liability, txs: list, as_of: datetime) -> float:
+        """Calculate outstanding balance of an interest-bearing liability."""
+        sorted_txs = sorted(txs, key=lambda t: (t.transaction_date, t.created_at or datetime.min))
+        borrow_txs = [t for t in sorted_txs if t.transaction_type == "BORROW"]
+        if not borrow_txs:
+            return 0.0
 
-            if as_of_str == today_str:
-                ticker_symbol = asset.name
-                if asset.subcategory_id:
-                    sub = await self.asset_repository.get_subcategory_by_id(asset.subcategory_id)
-                    if sub:
-                        ticker_symbol = sub.code
-                from app.use_cases.price_resolver import PriceResolverService
+        total_borrowed = sum(t.amount for t in borrow_txs)
+        snapshots = _simulate_amortization(
+            original_value=total_borrowed,
+            interest_rate=liability.interest_rate,
+            emi_amount=liability.emi_amount,
+            transactions=txs,
+            up_to_date=as_of,
+            emi_start_date=liability.emi_start_date,
+            compounding=liability.interest_compounding,
+        )
+        if not snapshots:
+            return 0.0
+        last_key = sorted(snapshots.keys())[-1]
+        balance, _, _ = snapshots[last_key]
+        return round(balance, 2)
 
-                ppu = PriceResolverService.resolve_price(ticker_symbol)
+    def _calculate_interest_free_liability_value(self, txs: list) -> float:
+        """Calculate outstanding balance of an interest-free liability."""
+        sorted_txs = sorted(txs, key=lambda t: (t.transaction_date, t.id))
+        borrow_txs = [t for t in sorted_txs if t.transaction_type == "BORROW"]
+        if not borrow_txs:
+            return 0.0
 
-            if ppu is None:
-                latest_ppu_txs = [
-                    t
-                    for t in txs_chrono
-                    if t.price_per_unit is not None and t.transaction_type in ("BUY", "REVALUE")
-                ]
-                ppu = latest_ppu_txs[-1].price_per_unit if latest_ppu_txs else 0.0
-
-            return round(total_units * ppu, 2)
+        total_borrowed = sum(t.amount for t in borrow_txs)
+        repayments = sum(t.amount for t in sorted_txs if t.transaction_type == "REPAY")
+        revalue_txs = [t for t in sorted_txs if t.transaction_type == "REVALUE"]
+        if revalue_txs:
+            latest_revalue = revalue_txs[-1]
+            revalue_index = sorted_txs.index(latest_revalue)
+            current_val = latest_revalue.amount
+            for t in sorted_txs[revalue_index + 1 :]:
+                if t.transaction_type == "BORROW":
+                    current_val += t.amount
+                elif t.transaction_type == "REPAY":
+                    current_val -= t.amount
+            return round(max(0.0, current_val), 2)
+        return round(max(0.0, total_borrowed - repayments), 2)
 
     async def _calculate_liability_value_at(self, liability, transactions: list, as_of: datetime) -> float:
         """Calculate the outstanding balance of a liability as of a specific date."""
@@ -297,43 +354,6 @@ class WealthService:
             return 0.0
 
         if liability.interest_rate and liability.interest_rate > 0:
-            sorted_txs = sorted(txs, key=lambda t: (t.transaction_date, t.created_at or datetime.min))
-            borrow_txs = [t for t in sorted_txs if t.transaction_type == "BORROW"]
-            if not borrow_txs:
-                return 0.0
-
-            total_borrowed = sum(t.amount for t in borrow_txs)
-            snapshots = _simulate_amortization(
-                original_value=total_borrowed,
-                interest_rate=liability.interest_rate,
-                emi_amount=liability.emi_amount,
-                transactions=txs,
-                up_to_date=as_of,
-                emi_start_date=liability.emi_start_date,
-                compounding=liability.interest_compounding,
-            )
-            if not snapshots:
-                return 0.0
-            last_key = sorted(snapshots.keys())[-1]
-            balance, _, _ = snapshots[last_key]
-            return round(balance, 2)
+            return self._calculate_interest_bearing_liability_value(liability, txs, as_of)
         else:
-            sorted_txs = sorted(txs, key=lambda t: (t.transaction_date, t.id))
-            borrow_txs = [t for t in sorted_txs if t.transaction_type == "BORROW"]
-            if not borrow_txs:
-                return 0.0
-
-            total_borrowed = sum(t.amount for t in borrow_txs)
-            repayments = sum(t.amount for t in sorted_txs if t.transaction_type == "REPAY")
-            revalue_txs = [t for t in sorted_txs if t.transaction_type == "REVALUE"]
-            if revalue_txs:
-                latest_revalue = revalue_txs[-1]
-                revalue_index = sorted_txs.index(latest_revalue)
-                current_val = latest_revalue.amount
-                for t in sorted_txs[revalue_index + 1 :]:
-                    if t.transaction_type == "BORROW":
-                        current_val += t.amount
-                    elif t.transaction_type == "REPAY":
-                        current_val -= t.amount
-                return round(max(0.0, current_val), 2)
-            return round(max(0.0, total_borrowed - repayments), 2)
+            return self._calculate_interest_free_liability_value(txs)
