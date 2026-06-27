@@ -18,7 +18,7 @@ All AI agents and developers must follow these rules when performing releases:
 When bumping the version of any component, locate and update all relevant version definitions within that component's directory:
 
 - **Python Services:** Update the version in the `VERSION` file, `__init__.py` file, and any schema/OpenAPI JSON documentation.
-- **Node.js/UI Applications:** Update the version in `package.json`.
+- **Node.js/UI Applications:** Update the version in `package.json` and the `VERSION` file.
 
 ## 3. Unified Changelog
 
