@@ -51,12 +51,12 @@ import type {
 } from '@/types/api';
 import { formatCurrency, formatCompactRupees } from '@/utils/formatters';
 
-// Colors for the donut chart
-const COLORS = ['#3b82f6', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#6366f1', '#ef4444'];
+// Colors for the donut chart — harmonized with the premium palette
+const COLORS = ['#1a8fc4', '#48b1e0', '#1a9a6b', '#e29624', '#8b6cc4', '#2ba8a4', '#6366f1', '#d94052'];
 
 export default function SavingsFundSegregatorPage() {
   const navigate = useNavigate();
-  // ── States ──────────────────────────────────────────────────────────────────
+  // States
   const [accounts, setAccounts] = useState<AccountNameResponse[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [buckets, setBuckets] = useState<SavingsBucketResponse[]>([]);
@@ -89,7 +89,7 @@ export default function SavingsFundSegregatorPage() {
 
 
 
-  // ── Data Fetching ────────────────────────────────────────────────────────────
+  // Data Fetching
   const fetchAccounts = async (keepSelection = false) => {
     try {
       const data = await emsClient.getAllAccounts();
@@ -140,7 +140,7 @@ export default function SavingsFundSegregatorPage() {
     fetchDetails();
   }, [fetchDetails]);
 
-  // ── Calculations ─────────────────────────────────────────────────────────────
+  // Calculations
   const totalSavings = buckets.reduce((sum, b) => sum + b.allocatedAmount, 0);
   const savingsBucket = buckets.find((b) => b.name === 'Savings');
   const unallocatedSavings = savingsBucket ? savingsBucket.allocatedAmount : 0.0;
@@ -154,7 +154,7 @@ export default function SavingsFundSegregatorPage() {
       value: b.allocatedAmount,
     }));
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
+  // Handlers
   const handleOpenBucketModal = (bucket?: SavingsBucketResponse) => {
     if (bucket) {
       setBucketEditId(bucket.id);
@@ -311,7 +311,7 @@ export default function SavingsFundSegregatorPage() {
     }
   };
 
-  // ── Helper Resolvers ─────────────────────────────────────────────────────────
+  // Helper Resolvers
   const getBucketNameById = (id: string | null) => {
     if (!id) return '-';
     const b = buckets.find(x => x.id === id);
@@ -382,7 +382,7 @@ export default function SavingsFundSegregatorPage() {
           </Box>
         </Box>
 
-        {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
+        {/* Summary Card: Prominent Portfolio Metrics */}
         <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
           <Grid container>
             {/* Block 1: Total Savings */}
@@ -429,7 +429,7 @@ export default function SavingsFundSegregatorPage() {
           </Grid>
         </Card>
 
-        {/* ── Main Layout: Visual Chart & Bucket List ── */}
+        {/* Main Layout: Visual Chart & Bucket List */}
         <Grid container spacing={3} sx={{ mb: 2 }}>
           {/* Visual Donut Chart */}
           <Grid size={{ xs: 12, lg: 4 }}>
@@ -586,7 +586,7 @@ export default function SavingsFundSegregatorPage() {
           </Grid>
         </Grid>
 
-        {/* ── Transaction Ledger Block ── */}
+        {/* Transaction Ledger Block */}
         <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
           <Box sx={{ p: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
             <Box>
@@ -744,7 +744,7 @@ export default function SavingsFundSegregatorPage() {
           />
         </Card>
 
-        {/* ── Add/Edit Bucket Dialog ── */}
+        {/* Add/Edit Bucket Dialog */}
         <Dialog open={isBucketModalOpen} onClose={() => setIsBucketModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
             {bucketEditId ? 'Edit Envelope Details' : 'Create New Envelope'}
@@ -777,7 +777,7 @@ export default function SavingsFundSegregatorPage() {
           </DialogActions>
         </Dialog>
 
-        {/* ── Transaction Move Money Dialog ── */}
+        {/* Transaction Move Money Dialog */}
         <Dialog open={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Log Transaction Entry</DialogTitle>
           <DialogContent>
@@ -900,7 +900,7 @@ export default function SavingsFundSegregatorPage() {
           </DialogActions>
         </Dialog>
 
-        {/* ── Cancel Transaction Dialog ── */}
+        {/* Cancel Transaction Dialog */}
         <Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Cancel Transaction</DialogTitle>
           <DialogContent>
@@ -928,7 +928,7 @@ export default function SavingsFundSegregatorPage() {
           </DialogActions>
         </Dialog>
 
-        {/* ── Delete Bucket Confirmation Dialog ── */}
+        {/* Delete Bucket Confirmation Dialog */}
         <Dialog open={isDeleteBucketModalOpen} onClose={() => setIsDeleteBucketModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Delete Envelope</DialogTitle>
           <DialogContent>

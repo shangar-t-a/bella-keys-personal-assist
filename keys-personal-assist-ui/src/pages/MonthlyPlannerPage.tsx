@@ -31,7 +31,7 @@ import {  Box,
   OutlinedInput,
   Tooltip,
 } from '@mui/material';
-import { Grid } from '@mui/material';
+import { Grid, alpha, useTheme } from '@mui/material';
 import {
   Add as Plus,
   Delete as Trash2,
@@ -39,6 +39,10 @@ import {
   Sync,
   Settings,
   Edit,
+  AccountBalanceWallet as SalaryIcon,
+  ShoppingCart as SpendingIcon,
+  Savings as SavingIcon,
+  AccountBalance as BalanceIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { emsClient } from '@/api/clients/ems-client';
@@ -56,7 +60,10 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
+const CHART_COLORS = [
+  '#1a8fc4', '#1a9a6b', '#e29624', '#d94052',
+  '#8b6cc4', '#2ba8a4', '#6366f1', '#ef6c6e',
+];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -96,6 +103,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function MonthlyPlannerPage() {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -131,7 +139,7 @@ export default function MonthlyPlannerPage() {
     setConfirmDialog(prev => ({ ...prev, open: false }));
   };
 
-  // --- Data Fetching ---
+  // Data Fetching
   const fetchData = useCallback(async () => {
     try {
       const [sum, exp, cat] = await Promise.all([
@@ -152,7 +160,7 @@ export default function MonthlyPlannerPage() {
     fetchData();
   }, [fetchData]);
 
-  // --- Calculations ---
+  // Calculations
   const totals = useMemo(() => {
     const totalSpending = expenses
       .filter(e => e.category_l1 === 'spending')
@@ -179,7 +187,7 @@ export default function MonthlyPlannerPage() {
     return Object.entries(l2Map).map(([name, value]) => ({ name, value }));
   }, [expenses]);
 
-  // --- Handlers ---
+  // Handlers
   const handleUpdateSalary = async (val: string) => {
     const salary = parseFloat(val) || 0;
     try {
@@ -372,91 +380,97 @@ export default function MonthlyPlannerPage() {
           </Stack>
         </Stack>
 
-        {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
-        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
-          <Grid container>
-            {/* Block 1: Current Salary (Interactive) */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{
-              p: 2.5,
-              borderRight: '1px solid',
-              borderRightColor: 'divider',
-              borderBottom: { xs: '1px solid', md: 'none' },
-              borderBottomColor: { xs: 'divider', md: 'transparent' },
-            }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Current Salary
-              </Typography>
-              {isEditingSalary ? (
-                <TextField
-                  size="small"
-                  type="number"
-                  autoFocus
-                  value={salaryInputVal}
-                  onChange={(e) => setSalaryInputVal(e.target.value)}
-                  onBlur={handleSaveSalary}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveSalary();
-                    if (e.key === 'Escape') setIsEditingSalary(false);
-                  }}
+        {/* Summary Metric Cards */}
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          {[
+            {
+              label: 'Current Salary',
+              value: formatCompactRupees(summary?.salary || 0),
+              color: theme.palette.primary.main,
+              icon: SalaryIcon,
+              editable: true,
+            },
+            {
+              label: 'Total Spending',
+              value: formatCompactRupees(totals.totalSpending),
+              color: theme.palette.error.main,
+              icon: SpendingIcon,
+            },
+            {
+              label: 'Total Saving',
+              value: formatCompactRupees(totals.totalSaving),
+              color: theme.palette.success.main,
+              icon: SavingIcon,
+            },
+            {
+              label: 'Remaining Balance',
+              value: formatCompactRupees(totals.balance),
+              color: totals.balance >= 0 ? theme.palette.primary.main : theme.palette.error.main,
+              icon: BalanceIcon,
+            },
+          ].map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Grid key={metric.label} size={{ xs: 6, md: 3 }}>
+                <Card
                   sx={{
-                    width: '100%',
-                    '& .MuiOutlinedInput-root': { borderRadius: 1.5, fontSize: '1rem', fontWeight: 700 }
+                    p: 2.5,
+                    height: '100%',
+                    background: alpha(metric.color, theme.palette.mode === 'dark' ? 0.08 : 0.04),
+                    border: `1px solid ${alpha(metric.color, 0.12)}`,
+                    transition: 'transform 200ms ease, box-shadow 200ms ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 6px 20px ${alpha(metric.color, 0.12)}`,
+                    },
                   }}
-                />
-              ) : (
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
-                  onClick={() => { setSalaryInputVal(String(summary?.salary || 0)); setIsEditingSalary(true); }}
                 >
-                  <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'primary.main', fontSize: '1.3rem' }}>
-                    {formatCompactRupees(summary?.salary || 0)}
-                  </Typography>
-                  <Edit sx={{ fontSize: 16, color: 'text.secondary', opacity: 0.6, '&:hover': { opacity: 1 } }} />
-                </Box>
-              )}
-            </Grid>
-
-            {/* Block 2: Total Spending */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{
-              p: 2.5,
-              borderRight: { xs: 'none', md: '1px solid' },
-              borderRightColor: { xs: 'transparent', md: 'divider' },
-              borderBottom: { xs: '1px solid', md: 'none' },
-              borderBottomColor: { xs: 'divider', md: 'transparent' },
-            }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Total Spending
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'error.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(totals.totalSpending)}
-              </Typography>
-            </Grid>
-
-            {/* Block 3: Total Saving */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{
-              p: 2.5,
-              borderRight: '1px solid',
-              borderRightColor: 'divider',
-            }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Total Saving
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(totals.totalSaving)}
-              </Typography>
-            </Grid>
-
-            {/* Block 4: Remaining Balance */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{ p: 2.5 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Remaining Balance
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: totals.balance >= 0 ? 'primary.main' : 'error.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(totals.balance)}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Card>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem' }}>
+                      {metric.label}
+                    </Typography>
+                    <Icon sx={{ color: metric.color, fontSize: 20, opacity: 0.7 }} />
+                  </Box>
+                  {metric.editable && isEditingSalary ? (
+                    <TextField
+                      size="small"
+                      type="number"
+                      autoFocus
+                      value={salaryInputVal}
+                      onChange={(e) => setSalaryInputVal(e.target.value)}
+                      onBlur={handleSaveSalary}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveSalary();
+                        if (e.key === 'Escape') setIsEditingSalary(false);
+                      }}
+                      sx={{
+                        width: '100%',
+                        '& .MuiOutlinedInput-root': { borderRadius: 1.5, fontSize: '1rem', fontWeight: 700 }
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        ...(metric.editable ? { cursor: 'pointer' } : {}),
+                      }}
+                      onClick={metric.editable ? () => { setSalaryInputVal(String(summary?.salary || 0)); setIsEditingSalary(true); } : undefined}
+                    >
+                      <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: metric.color, fontSize: '1.3rem' }}>
+                        {metric.value}
+                      </Typography>
+                      {metric.editable && (
+                        <Edit sx={{ fontSize: 16, color: 'text.secondary', opacity: 0.5, '&:hover': { opacity: 1 } }} />
+                      )}
+                    </Box>
+                  )}
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
 
         {/* Tabs for View */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
@@ -485,7 +499,7 @@ export default function MonthlyPlannerPage() {
         {activeTab === 0 && (
           <>
             {/* Checklist Toolbar Card */}
-            <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', px: 2, py: 1.25, mb: 2 }}>
+            <Card sx={{ px: 2, py: 1.25, mb: 2.5 }}>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>
                   Expense Checklist
@@ -526,10 +540,10 @@ export default function MonthlyPlannerPage() {
             </Card>
 
             {/* Checklist Table Card */}
-            <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
+            <Card sx={{ overflow: 'hidden', mb: 2 }}>
               <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
                 <Table size="small">
-                  <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
+                  <TableHead>
                     <TableRow>
                       <TableCell padding="checkbox" sx={{ pl: 3 }}>Status</TableCell>
                       <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Name</TableCell>
@@ -609,7 +623,7 @@ export default function MonthlyPlannerPage() {
         {activeTab === 1 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card variant="outlined" sx={{ height: 400, borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+              <Card sx={{ height: 400 }}>
                 <CardContent sx={{ height: '100%', p: 3 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', mb: 2 }}>
                     Allocation Type
@@ -628,7 +642,7 @@ export default function MonthlyPlannerPage() {
                         label={renderCustomizedLabel}
                       >
                         {chartDataL1.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                         ))}
                       </Pie>
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -639,7 +653,7 @@ export default function MonthlyPlannerPage() {
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card variant="outlined" sx={{ height: 400, borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+              <Card sx={{ height: 400 }}>
                 <CardContent sx={{ height: '100%', p: 3 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', mb: 2 }}>
                     Category Breakdown
@@ -658,7 +672,7 @@ export default function MonthlyPlannerPage() {
                         label={renderCustomizedLabel}
                       >
                         {chartDataL2.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                         ))}
                       </Pie>
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -671,7 +685,7 @@ export default function MonthlyPlannerPage() {
           </Grid>
         )}
 
-        {/* --- Expense Form Modal --- */}
+        {/* Expense Form Modal */}
         <Dialog open={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
             {editingExpense ? 'Edit Expense' : 'Add Expense'}
@@ -741,7 +755,7 @@ export default function MonthlyPlannerPage() {
           </DialogActions>
         </Dialog>
 
-        {/* --- Confirm Dialog --- */}
+        {/* Confirm Dialog */}
         <Dialog open={confirmDialog.open} onClose={closeConfirm} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>{confirmDialog.title}</DialogTitle>
           <DialogContent>

@@ -20,7 +20,7 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-# ----------------------------------------------- Constants & Helpers ------------------------------------------------ #
+# Constants & Helpers
 
 BASE_URL = "/v1/monthly-planner"
 
@@ -39,7 +39,7 @@ async def _post_expense(client: AsyncClient, year: int, month: int, payload: dic
     return resp.json()
 
 
-# ---------------------------------------------------- Categories ---------------------------------------------------- #
+# Categories
 
 
 class TestCategoriesEndpoints:
@@ -78,7 +78,7 @@ class TestCategoriesEndpoints:
         assert not any(c["id"] == cat["id"] for c in resp_list.json())
 
 
-# ----------------------------------------------------- Summary ------------------------------------------------------ #
+# Summary
 
 
 class TestSummaryEndpoints:
@@ -107,7 +107,7 @@ class TestSummaryEndpoints:
         assert get_resp.json()["salary"] == 8500.0
 
 
-# ----------------------------------------------------- Expenses ----------------------------------------------------- #
+# Expenses
 
 
 class TestExpensesEndpoints:

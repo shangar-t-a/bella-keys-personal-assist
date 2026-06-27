@@ -257,7 +257,15 @@ def asset_service(asset_repo):
 
 ---
 
-## 6. Frontend Coding Standards
+## 6. General Coding and Commenting Standards
+
+### Comment Style Standard
+
+All code comments in any language (Python, TypeScript, CSS, HTML, JSX/TSX, etc.) must remain simple, clean, and undecorated. Never use visual delimiters, horizontal lines, trailing dashes, or custom block dividers (such as `# ---* comment --------` or `// ── comment ──`). Comments should simply be `# comment`, `// comment`, or `/* comment */`.
+
+---
+
+## 7. Frontend Coding Standards
 
 ### API Calls — Always Use `fetchWithAuth`
 
@@ -352,7 +360,7 @@ TypeScript must compile with **zero errors** before staging any UI file. No `any
 
 ---
 
-## 7. Continuous Integration and Release Pipeline
+## 8. Continuous Integration and Release Pipeline
 
 The project utilizes GitHub Actions for building and publishing Docker images to the GitHub Container Registry (GHCR).
 

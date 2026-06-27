@@ -17,7 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # --- monthly_category ---
+    # monthly_category
     op.create_table(
         'monthly_category',
         sa.Column('id', sa.String(), nullable=False),
@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.UniqueConstraint('name', 'category_l1', name='uq_monthly_category_name_l1')
     )
 
-    # --- monthly_summary ---
+    # monthly_summary
     op.create_table(
         'monthly_summary',
         sa.Column('id', sa.String(), nullable=False),
@@ -42,7 +42,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_monthly_summary_period_id'), 'monthly_summary', ['period_id'], unique=False)
 
-    # --- monthly_expense_item ---
+    # monthly_expense_item
     op.create_table(
         'monthly_expense_item',
         sa.Column('id', sa.String(), nullable=False),

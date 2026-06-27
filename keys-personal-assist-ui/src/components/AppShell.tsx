@@ -156,7 +156,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
     const closeMobile = () => setMobileOpen(false);
 
-    const brandGradient = `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
+    const brandGradient = `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`;
 
     const BrandLogo = ({ size = 30 }: { size?: number }) => (
         <Box
@@ -180,7 +180,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
         return (
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', userSelect: 'none' }}>
-                {/* ── Header ─────────────────────────────────────── */}
+                {/* Header */}
                 <Box
                     sx={{
                         display: 'flex',
@@ -237,7 +237,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                 <Divider />
 
-                {/* ── Navigation ─────────────────────────────────── */}
+                {/* Navigation */}
                 <Box sx={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
                     {navSections.map((section, idx) => (
                         <Box key={section.section}>
@@ -273,17 +273,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                                     const activeStyle = active
                                         ? {
-                                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                            bgcolor: alpha(theme.palette.primary.main, 0.08),
                                             color: theme.palette.primary.main,
                                             '&::before': {
                                                 content: '""',
                                                 position: 'absolute',
                                                 left: 0,
-                                                top: '20%',
-                                                height: '60%',
+                                                top: '15%',
+                                                height: '70%',
                                                 width: 3,
                                                 bgcolor: 'primary.main',
-                                                borderRadius: '0 3px 3px 0',
+                                                borderRadius: '0 4px 4px 0',
+                                                transition: 'height 200ms ease',
                                             },
                                         }
                                         : {};
@@ -432,7 +433,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                 <Divider />
 
-                {/* ── User Profile ───────────────────────────────── */}
+                {/* User Profile */}
                 <Box sx={{ px: 1.5, pb: 1.5, pt: 1 }}>
                     {isOpen ? (
                         <ListItemButton
@@ -529,20 +530,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
         width: open ? DRAWER_WIDTH : MINI_WIDTH,
         flexShrink: 0,
         transition: theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: open
-                ? theme.transitions.duration.enteringScreen
-                : theme.transitions.duration.leavingScreen,
+            easing: theme.transitions.easing.easeInOut,
+            duration: 250,
         }),
         '& .MuiDrawer-paper': {
             width: open ? DRAWER_WIDTH : MINI_WIDTH,
             boxSizing: 'border-box',
             overflowX: 'hidden',
             transition: theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: open
-                    ? theme.transitions.duration.enteringScreen
-                    : theme.transitions.duration.leavingScreen,
+                easing: theme.transitions.easing.easeInOut,
+                duration: 250,
             }),
         },
     };
@@ -615,14 +612,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 onClose={handleUserMenuClose}
                 onClick={handleUserMenuClose}
                 PaperProps={{
-                    elevation: 4,
+                    elevation: 0,
                     sx: {
                         overflow: 'visible',
-                        filter: 'drop-shadow(0px 4px 20px rgba(0,0,0,0.08))',
                         mt: -1,
                         minWidth: 200,
-                        borderRadius: 2,
-                        border: `1px solid ${theme.palette.divider}`,
                         p: 0.5,
                     },
                 }}

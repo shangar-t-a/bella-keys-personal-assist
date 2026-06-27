@@ -20,7 +20,6 @@ import {
   DialogActions,
   Tooltip,
   CircularProgress,
-  Divider,
   Select,
   MenuItem,
   FormControl,
@@ -28,6 +27,7 @@ import {
   InputAdornment,
   useTheme,
   alpha,
+  Grid,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -322,8 +322,8 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-      {/* ── Toolbar Card: Search + Category Filters + Add Asset ───────────────── */}
-      <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', px: 2, py: 1.25 }}>
+      {/* Toolbar Card: Search + Category Filters + Add Asset */}
+      <Card sx={{ px: 2, py: 1.25, mb: 2.5 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
           {/* Left: search + category toggles */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1, flexWrap: 'wrap' }}>
@@ -376,71 +376,83 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
             color="primary"
             startIcon={<AddIcon />}
             onClick={() => setWizardOpen(true)}
-            sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem', flexShrink: 0 }}
           >
             Add Asset
           </Button>
         </Box>
       </Card>
 
-      {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
+      {/* Summary Cards: Prominent Portfolio Metrics */}
       {summary && (
-        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-          <Box sx={{ display: 'flex' }}>
-            {/* Invested */}
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Invested
-                </Typography>
-                <Tooltip title="The total amount of principal capital you have contributed to buy or fund your assets." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'text.primary', fontSize: '1.3rem' }}>
-                {formatCompactRupees(summary.totalInvested)}
-              </Typography>
-            </Box>
-            <Divider orientation="vertical" flexItem />
-            {/* Current Value */}
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Current Value
-                </Typography>
-                <Tooltip title="The current market value or appraised value of all your assets." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'primary.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(summary.totalCurrent)}
-              </Typography>
-            </Box>
-            <Divider orientation="vertical" flexItem />
-            {/* Returns */}
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Total Returns
-                </Typography>
-                <Tooltip title="The net absolute return and Percentage Return on Investment (ROI) calculated across your asset portfolio." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                {renderReturnsText(summary.totalReturns, summary.percentageReturns)}
-              </Box>
-            </Box>
-          </Box>
-        </Card>
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          {[
+            {
+              label: 'Invested',
+              value: formatCompactRupees(summary.totalInvested),
+              color: theme.palette.text.secondary,
+              icon: DebtIcon,
+              desc: 'The total amount of principal capital you have contributed to buy or fund your assets.',
+            },
+            {
+              label: 'Current Value',
+              value: formatCompactRupees(summary.totalCurrent),
+              color: theme.palette.primary.main,
+              icon: EquityIcon,
+              desc: 'The current market value or appraised value of all your assets.',
+            },
+            {
+              label: 'Total Returns',
+              value: renderReturnsText(summary.totalReturns, summary.percentageReturns),
+              color: summary.totalReturns >= 0 ? theme.palette.success.main : theme.palette.error.main,
+              icon: TrendingUpIcon,
+              desc: 'The net absolute return and Percentage Return on Investment (ROI) calculated across your asset portfolio.',
+            },
+          ].map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Grid key={metric.label} size={{ xs: 12, md: 4 }}>
+                <Card
+                  sx={{
+                    p: 2.5,
+                    height: '100%',
+                    background: alpha(metric.color, theme.palette.mode === 'dark' ? 0.08 : 0.04),
+                    border: `1px solid ${alpha(metric.color, 0.12)}`,
+                    transition: 'transform 200ms ease, box-shadow 200ms ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 6px 20px ${alpha(metric.color, 0.12)}`,
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem' }}>
+                        {metric.label}
+                      </Typography>
+                      <Tooltip title={metric.desc} arrow>
+                        <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                      </Tooltip>
+                    </Box>
+                    <Icon sx={{ color: metric.color, fontSize: 20, opacity: 0.7 }} />
+                  </Box>
+                  {typeof metric.value === 'string' ? (
+                    <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: metric.color === theme.palette.text.secondary ? 'text.primary' : metric.color, fontSize: '1.3rem' }}>
+                      {metric.value}
+                    </Typography>
+                  ) : (
+                    <Box sx={{ mt: 0.25 }}>{metric.value}</Box>
+                  )}
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
       )}
-      {/* ── Table Card ──────────────────────────────────────────────────────── */}
-      <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+      {/* Table Card */}
+      <Card sx={{ overflow: 'hidden' }}>
         <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
           <Table size="small">
-
-            {/* Single shared column header */}
-            <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
+            <TableHead>
               <TableRow>
                 <TableCell sx={{ pl: 3, fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Type</TableCell>
@@ -467,7 +479,7 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                 const isLast = visibleArr[visibleArr.length - 1][0] === code;
 
                 return [
-                  /* ── Category group-divider row — finboom style ── */
+                  /* Category group-divider row — finboom style */
                   <TableRow
                     key={`cat-${code}`}
                     onClick={() => handleToggleCategory(code)}
@@ -540,7 +552,7 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                     </TableCell>
                   </TableRow>,
 
-                  /* ── Asset rows (collapsed/expanded) with zebra striping ── */
+                  /* Asset rows (collapsed/expanded) with zebra striping */
                   ...catAssets.map((asset, assetIdx) => (
                     <TableRow
                       key={asset.id}
@@ -599,7 +611,7 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                     </TableRow>
                   )),
 
-                  /* ── Empty state row ── */
+                  /* Empty state row */
                   ...(isOpen && catAssets.length === 0 ? [
                     <TableRow key={`empty-${code}`}>
                       <TableCell colSpan={6} sx={{ textAlign: 'center', py: 2.5, color: 'text.disabled', fontSize: '0.82rem', borderBottom: isLast ? 'none' : '1px solid', borderBottomColor: 'divider' }}>
@@ -614,7 +626,7 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
         </TableContainer>
       </Card>
 
-      {/* ── Dialog Modals ────────────────────────────────────────────────────── */}
+      {/* Dialog Modals */}
       <AddAssetWizard 
         open={wizardOpen} 
         onClose={() => setWizardOpen(false)} 

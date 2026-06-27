@@ -33,10 +33,6 @@ export default function WealthPage() {
         bgcolor: 'background.default',
         py: 2.5,
         px: { xs: 2, md: 4 },
-        backgroundImage: (theme) =>
-          theme.palette.mode === 'dark'
-            ? 'radial-gradient(circle at 10% 20%, rgba(30, 41, 59, 0.4) 0%, rgba(17, 24, 39, 0.95) 90%)'
-            : 'none',
         transition: 'background-color 0.3s ease',
       }}
     >
@@ -68,20 +64,6 @@ export default function WealthPage() {
             onChange={(_e, newValue) => setActiveTab(newValue)}
             indicatorColor="primary"
             textColor="primary"
-            sx={{
-              minHeight: 36,
-              '& .MuiTab-root': {
-                fontFamily: '"Space Grotesk", sans-serif',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                textTransform: 'none',
-                minWidth: 80,
-                minHeight: 36,
-                px: 0,
-                mr: 3,
-                py: 0.5,
-              },
-            }}
           >
             <Tab label="Assets" id="wealth-tab-assets" />
             <Tab label="Liabilities" id="wealth-tab-liabilities" />

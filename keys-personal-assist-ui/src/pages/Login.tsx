@@ -39,7 +39,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const brandGradient = `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
+  const brandGradient = `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`;
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -128,7 +128,7 @@ const Login: React.FC = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: `radial-gradient(circle at 50% 50%, ${theme.palette.mode === 'dark' ? '#1e2d3d' : '#e2eaf2'} 0%, ${theme.palette.background.default} 100%)`,
+        background: `radial-gradient(circle at 50% 50%, ${theme.palette.mode === 'dark' ? '#152232' : '#e8f0f8'} 0%, ${theme.palette.background.default} 100%)`,
         px: 2,
       }}
     >

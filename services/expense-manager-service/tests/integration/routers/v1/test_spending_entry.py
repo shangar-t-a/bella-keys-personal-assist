@@ -14,7 +14,7 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-# ----------------------------------------------- Constants & Helpers ------------------------------------------------ #
+# Constants & Helpers
 
 BASE_URL = "/v1/spending_account"
 
@@ -71,7 +71,7 @@ async def _create_account(client: AsyncClient, prefix: str = "ACC") -> str:
     return name
 
 
-# -------------------------------------------- POST /v1/spending_account --------------------------------------------- #
+# POST /v1/spending_account
 
 
 class TestCreateEntry:
@@ -169,7 +169,7 @@ class TestCreateEntry:
         assert resp_b.status_code == 200
 
 
-# ------------------------------------------ GET /v1/spending_account/list ------------------------------------------- #
+# GET /v1/spending_account/list
 
 
 class TestListResponseShape:
@@ -502,7 +502,7 @@ class TestListPagination:
         assert len(data["spendingEntries"]) == 0
 
 
-# ---------------------------------------- GET /v1/spending_account/{id}/list ---------------------------------------- #
+# GET /v1/spending_account/{id}/list
 
 
 class TestPerAccountListAccountNotFound:
@@ -641,7 +641,7 @@ class TestPerAccountListPagination:
         assert ids_0.isdisjoint(ids_1)
 
 
-# ------------------------------------------ PUT /v1/spending_account/{id} ------------------------------------------- #
+# PUT /v1/spending_account/{id}
 
 
 class TestEditEntry:
@@ -734,7 +734,7 @@ class TestEditEntry:
         assert resp.status_code == 400
 
 
-# ----------------------------------------- DELETE /v1/spending_account/{id} ----------------------------------------- #
+# DELETE /v1/spending_account/{id}
 
 
 class TestDeleteEntry:
@@ -777,7 +777,7 @@ class TestDeleteEntry:
         assert resp.status_code == 404
 
 
-# ---------------------------------------------- Input Validation (422) ---------------------------------------------- #
+# Input Validation (422)
 
 
 class TestInputValidation:

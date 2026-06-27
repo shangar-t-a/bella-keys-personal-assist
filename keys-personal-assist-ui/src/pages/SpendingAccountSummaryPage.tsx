@@ -27,6 +27,8 @@ import {
   Tooltip,
   Paper,
   Grid,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   Add as Plus,
@@ -34,6 +36,10 @@ import {
   Delete as Trash2,
   Refresh as RotateCcw,
   Settings,
+  AccountBalanceWallet as StartingIcon,
+  TrendingDown as SpentIcon,
+  AccountBalance as CashIcon,
+  CreditCard as DebtIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -58,7 +64,7 @@ interface FormData {
   currentCredit: number;
 }
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 export const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -75,7 +81,7 @@ const DEFAULT_FORM: FormData = {
   currentCredit: 0,
 };
 
-// ── Entry form — defined OUTSIDE the page so it is never re-mounted ──────────
+// Entry form — defined OUTSIDE the page so it is never re-mounted
 // (Defining it inside the page would cause focus loss on every state change.)
 
 interface EntryFormFieldsProps {
@@ -153,11 +159,12 @@ function EntryFormFields({ formData, accounts, onChange, onAddAccountClick }: En
   );
 }
 
-// ── Page component ────────────────────────────────────────────────────────────
+// Page component
 
 export default function SpendingAccountSummaryPage() {
   const navigate = useNavigate();
-  // ── Server data ─────────────────────────────────────────────────────────────
+  const theme = useTheme();
+  // Server data
   const [entries, setEntries] = useState<SpendingAccountEntry[]>([]);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
     number: 0,
@@ -167,7 +174,7 @@ export default function SpendingAccountSummaryPage() {
   });
   const [accounts, setAccounts] = useState<string[]>([]);
 
-  // ── Filter / sort / pagination state ────────────────────────────────────────
+  // Filter / sort / pagination state
   const [filterAccount, setFilterAccount] = useState<string>('');
   const [filterMonth, setFilterMonth] = useState<string>('');
   const [filterYear, setFilterYear] = useState<string>('');
@@ -176,7 +183,7 @@ export default function SpendingAccountSummaryPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(12);
 
-  // ── Modal state ─────────────────────────────────────────────────────────────
+  // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -187,7 +194,7 @@ export default function SpendingAccountSummaryPage() {
   const [quickAddAccountName, setQuickAddAccountName] = useState('');
   const [quickAddLoading, setQuickAddLoading] = useState(false);
 
-  // ── Derived values for metric cards ─────────────────────────────────────────
+  // Derived values for metric cards
   const now = new Date();
 
   // Aggregate the currently loaded page (after server filtering)
@@ -197,7 +204,7 @@ export default function SpendingAccountSummaryPage() {
   const totalCurrentCredit = entries.reduce((s, e) => s + e.currentCredit, 0);
   const totalBalanceAfterCredit = entries.reduce((s, e) => s + e.balanceAfterCredit, 0);
 
-  // ── Data fetching ────────────────────────────────────────────────────────────
+  // Data fetching
   const fetchAccounts = async () => {
     try {
       const data = await emsClient.getAllAccounts();
@@ -229,7 +236,7 @@ export default function SpendingAccountSummaryPage() {
   useEffect(() => { fetchAccounts(); }, []);
   useEffect(() => { fetchEntries(); }, [fetchEntries]);
 
-  // ── Sort handler ─────────────────────────────────────────────────────────────
+  // Sort handler
   const handleSort = (field: SpendingEntrySortField) => {
     if (sortBy === field) {
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -247,7 +254,7 @@ export default function SpendingAccountSummaryPage() {
     setPage(0);
   };
 
-  // ── CRUD handlers ────────────────────────────────────────────────────────────
+  // CRUD handlers
   const handleAddEntry = async () => {
     try {
       await emsClient.addSpendingAccountEntry(formData);
@@ -319,8 +326,7 @@ export default function SpendingAccountSummaryPage() {
     setIsEditModalOpen(true);
   };
 
-  // ── Sortable column header ───────────────────────────────────────────────────
-  // ── Sortable column header ───────────────────────────────────────────────────
+  // Sortable column header
   const SortableCell = ({
     field,
     align = 'left',
@@ -358,7 +364,7 @@ export default function SpendingAccountSummaryPage() {
     </TableCell>
   );
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // Render
   const activeFilterCount =
     (filterAccount ? 1 : 0) + (filterMonth !== '' ? 1 : 0) + (filterYear !== '' ? 1 : 0);
 
@@ -397,72 +403,73 @@ export default function SpendingAccountSummaryPage() {
           </Box>
         </Box>
 
-        {/* ── Summary Card: Prominent Portfolio Metrics ────────────────────────── */}
-        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 2 }}>
-          <Grid container>
-            {/* Block 1: Starting Balance */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{
-              p: 2.5,
-              borderRight: '1px solid',
-              borderRightColor: 'divider',
-              borderBottom: { xs: '1px solid', md: 'none' },
-              borderBottomColor: { xs: 'divider', md: 'transparent' },
-            }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Starting Balance
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(totalStartingBalance)}
-              </Typography>
-            </Grid>
-            
-            {/* Block 2: Total Spent */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{
-              p: 2.5,
-              borderRight: { xs: 'none', md: '1px solid' },
-              borderRightColor: { xs: 'transparent', md: 'divider' },
-              borderBottom: { xs: '1px solid', md: 'none' },
-              borderBottomColor: { xs: 'divider', md: 'transparent' },
-            }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Total Spent
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'error.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(totalSpent)}
-              </Typography>
-            </Grid>
-            
-            {/* Block 3: Current Cash */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{
-              p: 2.5,
-              borderRight: '1px solid',
-              borderRightColor: 'divider',
-            }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Current Cash
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'info.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(totalCurrentBalance)}
-              </Typography>
-            </Grid>
-            
-            {/* Block 4: Credit CC Debt & Net */}
-            <Grid size={{ xs: 6, md: 3 }} sx={{ p: 2.5 }}>
-              <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block', mb: 0.5 }}>
-                Credit Card Debt
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'warning.main', fontSize: '1.3rem', mb: 0.5 }}>
-                {formatCompactRupees(totalCurrentCredit)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                Net: {formatCompactRupees(totalBalanceAfterCredit)}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Card>
+        {/* Summary Metric Cards */}
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          {[
+            {
+              label: 'Starting Balance',
+              value: formatCompactRupees(totalStartingBalance),
+              color: theme.palette.success.main,
+              icon: StartingIcon,
+            },
+            {
+              label: 'Total Spent',
+              value: formatCompactRupees(totalSpent),
+              color: theme.palette.error.main,
+              icon: SpentIcon,
+            },
+            {
+              label: 'Current Cash',
+              value: formatCompactRupees(totalCurrentBalance),
+              color: theme.palette.info.main,
+              icon: CashIcon,
+            },
+            {
+              label: 'Credit Card Debt',
+              value: formatCompactRupees(totalCurrentCredit),
+              color: theme.palette.warning.main,
+              icon: DebtIcon,
+              sub: `Net: ${formatCompactRupees(totalBalanceAfterCredit)}`,
+            },
+          ].map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Grid key={metric.label} size={{ xs: 6, md: 3 }}>
+                <Card
+                  sx={{
+                    p: 2.5,
+                    height: '100%',
+                    background: alpha(metric.color, theme.palette.mode === 'dark' ? 0.08 : 0.04),
+                    border: `1px solid ${alpha(metric.color, 0.12)}`,
+                    transition: 'transform 200ms ease, box-shadow 200ms ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 6px 20px ${alpha(metric.color, 0.12)}`,
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem' }}>
+                      {metric.label}
+                    </Typography>
+                    <Icon sx={{ color: metric.color, fontSize: 20, opacity: 0.7 }} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: metric.color, fontSize: '1.3rem' }}>
+                    {metric.value}
+                  </Typography>
+                  {metric.sub && (
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                      {metric.sub}
+                    </Typography>
+                  )}
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
 
-        {/* ── Toolbar Card: Filters + Actions ─────────────────────────────────── */}
-        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', px: 2, py: 1.25, mb: 2 }}>
+        {/* Toolbar Card: Filters + Actions */}
+        <Card sx={{ px: 2, py: 1.25, mb: 2.5 }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
             {/* Left: Filters */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1, flexWrap: 'wrap' }}>
@@ -556,11 +563,11 @@ export default function SpendingAccountSummaryPage() {
           </Box>
         </Card>
 
-        {/* ── Table Card ──────────────────────────────────────────────────────── */}
-        <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+        {/* Table Card */}
+        <Card sx={{ overflow: 'hidden' }}>
           <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
             <Table size="small">
-              <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
+              <TableHead>
                 <TableRow>
                   <SortableCell field="account_name">Account</SortableCell>
                   <SortableCell field="month">Month</SortableCell>
@@ -581,14 +588,11 @@ export default function SpendingAccountSummaryPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  entries.map((entry, idx) => (
+                  entries.map((entry) => (
                     <TableRow
                       key={entry.id}
                       sx={{
                         '& td': { py: 1 },
-                        bgcolor: idx % 2 === 0
-                          ? 'transparent'
-                          : (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.018)' : 'rgba(0,0,0,0.018)',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
                     >
@@ -630,11 +634,10 @@ export default function SpendingAccountSummaryPage() {
             page={page}
             onPageChange={(_e, newPage) => setPage(newPage)}
             onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
           />
         </Card>
 
-        {/* ── Add Modal ────────────────────────────────────────────────────────── */}
+        {/* Add Modal */}
         <Dialog open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Add New Entry</DialogTitle>
           <DialogContent>
@@ -646,7 +649,7 @@ export default function SpendingAccountSummaryPage() {
           </DialogActions>
         </Dialog>
 
-        {/* ── Edit Modal ───────────────────────────────────────────────────────── */}
+        {/* Edit Modal */}
         <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Edit Entry</DialogTitle>
           <DialogContent>
@@ -658,7 +661,7 @@ export default function SpendingAccountSummaryPage() {
           </DialogActions>
         </Dialog>
 
-        {/* ── Delete Modal ─────────────────────────────────────────────────────── */}
+        {/* Delete Modal */}
         <Dialog open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
           <DialogTitle sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>Delete Entry</DialogTitle>
           <DialogContent>

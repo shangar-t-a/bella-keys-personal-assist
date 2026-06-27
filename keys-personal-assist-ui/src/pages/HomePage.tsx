@@ -21,17 +21,41 @@ export default function HomePage() {
     <Box
       sx={{
         minHeight: '100vh',
+        position: 'relative',
+        overflow: 'hidden',
         background: (theme) =>
           theme.palette.mode === 'light'
-            ? 'linear-gradient(135deg, #f5f8fa 0%, #e0eef7 100%)'
-            : 'linear-gradient(135deg, #111827 0%, #0b2d47 100%)',
+            ? `linear-gradient(160deg, ${theme.palette.background.default} 0%, #e8f0f8 50%, #dce8f2 100%)`
+            : `linear-gradient(160deg, ${theme.palette.background.default} 0%, #0f2434 50%, #132d42 100%)`,
       }}
     >
+      {/* Subtle animated gradient orb */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '10%',
+          right: '15%',
+          width: 500,
+          height: 500,
+          borderRadius: '50%',
+          background: (theme) =>
+            theme.palette.mode === 'light'
+              ? 'radial-gradient(circle, rgba(26,143,196,0.08) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(72,177,224,0.06) 0%, transparent 70%)',
+          animation: 'orbFloat 8s ease-in-out infinite',
+          '@keyframes orbFloat': {
+            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+            '50%': { transform: 'translate(-30px, 20px) scale(1.05)' },
+          },
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Hero Section */}
-      <Container maxWidth="lg" sx={{ py: 12 }}>
+      <Container maxWidth="lg" sx={{ py: 14, position: 'relative', zIndex: 1 }}>
         <Box
           sx={{
-            maxWidth: '800px',
+            maxWidth: '780px',
             mx: 'auto',
             textAlign: 'center',
             display: 'flex',
@@ -39,29 +63,25 @@ export default function HomePage() {
             gap: 4,
             animation: 'slideIn 0.6s ease-out',
             '@keyframes slideIn': {
-              '0%': {
-                opacity: 0,
-                transform: 'translateY(20px)',
-              },
-              '100%': {
-                opacity: 1,
-                transform: 'translateY(0)',
-              },
+              '0%': { opacity: 0, transform: 'translateY(24px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
             },
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <Typography
               variant="h1"
               sx={{
-                fontSize: { xs: '2.5rem', md: '4rem' },
+                fontSize: { xs: '2.5rem', md: '3.75rem' },
                 fontWeight: 700,
                 fontFamily: '"Space Grotesk", sans-serif',
-                background: 'linear-gradient(135deg, #1e5067 0%, #108cc6 100%)',
+                background: (theme) =>
+                  `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                lineHeight: 1.2,
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
               }}
             >
               Bella
@@ -70,10 +90,11 @@ export default function HomePage() {
             <Typography
               variant="h2"
               sx={{
-                fontSize: { xs: '1.5rem', md: '2rem' },
+                fontSize: { xs: '1.4rem', md: '1.85rem' },
                 fontWeight: 600,
                 fontFamily: '"Space Grotesk", sans-serif',
                 color: 'text.primary',
+                letterSpacing: '-0.01em',
               }}
             >
               Keys' Personal Assistant
@@ -82,11 +103,11 @@ export default function HomePage() {
             <Typography
               variant="h5"
               sx={{
-                fontSize: { xs: '1.125rem', md: '1.25rem' },
+                fontSize: { xs: '1.05rem', md: '1.15rem' },
                 color: 'text.secondary',
-                maxWidth: '600px',
+                maxWidth: '560px',
                 mx: 'auto',
-                lineHeight: 1.6,
+                lineHeight: 1.7,
               }}
             >
               Manage your day, ask questions and more with your personal assistant.
@@ -100,6 +121,7 @@ export default function HomePage() {
               gap: 2,
               justifyContent: 'center',
               alignItems: 'center',
+              pt: 1,
             }}
           >
             <Button
@@ -110,19 +132,21 @@ export default function HomePage() {
               sx={{
                 px: 4,
                 py: 1.5,
-                fontSize: '1.125rem',
+                fontSize: '1.05rem',
                 fontWeight: 600,
                 textTransform: 'none',
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+                borderRadius: 2.5,
+                background: (theme) =>
+                  `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #059669 0%, #0891b2 100%)',
+                  background: (theme) =>
+                    `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.info.dark} 100%)`,
                   transform: 'translateY(-2px)',
-                  boxShadow: 6,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                 },
-                transition: 'all 0.3s ease',
+                transition: 'all 250ms ease',
                 '& .MuiButton-endIcon': {
-                  transition: 'transform 0.3s ease',
+                  transition: 'transform 250ms ease',
                 },
                 '&:hover .MuiButton-endIcon': {
                   transform: 'translateX(4px)',

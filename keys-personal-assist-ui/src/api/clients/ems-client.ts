@@ -71,7 +71,7 @@ class EMSClient {
     this.baseURL = getEmsBase();
   }
 
-  // ── Account endpoints ──────────────────────────────────────────────────────
+  // Account endpoints
 
   async getAllAccounts(): Promise<AccountNameResponse[]> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/account/list`);
@@ -106,7 +106,7 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to delete account');
   }
 
-  // ── Period endpoints ────────────────────────────────────────────────────────
+  // Period endpoints
 
   async getAllPeriods(): Promise<PeriodResponse[]> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/period/list`);
@@ -141,7 +141,7 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to delete period');
   }
 
-  // ── Spending Account endpoints ─────────────────────────────────────────────
+  // Spending Account endpoints
 
   async getAllSpendingAccountEntries(
     params: SpendingEntryListParams = {}
@@ -213,7 +213,7 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to delete spending account entry');
   }
 
-  // ── Monthly Planner endpoints ─────────────────────────────────────────────
+  // Monthly Planner endpoints
 
   async listMonthlyCategories(): Promise<MonthlyCategory[]> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/monthly-planner/categories`);
@@ -302,7 +302,7 @@ class EMSClient {
     return response.json();
   }
 
-  // ── Savings Buckets (V2 Fund Segregation) ───────────────────────────────────
+  // Savings Buckets (V2 Fund Segregation)
 
   async getSavingsBuckets(accountId: string): Promise<SavingsBucketResponse[]> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/savings_buckets/list/${accountId}`);
@@ -388,7 +388,7 @@ class EMSClient {
     return response.json();
   }
 
-  // ── Wealth Manager Assets endpoints ────────────────────────────────────────
+  // Wealth Manager Assets endpoints
 
   async getAllAssetCategories(): Promise<AssetCategory[]> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/assets/categories`);
@@ -477,7 +477,7 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to delete transaction');
   }
 
-  // ── Wealth Manager Liabilities endpoints ───────────────────────────────────
+  // Wealth Manager Liabilities endpoints
 
   async getAllLiabilityCategories(): Promise<LiabilityCategory[]> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/liabilities/categories`);
