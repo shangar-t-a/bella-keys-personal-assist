@@ -59,8 +59,8 @@ Output binaries are stored in the `dist/` directory.
 
 To keep documentation clean, modular, and maintainable, developer standards are decoupled into separate reference guides:
 
-* [Git Guidelines (Source of Truth)](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/.agents/rules/git-guidelines.md): Branch naming, commit formatting (with sign-off), and Pull Request standards.
-* [Monorepo Release Guidelines (Source of Truth)](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/.agents/rules/release-guidelines.md): Checklist for syncing versions across monorepo package files and the CHANGELOG.
-* [Architecture & Backend Coding Standards](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/docs/developer/architecture-standards.md): Monorepo technical stack, clean architecture structure, health checks, and Python code styling/docstrings.
-* [Backend Testing Guidelines](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/docs/developer/testing-guidelines.md): Pytest setup, test database execution, test fixtures, and scenario coverage requirements.
-* [Frontend Coding & UI Guidelines](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/docs/developer/frontend-guidelines.md): React/TypeScript API patterns, authentication event loops, and MUI Dialog layout rules.
+* [Git Guidelines (Source of Truth)](../../.agents/rules/git-guidelines.md): Branch naming, commit formatting (with sign-off), and Pull Request standards.
+* [Monorepo Release Guidelines (Source of Truth)](../../.agents/rules/release-guidelines.md): Checklist for syncing versions across monorepo package files and the CHANGELOG.
+* [Architecture & Backend Coding Standards](architecture-standards.md): Monorepo technical stack, clean architecture structure, health checks, and Python code styling/docstrings.
+* [Backend Testing Guidelines](testing-guidelines.md): Pytest setup, test database execution, test fixtures, and scenario coverage requirements.
+* [Frontend Coding & UI Guidelines](frontend-guidelines.md): React/TypeScript API patterns, authentication event loops, and MUI Dialog layout rules.

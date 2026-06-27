@@ -4,8 +4,8 @@ Established patterns for the React SPA. All new UI tabs, components, and pages *
 
 For a full working implementation of these patterns, refer to the canonical reference files:
 
-* **Tab/Card Layout, Tables, and Forms:** [AssetsTab.tsx](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/keys-personal-assist-ui/src/components/wealth/AssetsTab.tsx)
-* **Page Wrapper & Navigation:** [WealthPage.tsx](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/keys-personal-assist-ui/src/pages/WealthPage.tsx)
+* **Tab/Card Layout, Tables, and Forms:** [AssetsTab.tsx](../../keys-personal-assist-ui/src/components/wealth/AssetsTab.tsx)
+* **Page Wrapper & Navigation:** [WealthPage.tsx](../../keys-personal-assist-ui/src/pages/WealthPage.tsx)
 
 ---
 

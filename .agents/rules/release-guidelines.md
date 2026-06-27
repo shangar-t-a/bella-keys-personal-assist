@@ -22,6 +22,6 @@ When bumping the version of any component, locate and update all relevant versio
 
 ## 3. Unified Changelog
 
-Always log releases chronologically in [CHANGELOG.md](file:///c:/Users/shang/sandbox/repos/bella-keys-personal-assist/CHANGELOG.md) using the header format:
+Always log releases chronologically in [CHANGELOG.md](../../CHANGELOG.md) using the header format:
 `## [<component-name>@<version>] - YYYY-MM-DD`
 Group items under standard Keep a Changelog categories: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`. Do not use emojis.
