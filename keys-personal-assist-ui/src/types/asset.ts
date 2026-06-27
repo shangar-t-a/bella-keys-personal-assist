@@ -26,7 +26,7 @@ export interface AssetInterestDetails {
 }
 
 export interface AssetUnitDetails {
-  units: number;
+  units?: number;
   pricePerUnit: number;
 }
 
