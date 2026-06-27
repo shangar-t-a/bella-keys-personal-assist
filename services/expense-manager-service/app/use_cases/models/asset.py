@@ -21,7 +21,7 @@ class AssetInterestDetails(BaseInput):
 class AssetUnitDetails(BaseInput):
     """Grouping for unit-based asset fields (stocks, gold, ETFs)."""
 
-    units: float = Field(gt=0, description="Quantity/Weight of units purchased")
+    units: float | None = Field(default=None, gt=0, description="Quantity/Weight of units purchased")
     price_per_unit: float = Field(gt=0, description="Price per unit/NAV at time of transaction")
 
 
@@ -77,8 +77,11 @@ class AssetTransactionCreate(BaseInput):
         """Enforce that BUY/SELL transactions provide unit_details if the asset is unit-based.
 
         This is a soft validation: unit_details is allowed to be None for VALUE_BASED assets.
-        If unit_details is provided, both units and price_per_unit must be present (enforced by AssetUnitDetails).
+        If unit_details is provided, both units and price_per_unit must be present.
         """
+        if self.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.SELL):
+            if self.unit_details is not None and self.unit_details.units is None:
+                raise ValueError("Units must be specified for BUY or SELL transactions.")
         return self
 
 

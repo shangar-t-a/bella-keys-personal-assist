@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from app.entities.models.asset import AssetTransactionType, CompoundingFrequency
@@ -31,7 +31,7 @@ class AssetInterestDetailsSchema(BaseSchema):
 class AssetUnitDetailsSchema(BaseSchema):
     """Schema for unit-based asset fields."""
 
-    units: float = Field(gt=0, description="Quantity/Weight of units purchased")
+    units: float | None = Field(default=None, gt=0, description="Quantity/Weight of units purchased")
     price_per_unit: float = Field(gt=0, description="Price per unit/NAV at time of transaction")
 
 
@@ -76,6 +76,14 @@ class AssetTransactionRequest(BaseSchema):
     )
     transaction_date: datetime | None = Field(default=None, description="Transaction timestamp")
     description: str | None = Field(default=None, description="Audit remark")
+
+    @model_validator(mode="after")
+    def validate_unit_consistency(self) -> "AssetTransactionRequest":
+        """Enforce that BUY/SELL transactions provide units if unit_details is provided."""
+        if self.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.SELL):
+            if self.unit_details is not None and self.unit_details.units is None:
+                raise ValueError("units must be specified for BUY or SELL transactions")
+        return self
 
 
 # Response schemas

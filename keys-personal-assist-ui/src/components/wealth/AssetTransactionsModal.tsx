@@ -180,7 +180,7 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
         isUnitBased && transactionType !== 'REVALUE'
           ? { units: parseFloat(units), pricePerUnit: parseFloat(pricePerUnit) }
           : isUnitBased && transactionType === 'REVALUE'
-          ? { units: 0, pricePerUnit: parseFloat(pricePerUnit) }
+          ? { pricePerUnit: parseFloat(pricePerUnit) }
           : null,
       transactionDate: new Date(transactionDate).toISOString(),
       description: description.trim() || null,

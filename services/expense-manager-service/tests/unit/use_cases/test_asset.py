@@ -260,6 +260,48 @@ class TestAssetServiceCRUD:
         # Clean up
         await asset_service.delete_asset(asset.id)
 
+    async def test_revalue_unit_based_asset_calculations(self, asset_service):
+        """Test revaluing a unit-based asset (like a Mutual Fund or ETF) without units in the transaction."""
+        categories_map = await get_categories_map(asset_service)
+        subcategory_map = await get_subcategory_map(asset_service)
+        eq_cat_id = categories_map["EQUITY"]
+        stock_sub_id = subcategory_map.get("STOCK")
+
+        asset_in = AssetCreate(
+            category_id=eq_cat_id,
+            name="MUTUAL_FUND_XYZ",
+            subcategory_id=stock_sub_id,
+            initial_amount=100000.00,
+            unit_details=AssetUnitDetails(
+                units=100.00,
+                price_per_unit=1000.00,
+            ),
+            notes="Equity mutual fund",
+        )
+        asset = await asset_service.create_asset(asset_in)
+
+        assert asset.invested_value == 100000.00
+        assert asset.current_value == 100000.00
+
+        # Log a REVALUE transaction with new price per unit (NAV) = ₹1100, but no units specified.
+        reval_tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.REVALUE,
+            amount=110000.00,
+            unit_details=AssetUnitDetails(price_per_unit=1100.00),
+            description="End of month revaluation",
+        )
+        await asset_service.add_transaction(asset.id, reval_tx)
+
+        # Retrieve and verify updated values
+        updated = await asset_service.get_asset_by_id(asset.id)
+        assert updated.invested_value == 100000.00
+        assert updated.current_value == 110000.00
+        assert updated.absolute_returns == 10000.00
+        assert updated.percentage_returns == 10.00
+
+        # Clean up
+        await asset_service.delete_asset(asset.id)
+
 
 class TestAssetTransactionValidation:
     """Tests for AssetTransactionCreate validation rules."""
@@ -308,6 +350,31 @@ class TestAssetTransactionValidation:
         )
         assert tx.unit_details.units == 50.0
         assert tx.unit_details.price_per_unit == 5000.0
+
+    def test_revalue_unit_details_units_optional(self):
+        """Verify AssetTransactionCreate accepts REVALUE with unit_details having only price_per_unit."""
+        tx = AssetTransactionCreate(
+            transaction_type=AssetTransactionType.REVALUE,
+            amount=250000.00,
+            unit_details=AssetUnitDetails(price_per_unit=5000.0),
+        )
+        assert tx.unit_details.units is None
+        assert tx.unit_details.price_per_unit == 5000.0
+
+    def test_buy_sell_unit_details_units_required(self):
+        """Verify AssetTransactionCreate rejects BUY or SELL with unit_details if units is omitted."""
+        with pytest.raises(Exception):
+            AssetTransactionCreate(
+                transaction_type=AssetTransactionType.BUY,
+                amount=250000.00,
+                unit_details=AssetUnitDetails(price_per_unit=5000.0),
+            )
+        with pytest.raises(Exception):
+            AssetTransactionCreate(
+                transaction_type=AssetTransactionType.SELL,
+                amount=250000.00,
+                unit_details=AssetUnitDetails(price_per_unit=5000.0),
+            )
 
 
 class TestAssetPatchSemantics:
