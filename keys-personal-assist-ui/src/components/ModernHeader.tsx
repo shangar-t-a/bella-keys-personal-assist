@@ -83,7 +83,7 @@ export default function ModernHeader() {
                 width: 32,
                 height: 32,
                 borderRadius: 1.5,
-                background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -97,7 +97,7 @@ export default function ModernHeader() {
               sx={{
                 fontWeight: 700,
                 fontFamily: '"Space Grotesk", sans-serif',
-                background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',

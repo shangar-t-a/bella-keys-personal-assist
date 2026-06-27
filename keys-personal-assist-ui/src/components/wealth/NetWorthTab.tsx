@@ -133,14 +133,19 @@ export default function NetWorthTab() {
         <Card
           sx={{
             p: 2.5,
-            borderRadius: 3,
             position: 'relative',
             overflow: 'hidden',
             background: isDark
               ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.background.paper, 0.4)} 100%)`
               : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${theme.palette.background.paper} 100%)`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-            boxShadow: isDark ? `0 4px 20px ${alpha(theme.palette.common.black, 0.5)}` : 'none',
+            transition: 'transform 200ms ease, box-shadow 200ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: isDark 
+                ? `0 6px 20px ${alpha(theme.palette.primary.main, 0.25)}` 
+                : `0 6px 20px ${alpha(theme.palette.primary.main, 0.12)}`,
+            },
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -170,9 +175,13 @@ export default function NetWorthTab() {
         <Card
           sx={{
             p: 2.5,
-            borderRadius: 3,
-            background: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
+            background: alpha(theme.palette.success.main, isDark ? 0.08 : 0.04),
+            border: `1px solid ${alpha(theme.palette.success.main, 0.12)}`,
+            transition: 'transform 200ms ease, box-shadow 200ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: `0 6px 20px ${alpha(theme.palette.success.main, 0.12)}`,
+            },
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -204,9 +213,13 @@ export default function NetWorthTab() {
         <Card
           sx={{
             p: 2.5,
-            borderRadius: 3,
-            background: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
+            background: alpha(theme.palette.error.main, isDark ? 0.08 : 0.04),
+            border: `1px solid ${alpha(theme.palette.error.main, 0.12)}`,
+            transition: 'transform 200ms ease, box-shadow 200ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: `0 6px 20px ${alpha(theme.palette.error.main, 0.12)}`,
+            },
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -232,7 +245,7 @@ export default function NetWorthTab() {
       </Box>
 
       {/* Chart Panel */}
-      <Card sx={{ p: 3, borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+      <Card sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2.5 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
             Historical Portfolio Trajectory
@@ -330,7 +343,7 @@ export default function NetWorthTab() {
       </Card>
 
       {/* Ledger History Table */}
-      <Card sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}`, overflow: 'hidden' }}>
+      <Card sx={{ overflow: 'hidden' }}>
         <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
             Historical Net Worth Ledger

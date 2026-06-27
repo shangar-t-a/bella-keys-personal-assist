@@ -112,7 +112,7 @@ export interface MonthlyExpenseItemRequest {
   status?: 'pending' | 'settled';
 }
 
-// ── Savings Buckets (V2 Fund Segregation) ───────────────────────────────────
+// Savings Buckets (V2 Fund Segregation)
 
 export interface SavingsBucketResponse {
   id: string;

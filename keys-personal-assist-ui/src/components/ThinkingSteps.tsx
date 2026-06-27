@@ -24,7 +24,7 @@ interface ThinkingStepsProps {
     isStreaming: boolean;
 }
 
-// ── group adjacent call+result pairs ─────────────────────────────────────────
+// group adjacent call+result pairs
 
 type ToolGroup = {
     type: 'tool';
@@ -76,7 +76,7 @@ function groupSteps(steps: ThinkingStep[]): StepGroup[] {
     return groups;
 }
 
-// ── sub-components ────────────────────────────────────────────────────────────
+// sub-components
 
 const TRUNCATE = 280;
 
@@ -150,7 +150,7 @@ function ToolCard({ group, isLast, isStreaming }: { group: ToolGroup; isLast: bo
                 bgcolor: 'background.paper',
             }}
         >
-            {/* ── Header row ── */}
+            {/* Header row */}
             <Box
                 sx={{
                     display: 'flex',
@@ -219,7 +219,7 @@ function ToolCard({ group, isLast, isStreaming }: { group: ToolGroup; isLast: bo
                 )}
             </Box>
 
-            {/* ── Args (collapsible) ── */}
+            {/* Args (collapsible) */}
             {hasArgs && (
                 <Collapse in={argsExpanded}>
                     <Box sx={{ px: 1.25, py: 0.75, borderBottom: resultExpanded && hasResult ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -240,7 +240,7 @@ function ToolCard({ group, isLast, isStreaming }: { group: ToolGroup; isLast: bo
                 </Collapse>
             )}
 
-            {/* ── Result (collapsible) ── */}
+            {/* Result (collapsible) */}
             {hasResult && (
                 <Collapse in={resultExpanded}>
                     <Box sx={{ px: 1.25, pb: 0.75, pt: 0.5 }}>
@@ -266,7 +266,7 @@ function ThinkingCard({ step }: { step: ThinkingStep }) {
     );
 }
 
-// ── Error boundary so a render crash doesn't blank the whole chat ────────────
+// Error boundary so a render crash doesn't blank the whole chat
 
 class StepsErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
     state = { failed: false };
@@ -288,7 +288,7 @@ class StepsErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
     }
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// Main component
 
 export function ThinkingSteps({ steps, isStreaming }: ThinkingStepsProps) {
     const [expanded, setExpanded] = useState(true);

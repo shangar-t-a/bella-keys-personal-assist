@@ -1,4 +1,4 @@
-import { Box, Paper, Avatar } from '@mui/material';
+import { Box, Paper, Avatar, alpha } from '@mui/material';
 import { Chat as MessageCircle, AutoAwesome as Sparkles } from '@mui/icons-material';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ThinkingSteps } from './ThinkingSteps';
@@ -45,15 +45,24 @@ export function ChatMessage({ role, content, isStreaming, thinkingSteps }: ChatM
         elevation={0}
         sx={{
           maxWidth: { xs: '280px', sm: '400px', md: '500px' },
-          px: 2,
+          px: 2.5,
           py: 1.5,
-          borderRadius: 2,
-          bgcolor: isUser ? 'primary.main' : 'background.paper',
+          borderRadius: 3,
+          background: (theme) => isUser
+            ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`
+            : theme.palette.mode === 'dark'
+              ? 'rgba(21, 34, 50, 0.4)'
+              : '#ffffff',
           color: isUser ? 'primary.contrastText' : 'text.primary',
-          borderBottomRightRadius: isUser ? 0 : undefined,
-          borderBottomLeftRadius: !isUser ? 0 : undefined,
-          border: !isUser ? 1 : 0,
-          borderColor: 'divider',
+          borderBottomRightRadius: isUser ? 2 : undefined,
+          borderBottomLeftRadius: !isUser ? 2 : undefined,
+          border: '1px solid',
+          borderColor: (theme) => isUser ? 'transparent' : theme.palette.divider,
+          boxShadow: (theme) => isUser 
+            ? `0 4px 14px ${alpha(theme.palette.primary.main, 0.15)}`
+            : theme.palette.mode === 'dark'
+              ? '0 4px 12px rgba(0, 0, 0, 0.15)'
+              : '0 4px 12px rgba(0, 0, 0, 0.02)',
           ...(isStreaming && {
             animation: 'pulse 2s ease-in-out infinite',
             '@keyframes pulse': {

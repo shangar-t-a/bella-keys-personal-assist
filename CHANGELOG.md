@@ -28,6 +28,29 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [expense-manager-service@1.5.1] - 2026-06-27
+
+### Fixed
+
+- Net worth double-counting when REVALUE transaction is backdated to the asset creation day.
+
+### Changed
+
+- Audited and cleaned up comments across service migrations and tests to follow simplified, undecorated commenting standards.
+
+---
+
+## [keys-personal-assist-ui@1.6.0] - 2026-06-27
+
+### Changed
+
+- Overhauled visual styling to a premium, desaturated Azure-like aesthetic with individual elevated card layouts, float transitions, and unified chart color palettes.
+- Standardized user/assistant messaging bubbles with glassmorphism effects and modern gradient accents.
+- Simplified comment blocks across all frontend TS/TSX/CSS files to use undecorated, clean commenting formats.
+- Documented commenting guidelines and UI guidelines in `.agents/AGENTS.md` and `docs/developer/development-workflow.md`.
+
+---
+
 ## [expense-manager-service@1.5.0] - 2026-06-27
 
 ### Added

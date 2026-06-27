@@ -2,7 +2,7 @@
  * Chat-related types shared across pages and components.
  */
 
-// ── SSE event payloads ────────────────────────────────────────────────────────
+// SSE event payloads
 
 export interface ThinkingEvent {
     type: 'thinking';
@@ -49,7 +49,7 @@ export type SSEEvent =
     | ErrorEvent
     | DoneEvent;
 
-// ── Thinking step (for UI display) ────────────────────────────────────────────
+// Thinking step (for UI display)
 
 export type ThinkingStepKind = 'thinking' | 'tool_call' | 'tool_result';
 
@@ -66,7 +66,7 @@ export interface ThinkingStep {
     isError?: boolean;
 }
 
-// ── Chat message ───────────────────────────────────────────────────────────────
+// Chat message
 
 export interface ChatMessage {
     id: string;
@@ -76,7 +76,7 @@ export interface ChatMessage {
     thinkingSteps?: ThinkingStep[];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 /**
  * Parse a raw SSE buffer (potentially containing multiple events) into typed

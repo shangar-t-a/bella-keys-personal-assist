@@ -132,7 +132,7 @@ export default function AllocationTab() {
         }}
       >
         {/* Asset Allocation Chart */}
-        <Card sx={{ p: 3, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, minHeight: 380 }}>
+        <Card sx={{ p: 3, minHeight: 380 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
               Asset Distribution
@@ -210,7 +210,7 @@ export default function AllocationTab() {
         </Card>
 
         {/* Liability Allocation Chart */}
-        <Card sx={{ p: 3, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, minHeight: 380 }}>
+        <Card sx={{ p: 3, minHeight: 380 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
               Liability Distribution
@@ -289,7 +289,7 @@ export default function AllocationTab() {
       </Box>
 
       {/* Leverage Analysis & Financing Bar */}
-      <Card sx={{ p: 3, borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+      <Card sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
             Asset Financing Leverage
@@ -369,7 +369,7 @@ export default function AllocationTab() {
         }}
       >
         {/* Leverage Ratio Card */}
-        <Card sx={{ p: 2.5, borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+        <Card sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: 0.8 }}>
               Debt-to-Asset Ratio
@@ -405,7 +405,7 @@ export default function AllocationTab() {
         </Card>
 
         {/* Liquidity Ratio Card */}
-        <Card sx={{ p: 2.5, borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+        <Card sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: 0.8 }}>
               Portfolio Liquidity Ratio

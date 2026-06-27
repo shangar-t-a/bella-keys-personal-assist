@@ -17,7 +17,7 @@ from app.infrastructures.postgres_db import database
 from app.main import app
 from tests.unit.settings import UnitTestSettings
 
-# --------------------------------------------------- Pytest Hooks --------------------------------------------------- #
+# Pytest Hooks
 
 
 def pytest_collection_modifyitems(items):
@@ -35,9 +35,9 @@ def pytest_collection_modifyitems(items):
             item.add_marker(session_scope_marker, append=False)
 
 
-# ----------------------------------------------- End of Pytest Hooks ------------------------------------------------ #
+# End of Pytest Hooks
 
-# ----------------------------------------------------- Fixtures ----------------------------------------------------- #
+# Fixtures
 
 
 @pytest_asyncio.fixture(autouse=True, scope="session")
@@ -78,4 +78,4 @@ async def client(patch_settings, init_and_drop_db) -> AsyncClient:
         yield ac
 
 
-# ------------------------------------------------- End of Fixtures -------------------------------------------------- #
+# End of Fixtures

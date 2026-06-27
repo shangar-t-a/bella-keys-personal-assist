@@ -20,7 +20,6 @@ import {
   DialogActions,
   Tooltip,
   CircularProgress,
-  Divider,
   Select,
   MenuItem,
   FormControl,
@@ -29,6 +28,7 @@ import {
   useTheme,
   alpha,
   LinearProgress,
+  Grid,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -377,8 +377,8 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-      {/* ── Toolbar Card ────────────────────────────────────────────────────── */}
-      <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none', px: 2, py: 1.25 }}>
+      {/* Toolbar Card */}
+      <Card sx={{ px: 2, py: 1.25, mb: 2.5 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1, flexWrap: 'wrap' }}>
             <TextField
@@ -430,84 +430,87 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
             color="primary"
             startIcon={<AddIcon />}
             onClick={() => setWizardOpen(true)}
-            sx={{ py: 0.6, px: 2, fontWeight: 600, textTransform: 'none', borderRadius: 1.5, fontSize: '0.85rem', flexShrink: 0 }}
           >
             Add Liability
           </Button>
         </Box>
       </Card>
 
-      {/* ── Summary Card ────────────────────────────────────────────────────── */}
+      {/* Summary Metric Cards */}
       {summary && (
-        <Card variant="outlined" sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-          <Box sx={{ display: 'flex' }}>
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Total Borrowed
-                </Typography>
-                <Tooltip title="The total original amount of principal money borrowed across all active liabilities." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'text.primary', fontSize: '1.3rem' }}>
-                {formatCompactRupees(summary.totalOriginal)}
-              </Typography>
-            </Box>
-            <Divider orientation="vertical" flexItem />
-            
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Outstanding Balance
-                </Typography>
-                <Tooltip title="The current unpaid balance remaining on your liabilities." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'error.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(summary.totalOutstanding)}
-              </Typography>
-            </Box>
-            <Divider orientation="vertical" flexItem />
-
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Total Repaid
-                </Typography>
-                <Tooltip title="The total amount of principal and interest you have successfully paid back." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'success.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(summary.totalRepaid)}
-              </Typography>
-            </Box>
-            <Divider orientation="vertical" flexItem />
-
-            <Box sx={{ flex: 1, px: 3, py: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem', display: 'block' }}>
-                  Interest Accrued
-                </Typography>
-                <Tooltip title="The total interest that has accumulated on your interest-bearing liabilities since inception." arrow>
-                  <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
-                </Tooltip>
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: 'warning.main', fontSize: '1.3rem' }}>
-                {formatCompactRupees(summary.accumulatedInterest)}
-              </Typography>
-            </Box>
-          </Box>
-        </Card>
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          {[
+            {
+              label: 'Total Borrowed',
+              value: formatCompactRupees(summary.totalOriginal),
+              color: theme.palette.text.secondary,
+              icon: CreditCardIcon,
+              desc: 'The total original amount of principal money borrowed across all active liabilities.',
+            },
+            {
+              label: 'Outstanding Balance',
+              value: formatCompactRupees(summary.totalOutstanding),
+              color: theme.palette.error.main,
+              icon: UnsecuredIcon,
+              desc: 'The current unpaid balance remaining on your liabilities.',
+            },
+            {
+              label: 'Total Repaid',
+              value: formatCompactRupees(summary.totalRepaid),
+              color: theme.palette.success.main,
+              icon: SecuredIcon,
+              desc: 'The total amount of principal and interest you have successfully paid back.',
+            },
+            {
+              label: 'Interest Accrued',
+              value: formatCompactRupees(summary.accumulatedInterest),
+              color: theme.palette.warning.main,
+              icon: InfoIcon,
+              desc: 'The total interest that has accumulated on your interest-bearing liabilities since inception.',
+            },
+          ].map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Grid key={metric.label} size={{ xs: 6, md: 3 }}>
+                <Card
+                  sx={{
+                    p: 2.5,
+                    height: '100%',
+                    background: alpha(metric.color, theme.palette.mode === 'dark' ? 0.08 : 0.04),
+                    border: `1px solid ${alpha(metric.color, 0.12)}`,
+                    transition: 'transform 200ms ease, box-shadow 200ms ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 6px 20px ${alpha(metric.color, 0.12)}`,
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.68rem' }}>
+                        {metric.label}
+                      </Typography>
+                      <Tooltip title={metric.desc} arrow>
+                        <InfoIcon sx={{ fontSize: '0.8rem', color: 'text.secondary', cursor: 'pointer' }} />
+                      </Tooltip>
+                    </Box>
+                    <Icon sx={{ color: metric.color, fontSize: 20, opacity: 0.7 }} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', color: metric.color === theme.palette.text.secondary ? 'text.primary' : metric.color, fontSize: '1.3rem' }}>
+                    {metric.value}
+                  </Typography>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
       )}
 
-      {/* ── Table Card ──────────────────────────────────────────────────────── */}
-      <Card variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+      {/* Table Card */}
+      <Card sx={{ overflow: 'hidden' }}>
         <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, bgcolor: 'transparent' }}>
           <Table size="small">
-            <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9' }}>
+            <TableHead>
               <TableRow>
                 <TableCell sx={{ pl: 3, fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Name / Lender</TableCell>
                 <TableCell sx={{ fontWeight: 700, py: 1.25, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}>Subtype</TableCell>
@@ -904,7 +907,7 @@ export default function LiabilitiesTab({ onLiabilitiesLoad }: LiabilitiesTabProp
         </TableContainer>
       </Card>
 
-      {/* ── Dialog Modals ────────────────────────────────────────────────────── */}
+      {/* Dialog Modals */}
       <AddLiabilityWizard 
         open={wizardOpen} 
         onClose={() => setWizardOpen(false)} 

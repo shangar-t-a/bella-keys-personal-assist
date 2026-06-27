@@ -1,3 +1,7 @@
 # Workspace Agent Rules
 
 - **Development Practices Compliance:** Always read and adhere to the generic coding practices and architectural guidelines documented in [development-workflow.md](../docs/developer/development-workflow.md) before writing any code to ensure imports are on top, logic is modularized, and linter suppressions are minimized.
+- **Comment Style Standard:** All code comments in any language (Python, TypeScript, CSS, JSX/TSX, etc.) must remain simple, clean, and undecorated. Never use visual delimiters, horizontal lines, trailing dashes, or custom block dividers (such as `# ---* comment --------` or `// ── comment ──`). Comments should simply be `# comment`, `// comment`, or `/* comment */`.
+- **UI Design & Aesthetic Standards:** Always read and adhere to the UI design standards, visual hierarchy, and component patterns documented in [ui-guidelines.md](../docs/developer/ui-guidelines.md) before implementing or modifying UI elements to ensure a premium, desaturated, modern Azure-like aesthetic with clean elevation, shadows, card layout systems, and proper typography.
+- **Git Guidelines:** Always read and strictly adhere to the operational Git standards in [git-guidelines.md](./rules/git-guidelines.md) before executing any branch, commit, or pull request operations.
+- **Release Guidelines:** Always read and strictly follow the monorepo release workflow and version checklist in [release-guidelines.md](./rules/release-guidelines.md) when updating package/service versions or editing the unified CHANGELOG.

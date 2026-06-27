@@ -17,7 +17,7 @@ from app.infrastructures.postgres_db.asset import PostgresAssetRepository
 from app.infrastructures.postgres_db.liability import PostgresLiabilityRepository
 from tests.unit.settings import UnitTestSettings
 
-# --------------------------------------------------- Pytest Hooks --------------------------------------------------- #
+# Pytest Hooks
 
 
 
@@ -36,9 +36,9 @@ def pytest_collection_modifyitems(items):
             item.add_marker(session_scope_marker, append=False)
 
 
-# ----------------------------------------------- End of Pytest Hooks ------------------------------------------------ #
+# End of Pytest Hooks
 
-# ----------------------------------------------------- Fixtures ----------------------------------------------------- #
+# Fixtures
 
 
 @pytest_asyncio.fixture(autouse=True, scope="session")
@@ -124,4 +124,4 @@ def liability_repo(patch_settings, init_and_drop_db):
     raise NotImplementedError("Invalid STORAGE_TYPE")
 
 
-# ------------------------------------------------- End of Fixtures -------------------------------------------------- #
+# End of Fixtures

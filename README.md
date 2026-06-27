@@ -8,7 +8,7 @@ The project uses a hybrid "inside-out" architecture: application logic is contai
 
 * [User Setup Guide](docs/user/setup-guide.md): Installing dependencies, initializing databases, and running the application.
 * [Developer Workflow](docs/developer/development-workflow.md): Project structure, local development environment, and build commands.
-* [Git Workflow](docs/developer/git-workflow.md): Rules for branch naming, commits, and pull requests.
+* [Git Guidelines](.agents/rules/git-guidelines.md): Rules for branch naming, commits, and pull requests.
 
 ## Project Structure
 

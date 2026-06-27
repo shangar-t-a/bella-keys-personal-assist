@@ -49,14 +49,14 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(activeTabParam);
   const [loading, setLoading] = useState(false);
 
-  // --- Accounts States ---
+  // Accounts States
   const [accounts, setAccounts] = useState<AccountNameResponse[]>([]);
   const [newAccountName, setNewAccountName] = useState('');
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [editingAccountName, setEditingAccountName] = useState('');
   const [deleteAccountConfirmId, setDeleteAccountConfirmId] = useState<string | null>(null);
 
-  // --- Categories States ---
+  // Categories States
   const [categories, setCategories] = useState<MonthlyCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryL1, setNewCategoryL1] = useState<'spending' | 'saving'>('spending');
@@ -72,7 +72,7 @@ export default function SettingsPage() {
     setSearchParams({ tab: newValue === 1 ? 'categories' : 'accounts' });
   };
 
-  // --- Load Data ---
+  // Load Data
   const loadData = async () => {
     setLoading(true);
     try {
@@ -93,7 +93,7 @@ export default function SettingsPage() {
     loadData();
   }, []);
 
-  // ── Account Handlers ────────────────────────────────────────────────────────
+  // Account Handlers
   const handleCreateAccount = async () => {
     if (!newAccountName.trim()) {
       toast.error('Account name cannot be empty');
@@ -155,7 +155,7 @@ export default function SettingsPage() {
     }
   };
 
-  // ── Category Handlers ───────────────────────────────────────────────────────
+  // Category Handlers
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
       toast.error('Category name cannot be empty');
@@ -196,30 +196,37 @@ export default function SettingsPage() {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6 }}>
       <Container maxWidth="md">
         <Typography
-          variant="h3"
+          variant="h5"
           sx={{
             fontWeight: 700,
             fontFamily: '"Space Grotesk", sans-serif',
             mb: 1,
-            background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+            background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}
         >
           System Settings
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 4, display: 'block', fontWeight: 500 }}>
           Centralized configuration panel to manage bank accounts and budget categories
         </Typography>
 
-        <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+        <Card sx={{ mt: 2 }}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
             variant="fullWidth"
             indicatorColor="primary"
             textColor="primary"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              '& .MuiTab-root': {
+                mr: 0,
+                py: 1.5,
+              }
+            }}
           >
             <Tab icon={<AccountBalance />} iconPosition="start" label="Bank Accounts" />
             <Tab icon={<CategoryIcon />} iconPosition="start" label="Budget Categories" />
@@ -258,7 +265,6 @@ export default function SettingsPage() {
                     startIcon={<Plus />}
                     onClick={handleCreateAccount}
                     disabled={loading || !newAccountName.trim()}
-                    sx={{ px: 3, borderRadius: 2 }}
                   >
                     Create
                   </Button>
@@ -400,7 +406,6 @@ export default function SettingsPage() {
                     startIcon={<Plus />}
                     onClick={handleCreateCategory}
                     disabled={loading || !newCategoryName.trim()}
-                    sx={{ px: 3, borderRadius: 2 }}
                   >
                     Add
                   </Button>
