@@ -1,6 +1,7 @@
 """Use cases for Assets."""
 
 import uuid
+from datetime import UTC, datetime
 
 from app.entities.models.asset import (
     Asset,
@@ -88,7 +89,15 @@ class AssetService:
         )
         created_asset = await self.asset_repository.add_asset(asset)
 
-        # Log the initial BUY transaction
+        # Log the initial BUY transaction.
+        # Use start-of-day (midnight UTC) as the transaction_date so that any
+        # same-day REVALUE entered by the user — even if backdated to an earlier
+        # clock time — always sorts chronologically after this BUY.  Using the
+        # raw datetime.now() would cause the BUY to land at, say, 17:32 while a
+        # user-supplied REVALUE at 12:02 would sort before it, producing an
+        # incorrect cumulative value.
+        now_utc = datetime.now(UTC)
+        start_of_day = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
         tx = AssetTransaction(
             id=uuid.uuid4().hex,
             asset_id=asset_id,
@@ -96,6 +105,7 @@ class AssetService:
             amount=asset_create.initial_amount,
             units=units,
             price_per_unit=price_per_unit,
+            transaction_date=start_of_day,
             description="Initial deposit/purchase",
         )
         await self.asset_repository.add_transaction(tx)
