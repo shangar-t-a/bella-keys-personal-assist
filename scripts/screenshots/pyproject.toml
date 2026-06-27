@@ -1,0 +1,12 @@
+[project]
+name = "bella-screenshots"
+version = "1.0.0"
+description = "Playwright screenshot capture for Bella Keys portfolio docs"
+requires-python = ">=3.13"
+dependencies = [
+    "playwright>=1.45",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = []
