@@ -19,6 +19,7 @@ bash scripts/run-tests.sh
 ## 2. Test Database Configuration
 
 Unit/integration tests connect to a **dedicated test PostgreSQL database** (`expense_manager_test`) rather than using mocks.
+
 - The `conftest.py` file exposes an `init_and_drop_db` session-scoped fixture to handle initial schema creation and teardown.
 - Tests exercise the full execution path: `use case` → `repository` → `database`.
 

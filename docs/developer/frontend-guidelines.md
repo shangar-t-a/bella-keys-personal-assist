@@ -27,13 +27,16 @@ const response = await fetch(`${emsBase}/assets`, {
 `AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React authentication state. `localStorage` is used solely as the persistence layer.
 
 ### App Mount Hook
+
 1. If a `refresh_token` exists in `localStorage` → call `/refresh`.
 2. On success: store new tokens, update React state.
 3. On network failure: fall back to expiry check of the existing `access_token`.
 4. On no refresh token: log out immediately.
 
 ### Cross-Layer Auth Sync
+
 Use a custom window event bus to avoid circular or direct imports between the network/fetch client layer and React context:
+
 - `window.dispatchEvent(new Event('auth-logout'))` → triggers `logout()` in `AuthContext`.
 - `window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }))` → syncs new token into `AuthContext` state.
 
@@ -44,6 +47,7 @@ Use a custom window event bus to avoid circular or direct imports between the ne
 - **Destructive Actions Confirmations:** Never use browser-native `window.confirm` or `window.alert`. Always implement a custom in-app MUI `<Dialog>`.
 
 ### Custom Confirm Dialog Pattern
+
 ```tsx
 const [confirmDialog, setConfirmDialog] = useState<{
   open: boolean;
@@ -60,6 +64,7 @@ const closeConfirm = () => {
   setConfirmDialog((prev) => ({ ...prev, open: false }));
 };
 ```
+
 Render the dialog at the end of the component JSX (outside any primary dialog if nesting is needed).
 
 - **DialogContent Padding and Layout:** Always wrap input fields in a `<Box>` to prevent MUI floating label clipping and layout alignment bugs:

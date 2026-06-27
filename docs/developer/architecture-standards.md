@@ -18,6 +18,7 @@ This document details the monorepo technology stack, system architecture guideli
 ## 2. Stateless Containers
 
 All containerized services must remain stateless.
+
 1. Do not use Docker-managed named volumes for application data.
 2. Direct all database and system connections to the host PC via `host.docker.internal`.
 3. Bind mounts are permitted only for local engine caches (e.g., Qdrant).
@@ -56,6 +57,7 @@ infrastructures/     ← Concrete DB implementations (SQLAlchemy)
 ```
 
 ### Dependency Rules
+
 * `entities/models/` — pure Pydantic `BaseModel`. No SQLAlchemy, no FastAPI.
 * `entities/repositories/` — abstract `ABC` interfaces only. One interface per domain entity.
 * `use_cases/` — `*Service` classes importing only from `entities/` and `use_cases/models/`.
@@ -67,6 +69,7 @@ infrastructures/     ← Concrete DB implementations (SQLAlchemy)
 ## 5. Python Coding & Linting Standards
 
 ### Linting
+
 Run `ruff check` from the service root directory before staging/committing any Python file:
 
 ```bash
@@ -74,6 +77,7 @@ uv run ruff check
 ```
 
 The enforced rule sets (configured in `ruff.toml`):
+
 * `E` / `W` — pycodestyle errors and warnings
 * `F` — Pyflakes (unused imports, undefined names)
 * `I` — isort (import ordering)
@@ -86,10 +90,11 @@ The enforced rule sets (configured in `ruff.toml`):
 * `SIM` — flake8-simplify
 * `TC` — flake8-type-checking
 
-- **Line length:** 120 characters maximum.
-- **Scope:** `app/**/*.py` (Alembic migration versions and deprecated code excluded).
+* **Line length:** 120 characters maximum.
+* **Scope:** `app/**/*.py` (Alembic migration versions and deprecated code excluded).
 
 ### Import Ordering
+
 All imports must be at the **top of the file** — never inside functions or class bodies (unless guarding a circular import).
 Order: **stdlib → third-party → internal `app.*`**. Group multiple names from the same module into a single parenthesized block:
 
@@ -109,6 +114,7 @@ def some_function():
 ```
 
 ### Docstrings (Google Style)
+
 Every module, class, and public method must have a Google-style docstring. Enforced by ruff `D` rules.
 
 ```python
@@ -122,6 +128,7 @@ class AssetService:
 ```
 
 ### Error Handling in Endpoints
+
 ```python
 # ValueError from use case layer → 404
 except ValueError as e:
@@ -131,9 +138,11 @@ except ValueError as e:
 except Exception as e:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 ```
-- Always `raise HTTPException(...) from e` to preserve stack traces.
+
+* Always `raise HTTPException(...) from e` to preserve stack traces.
 
 ### Conventions
-- **IDs:** Generate with `uuid.uuid4().hex` (compact hex string, no dashes).
-- **Financial values:** Always `round(value, 2)` before persisting or returning.
-- **Dependency injection:** Use FastAPI `Depends()` in endpoint signatures. Never instantiate services directly inside endpoint logic.
+
+* **IDs:** Generate with `uuid.uuid4().hex` (compact hex string, no dashes).
+* **Financial values:** Always `round(value, 2)` before persisting or returning.
+* **Dependency injection:** Use FastAPI `Depends()` in endpoint signatures. Never instantiate services directly inside endpoint logic.
