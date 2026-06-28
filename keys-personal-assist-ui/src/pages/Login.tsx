@@ -85,7 +85,11 @@ const Login: React.FC = () => {
         toast.success(`Welcome back, ${username}!`);
         // Force redirect to homepage
         setTimeout(() => {
-          window.location.href = '/';
+          if (import.meta.env.VITE_APP_ENV === 'electron') {
+            window.location.hash = '#/';
+          } else {
+            window.location.href = '/';
+          }
         }, 800);
       } else {
         // --- REGISTER FLOW ---
@@ -112,7 +116,11 @@ const Login: React.FC = () => {
         login(access_token, refresh_token);
 
         setTimeout(() => {
-          window.location.href = '/';
+          if (import.meta.env.VITE_APP_ENV === 'electron') {
+            window.location.hash = '#/';
+          } else {
+            window.location.href = '/';
+          }
         }, 800);
       }
     } catch (err: any) {
