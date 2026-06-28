@@ -75,7 +75,8 @@ const Login: React.FC = () => {
         const response = await axios.post(`${authBase}/login`, formData, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
-          }
+          },
+          withCredentials: true
         });
         
         const { access_token, refresh_token } = response.data;
@@ -103,7 +104,8 @@ const Login: React.FC = () => {
         const response = await axios.post(`${authBase}/login`, formData, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
-          }
+          },
+          withCredentials: true
         });
 
         const { access_token, refresh_token } = response.data;

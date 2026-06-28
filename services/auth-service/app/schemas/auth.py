@@ -11,18 +11,11 @@ class UserCreate(BaseModel):
 
 
 class Token(BaseModel):
-    """Schema for dual token response."""
+    """Schema for token response."""
 
     access_token: str
-    refresh_token: str
     token_type: str
     expires_in: int
-
-
-class RefreshRequest(BaseModel):
-    """Schema for requesting a new token via refresh token."""
-
-    refresh_token: str
 
 
 class UserResponse(BaseModel):

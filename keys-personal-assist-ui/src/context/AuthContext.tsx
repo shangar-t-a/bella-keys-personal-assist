@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getAuthBase } from '../api/config';
+import { setAccessToken } from '../api/tokenStore';
 
 interface User {
   id: string;
@@ -41,10 +42,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login = (newToken: string, refreshToken: string) => {
+  const login = (newToken: string, _refreshToken?: string) => {
     setToken(newToken);
-    localStorage.setItem('access_token', newToken);
-    localStorage.setItem('refresh_token', refreshToken);
+    setAccessToken(newToken);
     const decoded = decodeToken(newToken);
     if (decoded) {
       setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
@@ -56,62 +56,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setToken(null);
     setUser(null);
+    setAccessToken(null);
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+
+    const authBase = getAuthBase();
+    fetch(`${authBase}/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    }).catch((error) => {
+      console.error("Error logging out from server:", error);
+    });
   };
 
   useEffect(() => {
     const checkAuth = async () => {
-      const storedRefreshToken = localStorage.getItem('refresh_token');
-      const storedAccessToken = localStorage.getItem('access_token');
+      try {
+        const authBase = getAuthBase();
+        const response = await fetch(`${authBase}/refresh`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({}),
+        });
 
-      if (storedRefreshToken) {
-        try {
-          const authBase = getAuthBase();
-          const response = await fetch(`${authBase}/refresh`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ refresh_token: storedRefreshToken }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            const { access_token, refresh_token: new_refresh_token } = data;
-            
-            setToken(access_token);
-            localStorage.setItem('access_token', access_token);
-            localStorage.setItem('refresh_token', new_refresh_token);
-            
-            const decoded = decodeToken(access_token);
-            if (decoded) {
-              setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
-            } else {
-              setUser({ id: "1", username: "admin", role: "admin" });
-            }
+        if (response.ok) {
+          const data = await response.json();
+          const { access_token } = data;
+          
+          setToken(access_token);
+          setAccessToken(access_token);
+          
+          const decoded = decodeToken(access_token);
+          if (decoded) {
+            setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
           } else {
-            logout();
+            setUser({ id: "1", username: "admin", role: "admin" });
           }
-        } catch (error) {
-          console.error("Error during silent token refresh on mount:", error);
-          if (storedAccessToken) {
-            const decoded = decodeToken(storedAccessToken);
-            const isExpired = decoded && (decoded as any).exp ? (decoded as any).exp * 1000 < Date.now() : true;
-            if (!isExpired) {
-              setToken(storedAccessToken);
-              if (decoded) {
-                setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
-              }
-            } else {
-              logout();
-            }
-          } else {
-            logout();
-          }
+        } else {
+          // Explicit authorization failure (e.g. cookie expired or deleted)
+          logout();
         }
-      } else {
-        logout();
+      } catch (error) {
+        // Network connection exception (e.g. backend offline or network disconnected)
+        console.error("Error during silent token refresh on mount (possibly offline):", error);
       }
       setLoading(false);
     };

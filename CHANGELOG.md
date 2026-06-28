@@ -28,6 +28,31 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.7.0] - 2026-06-28
+
+### Security
+- Migrated refresh token storage from browser `localStorage` to secure, server-controlled `HttpOnly` cookies to protect Single-Page Application (SPA) sessions against Cross-Site Scripting (XSS) attacks.
+
+### Changed
+- Configured Axios client and Fetch authorization wrappers to transmit credentials/cookies and retrieve silent token refresh securely.
+- Cleaned up token management flow inside `AuthContext` to skip storing refresh token in `localStorage`.
+
+---
+
+## [auth-service@1.1.0] - 2026-06-28
+
+### Added
+- Created `/logout` POST endpoint to delete and clear the client's `refresh_token` cookie.
+
+### Security
+- Updated `/login` and `/refresh` endpoints to set and rotate `refresh_token` in secure, HttpOnly cookies.
+
+### Changed
+- Configured CORS middleware dynamically to allow credential sharing for all local hosts (e.g. electron-vite dev environment) using a regex origin check.
+- Updated FastAPI instance metadata to bind dynamically to the auth service package version.
+
+---
+
 ## [expense-manager-service@1.5.1] - 2026-06-27
 
 ### Fixed

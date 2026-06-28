@@ -5,7 +5,10 @@ from datetime import datetime, timedelta
 from fastapi import (APIRouter,
     Depends,
     HTTPException,
-    status
+    status,
+    Response,
+    Request,
+    Cookie
 )
 from fastapi.security import (OAuth2PasswordBearer,
     OAuth2PasswordRequestForm
@@ -27,8 +30,7 @@ from app.db.database import get_db
 from app.db.models import (RefreshToken,
     User
 )
-from app.schemas.auth import (RefreshRequest,
-    Token,
+from app.schemas.auth import (Token,
     UserCreate,
     UserResponse
 )
@@ -76,8 +78,13 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    """Authenticate user credentials and return dual tokens."""
+async def login(
+    response: Response,
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    """Authenticate user credentials and return access token."""
     result = await db.execute(select(User).where(User.username == form_data.username))
     user = result.scalars().first()
 
@@ -103,25 +110,44 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     db.add(new_rt)
     await db.commit()
 
+    # Set refresh token in HttpOnly cookie
+    secure_flag = request.url.scheme == "https"
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=secure_flag,
+        samesite="lax",
+        path="/"
+    )
+
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
         "token_type": "bearer",
         "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh(req: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    """Issue a new access token using a valid refresh token."""
+async def refresh(
+    response: Response,
+    request: Request,
+    refresh_token: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Issue a new access token using a valid refresh token cookie."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not refresh_token:
+        raise credentials_exception
+
     try:
         secret = get_settings().JWT_SECRET.get_secret_value()
-        payload = jwt.decode(req.refresh_token, secret, algorithms=[ALGORITHM])
+        payload = jwt.decode(refresh_token, secret, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -129,7 +155,7 @@ async def refresh(req: RefreshRequest, db: AsyncSession = Depends(get_db)):
         raise credentials_exception from None
 
     # Check if refresh token is in DB
-    result = await db.execute(select(RefreshToken).where(RefreshToken.token == req.refresh_token))
+    result = await db.execute(select(RefreshToken).where(RefreshToken.token == refresh_token))
     rt_record = result.scalars().first()
 
     if not rt_record or rt_record.expires_at < datetime.utcnow():
@@ -148,12 +174,29 @@ async def refresh(req: RefreshRequest, db: AsyncSession = Depends(get_db)):
     rt_record.expires_at = datetime.utcnow() + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS)
     await db.commit()
 
+    # Set rotated refresh token in HttpOnly cookie
+    secure_flag = request.url.scheme == "https"
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=secure_flag,
+        samesite="lax",
+        path="/"
+    )
+
     return {
         "access_token": access_token,
-        "refresh_token": new_refresh_token,
         "token_type": "bearer",
         "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    """Clear the refresh token cookie to log out the user."""
+    response.delete_cookie(key="refresh_token", path="/")
+    return {"message": "Logged out successfully"}
 
 
 @router.get("/me", response_model=UserResponse)
