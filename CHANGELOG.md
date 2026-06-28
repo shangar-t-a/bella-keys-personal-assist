@@ -28,6 +28,14 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.7.2] - 2026-06-28
+
+### Fixed
+
+- Resolved access violation crashes in packaged Electron production executable caused by absolute redirect paths starting with `/` or `/login` resolving to local directories (`file:///C:/`) rather than the application's relative index bundle path.
+
+---
+
 ## [keys-personal-assist-ui@1.7.1] - 2026-06-28
 
 ### Fixed
