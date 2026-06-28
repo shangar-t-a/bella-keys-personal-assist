@@ -47,7 +47,7 @@ sequenceDiagram
     Auth->>Auth: Generate JWT Access & Refresh Tokens
     Auth->>DB: Store Refresh Token (user_id, token, expires_at)
     DB-->>Auth: Token stored
-    Auth-->>UI: Return Access Token & Refresh Token (Bearer)
+    Auth-->>UI: Return Access Token & set HttpOnly Refresh Cookie
     UI-->>User: Unlock App & show Dashboard
 
     Note over User, DB: 2. Accessing Protected Resources
@@ -59,13 +59,13 @@ sequenceDiagram
     Note over User, DB: 3. Token Rotation (Silent Refresh)
     UI->>API: API Request (Expired Access Token)
     API-->>UI: 401 Unauthorized Response
-    UI->>Auth: POST /auth/refresh { refresh_token }
+    UI->>Auth: POST /auth/refresh (Cookie: refresh_token)
     Auth->>DB: Lookup refresh token & verify expiration
     DB-->>Auth: Token valid, return record
     Auth->>Auth: Generate new Access & Refresh Tokens
     Auth->>DB: Rotate token (update old record with new token)
     DB-->>Auth: Record updated
-    Auth-->>UI: Return new Access & Refresh Tokens
+    Auth-->>UI: Return new Access Token & update HttpOnly Refresh Cookie
     UI->>API: Retry original API Request (Authorization: Bearer <new_access_token>)
     API-->>UI: Protected Data Response
     UI-->>User: Update UI

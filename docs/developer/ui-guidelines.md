@@ -111,7 +111,7 @@ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.3)' : '#
 
 ### Authentication State
 
-* `AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React auth state. `localStorage` is only the persistence layer.
+* `AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React auth state. `localStorage` is used to persist the access token, while the refresh token is stored securely in an `HttpOnly` cookie.
 * Syncing across layers is performed via the custom window event bus:
   * `window.dispatchEvent(new Event('auth-logout'))` triggers logout.
   * `window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }))` updates tokens.
