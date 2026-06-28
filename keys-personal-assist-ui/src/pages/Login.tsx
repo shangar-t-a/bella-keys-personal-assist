@@ -211,8 +211,8 @@ const Login: React.FC = () => {
                 }
               }}
             >
-              <Tab label="Log In" icon={<Lock sx={{ fontSize: 18 }} />} iconPosition="start" />
-              <Tab label="Sign Up" icon={<VpnKey sx={{ fontSize: 18 }} />} iconPosition="start" />
+              <Tab label="Log In" icon={<Lock sx={{ fontSize: 18 }} />} iconPosition="start" value={0} />
+              <Tab label="Sign Up" icon={<VpnKey sx={{ fontSize: 18 }} />} iconPosition="start" value={1} />
             </Tabs>
 
             {/* Input Form */}

@@ -491,8 +491,8 @@ export default function MonthlyPlannerPage() {
               },
             }}
           >
-            <Tab label="Checklist" />
-            <Tab label="Visuals" />
+            <Tab label="Checklist" value={0} />
+            <Tab label="Visuals" value={1} />
           </Tabs>
         </Box>
 
