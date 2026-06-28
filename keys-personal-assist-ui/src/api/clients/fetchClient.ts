@@ -1,4 +1,5 @@
 import { getAuthBase } from '../config';
+import { getAccessToken, setAccessToken } from '../tokenStore';
 
 /**
  * Shared refresh promise to prevent concurrent duplicate refresh requests.
@@ -28,10 +29,10 @@ async function performRefresh(): Promise<{ access_token: string } | null> {
 
 /**
  * Authorized fetch wrapper
- * Automatically appends the access token from localStorage, attempts silent refresh on 401, and redirects on failure.
+ * Automatically appends the access token from memory, attempts silent refresh on 401, and redirects on failure.
  */
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  let token = localStorage.getItem('access_token');
+  let token = getAccessToken();
   
   // Prepare headers
   const headers = new Headers(options.headers || {});
@@ -65,8 +66,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
       if (refreshResult) {
         const { access_token } = refreshResult;
         
-        // Save new token
-        localStorage.setItem('access_token', access_token);
+        // Save new token in-memory
+        setAccessToken(access_token);
         
         // Dispatch event to sync AuthContext state
         window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }));
@@ -86,7 +87,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
         response = await fetch(url, retryOptions);
       } else {
         // Refresh failed (or no refresh token was present)
-        localStorage.removeItem('access_token');
+        setAccessToken(null);
         localStorage.removeItem('refresh_token');
         
         // Dispatch logout event to sync AuthContext state

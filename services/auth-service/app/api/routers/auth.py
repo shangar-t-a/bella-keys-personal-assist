@@ -30,8 +30,7 @@ from app.db.database import get_db
 from app.db.models import (RefreshToken,
     User
 )
-from app.schemas.auth import (RefreshRequest,
-    Token,
+from app.schemas.auth import (Token,
     UserCreate,
     UserResponse
 )
@@ -85,7 +84,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
-    """Authenticate user credentials and return dual tokens."""
+    """Authenticate user credentials and return access token."""
     result = await db.execute(select(User).where(User.username == form_data.username))
     user = result.scalars().first()
 
@@ -124,7 +123,6 @@ async def login(
 
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
         "token_type": "bearer",
         "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }
@@ -134,28 +132,22 @@ async def login(
 async def refresh(
     response: Response,
     request: Request,
-    req: RefreshRequest | None = None,
-    refresh_token_cookie: str | None = Cookie(default=None, alias="refresh_token"),
+    refresh_token: str | None = Cookie(default=None),
     db: AsyncSession = Depends(get_db)
 ):
-    """Issue a new access token using a valid refresh token."""
+    """Issue a new access token using a valid refresh token cookie."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Resolve refresh token from cookie or body
-    token_to_use = refresh_token_cookie
-    if not token_to_use and req and req.refresh_token:
-        token_to_use = req.refresh_token
-
-    if not token_to_use:
+    if not refresh_token:
         raise credentials_exception
 
     try:
         secret = get_settings().JWT_SECRET.get_secret_value()
-        payload = jwt.decode(token_to_use, secret, algorithms=[ALGORITHM])
+        payload = jwt.decode(refresh_token, secret, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -163,7 +155,7 @@ async def refresh(
         raise credentials_exception from None
 
     # Check if refresh token is in DB
-    result = await db.execute(select(RefreshToken).where(RefreshToken.token == token_to_use))
+    result = await db.execute(select(RefreshToken).where(RefreshToken.token == refresh_token))
     rt_record = result.scalars().first()
 
     if not rt_record or rt_record.expires_at < datetime.utcnow():
@@ -195,7 +187,6 @@ async def refresh(
 
     return {
         "access_token": access_token,
-        "refresh_token": new_refresh_token,
         "token_type": "bearer",
         "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }

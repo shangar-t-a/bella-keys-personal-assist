@@ -24,13 +24,14 @@ const response = await fetch(`${emsBase}/assets`, {
 
 ## 2. Authentication Pattern
 
-`AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React authentication state. `localStorage` is used solely to persist the access token, while the refresh token is stored securely in an `HttpOnly` cookie.
+`AuthContext` (`src/context/AuthContext.tsx`) is the single source of truth for React authentication state. We avoid storing any active session tokens (like the access token or refresh token) in persistent browser storage (`localStorage` or `sessionStorage`). Instead, the `access_token` is stored strictly in application memory (using `tokenStore.ts`), and the `refresh_token` is stored securely in an `HttpOnly` cookie.
 
 ### App Mount Hook
 
 1. Always attempt a silent refresh by calling `/refresh` with credentials included (the browser automatically transmits the `refresh_token` cookie).
-2. On success: store the new access token in `localStorage`, update React state.
-3. On failure (e.g. cookie expired, missing, or network issues): fall back to checking the validity of the existing `access_token` in `localStorage`. If expired or absent, trigger logout.
+2. On success: store the new access token in the in-memory `tokenStore`, and update the React `AuthContext` state.
+3. On authentication failure (e.g. cookie expired, missing, or revoked): trigger `logout()` immediately to return to the Lock Screen.
+4. On network connectivity failure (e.g. offline): log the connection error but do not log the user out.
 
 ### Cross-Layer Auth Sync
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getAuthBase } from '../api/config';
+import { setAccessToken } from '../api/tokenStore';
 
 interface User {
   id: string;
@@ -43,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = (newToken: string, _refreshToken?: string) => {
     setToken(newToken);
-    localStorage.setItem('access_token', newToken);
+    setAccessToken(newToken);
     const decoded = decodeToken(newToken);
     if (decoded) {
       setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
@@ -55,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setToken(null);
     setUser(null);
+    setAccessToken(null);
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
 
@@ -69,8 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const checkAuth = async () => {
-      const storedAccessToken = localStorage.getItem('access_token');
-
       try {
         const authBase = getAuthBase();
         const response = await fetch(`${authBase}/refresh`, {
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { access_token } = data;
           
           setToken(access_token);
-          localStorage.setItem('access_token', access_token);
+          setAccessToken(access_token);
           
           const decoded = decodeToken(access_token);
           if (decoded) {
@@ -96,37 +96,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser({ id: "1", username: "admin", role: "admin" });
           }
         } else {
-          if (storedAccessToken) {
-            const decoded = decodeToken(storedAccessToken);
-            const isExpired = decoded && (decoded as any).exp ? (decoded as any).exp * 1000 < Date.now() : true;
-            if (!isExpired) {
-              setToken(storedAccessToken);
-              if (decoded) {
-                setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
-              }
-            } else {
-              logout();
-            }
-          } else {
-            logout();
-          }
-        }
-      } catch (error) {
-        console.error("Error during silent token refresh on mount:", error);
-        if (storedAccessToken) {
-          const decoded = decodeToken(storedAccessToken);
-          const isExpired = decoded && (decoded as any).exp ? (decoded as any).exp * 1000 < Date.now() : true;
-          if (!isExpired) {
-            setToken(storedAccessToken);
-            if (decoded) {
-              setUser({ id: decoded.sub, username: decoded.sub, role: decoded.role || 'user' });
-            }
-          } else {
-            logout();
-          }
-        } else {
+          // Explicit authorization failure (e.g. cookie expired or deleted)
           logout();
         }
+      } catch (error) {
+        // Network connection exception (e.g. backend offline or network disconnected)
+        console.error("Error during silent token refresh on mount (possibly offline):", error);
       }
       setLoading(false);
     };
