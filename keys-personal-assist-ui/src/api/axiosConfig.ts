@@ -51,7 +51,11 @@ api.interceptors.response.use(
         setAccessToken(null);
         localStorage.removeItem('refresh_token');
         // Force reload or redirect to login (can be handled better via React Router, but this is a fail-safe)
-        window.location.href = '/login';
+        if (import.meta.env.VITE_APP_ENV === 'electron') {
+          window.location.hash = '#/login';
+        } else {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -95,7 +95,9 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
         
         // Redirect to login page unless we are already on it (handling both BrowserRouter and HashRouter paths)
         if (window.location.pathname !== '/login' && window.location.hash !== '#/login') {
-          if (window.location.hash.startsWith('#/')) {
+          if (import.meta.env.VITE_APP_ENV === 'electron') {
+            window.location.hash = '#/login';
+          } else if (window.location.hash.startsWith('#/')) {
             window.location.hash = '#/login';
           } else {
             window.location.href = '/login';
