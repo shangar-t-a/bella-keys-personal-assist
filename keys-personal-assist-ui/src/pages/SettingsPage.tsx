@@ -228,8 +228,8 @@ export default function SettingsPage() {
               }
             }}
           >
-            <Tab icon={<AccountBalance />} iconPosition="start" label="Bank Accounts" />
-            <Tab icon={<CategoryIcon />} iconPosition="start" label="Budget Categories" />
+            <Tab icon={<AccountBalance />} iconPosition="start" label="Bank Accounts" value={0} />
+            <Tab icon={<CategoryIcon />} iconPosition="start" label="Budget Categories" value={1} />
           </Tabs>
 
           <CardContent sx={{ p: 4 }}>

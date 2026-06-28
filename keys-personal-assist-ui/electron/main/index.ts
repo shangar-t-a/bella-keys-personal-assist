@@ -49,16 +49,31 @@ function createWindow(): void {
     })
 }
 
-app.whenReady().then(() => {
-    createWindow()
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
-    app.on('activate', () => {
-        // macOS: re-create the window when the dock icon is clicked and no windows are open
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow()
+if (!gotSingleInstanceLock) {
+    app.quit()
+} else {
+    app.on('second-instance', () => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) {
+                mainWindow.restore()
+            }
+            mainWindow.focus()
         }
     })
-})
+
+    app.whenReady().then(() => {
+        createWindow()
+
+        app.on('activate', () => {
+            // macOS: re-create the window when the dock icon is clicked and no windows are open
+            if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow()
+            }
+        })
+    })
+}
 
 app.on('window-all-closed', () => {
     // On macOS apps conventionally stay active until the user quits explicitly

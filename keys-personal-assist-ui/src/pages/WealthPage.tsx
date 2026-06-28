@@ -65,10 +65,10 @@ export default function WealthPage() {
             indicatorColor="primary"
             textColor="primary"
           >
-            <Tab label="Assets" id="wealth-tab-assets" />
-            <Tab label="Liabilities" id="wealth-tab-liabilities" />
-            <Tab label="Net Worth" id="wealth-tab-networth" />
-            <Tab label="Allocation" id="wealth-tab-allocation" />
+            <Tab label="Assets" id="wealth-tab-assets" value={0} />
+            <Tab label="Liabilities" id="wealth-tab-liabilities" value={1} />
+            <Tab label="Net Worth" id="wealth-tab-networth" value={2} />
+            <Tab label="Allocation" id="wealth-tab-allocation" value={3} />
           </Tabs>
         </Box>
 

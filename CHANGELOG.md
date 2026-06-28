@@ -28,12 +28,28 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.7.1] - 2026-06-28
+
+### Fixed
+
+- Implemented single-instance application lock check during startup to prevent concurrent app instances from locking disk cache directories and throwing access denied errors.
+- Corrected Recharts chart rendering in Savings Envelopes page to initialize safely with fallback dimensions.
+- Added explicit tab values to Material UI navigation tabs to suppress invalid value console warnings.
+
+### Security
+
+- Defined a robust Content Security Policy (CSP) to restrict remote origin access while permitting local API ports and hot-reload WebSockets in development.
+
+---
+
 ## [keys-personal-assist-ui@1.7.0] - 2026-06-28
 
 ### Security
+
 - Migrated refresh token storage from browser `localStorage` to secure, server-controlled `HttpOnly` cookies to protect Single-Page Application (SPA) sessions against Cross-Site Scripting (XSS) attacks.
 
 ### Changed
+
 - Configured Axios client and Fetch authorization wrappers to transmit credentials/cookies and retrieve silent token refresh securely.
 - Cleaned up token management flow inside `AuthContext` to skip storing refresh token in `localStorage`.
 
@@ -42,12 +58,15 @@ Changes under each header must be grouped into the following categories:
 ## [auth-service@1.1.0] - 2026-06-28
 
 ### Added
+
 - Created `/logout` POST endpoint to delete and clear the client's `refresh_token` cookie.
 
 ### Security
+
 - Updated `/login` and `/refresh` endpoints to set and rotate `refresh_token` in secure, HttpOnly cookies.
 
 ### Changed
+
 - Configured CORS middleware dynamically to allow credential sharing for all local hosts (e.g. electron-vite dev environment) using a regex origin check.
 - Updated FastAPI instance metadata to bind dynamically to the auth service package version.
 
