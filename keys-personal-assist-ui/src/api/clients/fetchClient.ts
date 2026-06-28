@@ -3,13 +3,9 @@ import { getAuthBase } from '../config';
 /**
  * Shared refresh promise to prevent concurrent duplicate refresh requests.
  */
-let refreshPromise: Promise<{ access_token: string; refresh_token: string } | null> | null = null;
+let refreshPromise: Promise<{ access_token: string } | null> | null = null;
 
-async function performRefresh(): Promise<{ access_token: string; refresh_token: string } | null> {
-  const refreshToken = localStorage.getItem('refresh_token');
-  if (!refreshToken) {
-    return null;
-  }
+async function performRefresh(): Promise<{ access_token: string } | null> {
   try {
     const authBase = getAuthBase();
     const response = await fetch(`${authBase}/refresh`, {
@@ -17,7 +13,8 @@ async function performRefresh(): Promise<{ access_token: string; refresh_token: 
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      credentials: 'include',
+      body: JSON.stringify({}),
     });
     if (response.ok) {
       const data = await response.json();
@@ -42,10 +39,16 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  let response = await fetch(url, {
+  // Ensure credentials are included for API calls to carry cookies if cross-origin
+  let fetchOptions = {
     ...options,
     headers,
-  });
+  };
+  if (!fetchOptions.credentials) {
+    fetchOptions.credentials = 'include';
+  }
+
+  let response = await fetch(url, fetchOptions);
 
   if (response.status === 401) {
     const isRefreshRequest = url.includes('/refresh');
@@ -60,11 +63,10 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
       
       const refreshResult = await refreshPromise;
       if (refreshResult) {
-        const { access_token, refresh_token: new_refresh_token } = refreshResult;
+        const { access_token } = refreshResult;
         
-        // Save new tokens
+        // Save new token
         localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', new_refresh_token);
         
         // Dispatch event to sync AuthContext state
         window.dispatchEvent(new CustomEvent('auth-refresh', { detail: { access_token } }));
@@ -73,10 +75,15 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
         const retryHeaders = new Headers(options.headers || {});
         retryHeaders.set('Authorization', `Bearer ${access_token}`);
         
-        response = await fetch(url, {
+        const retryOptions = {
           ...options,
           headers: retryHeaders,
-        });
+        };
+        if (!retryOptions.credentials) {
+          retryOptions.credentials = 'include';
+        }
+
+        response = await fetch(url, retryOptions);
       } else {
         // Refresh failed (or no refresh token was present)
         localStorage.removeItem('access_token');
