@@ -3,12 +3,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import __version__
 from app.api.routers.auth import router as auth_router
 
 app = FastAPI(
     title="Bella Keys Auth Service",
     description="Authentication and Identity Management for Bella Keys",
-    version="0.1.0",
+    version=__version__,
 )
 
 app.add_middleware(
