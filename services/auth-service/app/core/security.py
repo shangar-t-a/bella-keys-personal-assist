@@ -1,7 +1,8 @@
 """Security utilities for password hashing and JWT encoding/decoding."""
 
 from datetime import (datetime,
-    timedelta
+    timedelta,
+    UTC
 )
 
 import bcrypt
@@ -35,9 +36,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     """Create a short-lived access JWT token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=get_settings().ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(minutes=get_settings().ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
 
     secret = get_settings().JWT_SECRET.get_secret_value()
@@ -49,9 +50,9 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> 
     """Create a long-lived refresh JWT token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(UTC) + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
 
     secret = get_settings().JWT_SECRET.get_secret_value()

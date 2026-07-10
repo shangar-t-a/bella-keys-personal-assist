@@ -2,37 +2,43 @@
 
 from datetime import datetime, timedelta
 
-from fastapi import (APIRouter,
+from fastapi import (
+    APIRouter,
+    Cookie,
     Depends,
     HTTPException,
-    status,
-    Response,
     Request,
-    Cookie
+    Response,
+    status,
 )
-from fastapi.security import (OAuth2PasswordBearer,
-    OAuth2PasswordRequestForm
+from fastapi.security import (
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
 )
-from jose import (JWTError,
-    jwt
+from jose import (
+    JWTError,
+    jwt,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.config import get_settings
-from app.core.security import (ALGORITHM,
+from app.core.security import (
+    ALGORITHM,
     create_access_token,
     create_refresh_token,
     get_password_hash,
-    verify_password
+    verify_password,
 )
 from app.db.database import get_db
-from app.db.models import (RefreshToken,
-    User
+from app.db.models import (
+    RefreshToken,
+    User,
 )
-from app.schemas.auth import (Token,
+from app.schemas.auth import (
+    Token,
     UserCreate,
-    UserResponse
+    UserResponse,
 )
 
 router = APIRouter()

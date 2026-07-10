@@ -7,7 +7,8 @@ import AppShell from '@/components/AppShell';
 import { getAvailableServices } from '@/config/features';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : BrowserRouter;
+const isElectron = typeof window !== 'undefined' && window.navigator.userAgent.toLowerCase().includes('electron');
+const Router = isElectron ? HashRouter : BrowserRouter;
 
 // Lazy load all route components for code splitting
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -18,6 +19,7 @@ const SavingsFundSegregatorPage = lazy(() => import('@/pages/SavingsFundSegregat
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const WealthPage = lazy(() => import('@/pages/WealthPage'));
 const Login = lazy(() => import('@/pages/Login'));
+const OAuthCallback = lazy(() => import('@/pages/OAuthCallback'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -44,6 +46,7 @@ function AppContent() {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/callback" element={<OAuthCallback />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>

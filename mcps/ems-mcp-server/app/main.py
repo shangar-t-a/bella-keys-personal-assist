@@ -1,25 +1,93 @@
 """EMS MCP Server entry point.
 
-Exposes Expense Manager Service read operations as MCP tools over streamable-HTTP.
+Exposes Expense Manager Service read operations as MCP tools over HTTP/SSE.
 """
 
-import re
+from contextlib import asynccontextmanager
+import logging
+import os
+from typing import AsyncIterator
 
-import httpx
-import uvicorn
 from fastmcp import FastMCP
+from fastmcp.server.auth import RemoteAuthProvider, TokenVerifier, AccessToken
+import jwt
 from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse
-from starlette.types import ASGIApp
+from starlette.middleware.cors import CORSMiddleware
+import uvicorn
 
+from app.client import close_ems_client
 from app.settings import get_settings
-from app.tools.accounts import get_account, list_accounts
-from app.tools.periods import get_period, list_periods
-from app.tools.spending_entries import (
-    list_spending_entries,
-    list_spending_entries_for_account,
+import app.tools as tools
+
+logger = logging.getLogger("ems-mcp-server")
+
+
+class EMSTokenVerifier(TokenVerifier):
+    """Custom token verifier for EMS that validates tokens locally using JWT_SECRET."""
+
+    async def verify_token(self, token: str) -> AccessToken | None:
+        """Verify the access token and validate target audience."""
+        settings = get_settings()
+        dev_token = os.environ.get("DEV_JWT_TOKEN") or os.environ.get("EMS_DEV_TOKEN")
+        if dev_token:
+            clean_dev = dev_token.replace("Bearer ", "")
+            clean_token = token.replace("Bearer ", "")
+            if clean_token == clean_dev:
+                return AccessToken(
+                    token=token,
+                    client_id="dev_client",
+                    scopes=[],
+                    claims={"sub": "dev_user"},
+                )
+
+        secret_str = settings.JWT_SECRET.get_secret_value() if settings.JWT_SECRET else None
+        if not secret_str:
+            logger.error("JWT_SECRET is not configured in the environment of EMS MCP Server")
+            return None
+
+        try:
+            payload = jwt.decode(token, secret_str, algorithms=["HS256"], options={"verify_aud": False})
+        except jwt.PyJWTError as e:
+            logger.warning(f"JWT signature validation failed: {e}")
+            return None
+
+        # Validate target resource audience if present (RFC 8707 / RFC 9728)
+        aud = payload.get("aud")
+        if aud:
+            settings = get_settings()
+            norm_aud = str(aud).rstrip("/")
+            norm_expected = settings.BASE_URL.rstrip("/")
+
+            if norm_aud != norm_expected and norm_aud != f"{norm_expected}/mcp" and norm_aud != f"{norm_expected}/sse":
+                logger.warning(f"Token verification failed: Token audience '{aud}' does not match expected '{settings.BASE_URL}'")
+                return None
+
+        return AccessToken(
+            token=token,
+            client_id=payload.get("client_id", "default_client"),
+            scopes=payload.get("scopes", []),
+            expires_at=payload.get("exp"),
+            claims=payload,
+        )
+
+
+@asynccontextmanager
+async def mcp_lifespan(server: FastMCP) -> AsyncIterator[None]:
+    """Manage lifecycle resources for the EMS MCP Server."""
+    logger.info("Initializing EMS MCP Server resources...")
+    yield
+    logger.info("Shutting down EMS MCP Server and cleaning up resources...")
+    await close_ems_client()
+
+
+# Setup Auth Providers
+settings = get_settings()
+verifier = EMSTokenVerifier()
+auth_provider = RemoteAuthProvider(
+    token_verifier=verifier,
+    authorization_servers=[settings.AUTH_SERVICE_URL],
+    base_url=settings.BASE_URL,
+    resource_name="EMS MCP Server",
 )
 
 mcp = FastMCP(
@@ -30,118 +98,37 @@ mcp = FastMCP(
         "Use list_spending_entries or list_spending_entries_for_account to fetch "
         "balance and spending data, optionally filtered by month, year, or account name."
     ),
+    auth=auth_provider,
+    lifespan=mcp_lifespan,
 )
 
-
-HTTP_200_OK = 200
-
-
-class RemoteAuthMiddleware(BaseHTTPMiddleware):
-    """Middleware to validate user JWT by contacting the Auth Service's /me endpoint."""
-
-    def __init__(
-        self,
-        app: ASGIApp,
-        exclude_paths: list[str] | None = None,
-        auth_service_url: str | None = None,
-    ):
-        """Initialize RemoteAuthMiddleware."""
-        super().__init__(app)
-        self.exclude_paths = exclude_paths or [
-            r"^/health$",
-            r"^/openapi\.json$",
-            r"^/docs$",
-            r"^/redoc$",
-        ]
-        self.auth_service_url = auth_service_url
-
-    async def dispatch(self, request: Request, call_next):
-        """Dispatch the request and validate auth token."""
-        # Allow GET, DELETE, OPTIONS requests to pass through (SSE stream, connection teardown, CORS)
-        if request.method in ("OPTIONS", "GET", "DELETE"):
-            return await call_next(request)
-
-        # Check if path is excluded
-        path = request.url.path
-        for pattern in self.exclude_paths:
-            if re.match(pattern, path):
-                return await call_next(request)
-
-        # Read request body to check JSON-RPC method
-        is_public_method = False
-        if request.method == "POST":
-            try:
-                body = await request.body()
-                import json
-
-                data = json.loads(body)
-                method = data.get("method")
-                if method in ("initialize", "notifications/initialized", "tools/list"):
-                    is_public_method = True
-            except Exception:
-                pass
-
-        if is_public_method:
-            return await call_next(request)
-
-        # Extract Authorization Header
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return JSONResponse(
-                status_code=401, content={"detail": "Not authenticated"}
-            )
-
-        # Resolve auth service URL dynamically if not set
-        auth_url = self.auth_service_url
-        if not auth_url:
-            settings = get_settings()
-            auth_url = settings.AUTH_SERVICE_URL
-
-        # Call auth-service to validate the token
-        async with httpx.AsyncClient(timeout=10) as client:
-            try:
-                response = await client.get(
-                    f"{auth_url}/me",
-                    headers={"Authorization": auth_header},
-                )
-                if response.status_code != HTTP_200_OK:
-                    return JSONResponse(
-                        status_code=401, content={"detail": "Invalid or expired token"}
-                    )
-
-                # Attach resolved user info to request state
-                request.state.user = response.json()
-            except Exception as e:
-                return JSONResponse(
-                    status_code=500,
-                    content={"detail": f"Authentication service unreachable: {str(e)}"},
-                )
-
-        return await call_next(request)
-
-
 # Register all tools
-for _fn in [
-    list_accounts,
-    get_account,
-    list_periods,
-    get_period,
-    list_spending_entries,
-    list_spending_entries_for_account,
-]:
-    mcp.add_tool(_fn)
+for name in tools.__all__:
+    mcp.add_tool(getattr(tools, name))
 
 
 def run() -> None:
     """Entry point for the EMS MCP Server."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
     settings = get_settings()
+    transport_type = os.environ.get("MCP_TRANSPORT", "streamable-http")
+    if transport_type not in ("streamable-http", "sse", "http"):
+        transport_type = "streamable-http"
+
     app = mcp.http_app(
-        transport="streamable-http",
+        transport=transport_type,
         middleware=[
             Middleware(
-                RemoteAuthMiddleware,
-                auth_service_url=settings.AUTH_SERVICE_URL,
-            )
+                CORSMiddleware,
+                allow_origins=["*"],
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            ),
         ],
     )
     uvicorn.run(

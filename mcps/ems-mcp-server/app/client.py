@@ -1,10 +1,15 @@
 """HTTP client for communicating with the Expense Manager Service."""
 
+import logging
+import os
+from typing import Any
+
 import httpx
-from fastmcp.server.dependencies import get_http_request
+from mcp.server.auth.middleware.auth_context import get_access_token
 
 from app.settings import get_settings
 
+logger = logging.getLogger("ems-mcp-server")
 _client: httpx.AsyncClient | None = None
 
 
@@ -19,13 +24,50 @@ def get_ems_client() -> httpx.AsyncClient:
     return _client
 
 
+async def close_ems_client() -> None:
+    """Close the shared async HTTP client if it was initialized."""
+    global _client
+    if _client is not None:
+        await _client.aclose()
+        _client = None
+        logger.info("Shared EMS HTTP client closed successfully.")
+
+
 def get_auth_headers() -> dict[str, str]:
-    """Extract Authorization header from the current request to propagate to EMS backend."""
-    try:
-        req = get_http_request()
-        auth_header = req.headers.get("Authorization")
-        if auth_header:
-            return {"Authorization": auth_header}
-    except Exception:
-        pass
+    """Extract Authorization header from the current request context to propagate to EMS backend."""
+    access_token = get_access_token()
+    if access_token:
+        token = access_token.token
+        if not token.startswith("Bearer "):
+            token = f"Bearer {token}"
+        return {"Authorization": token}
+
+    dev_token = os.environ.get("DEV_JWT_TOKEN") or os.environ.get("EMS_DEV_TOKEN")
+    if dev_token:
+        if not dev_token.startswith("Bearer "):
+            dev_token = f"Bearer {dev_token}"
+        return {"Authorization": dev_token}
+
     return {}
+
+
+async def request_ems(method: str, path: str, **kwargs: Any) -> Any:
+    """Send an HTTP request to EMS and handle errors robustly."""
+    client = get_ems_client()
+    headers = kwargs.pop("headers", {})
+    headers.update(get_auth_headers())
+    try:
+        response = await client.request(method, path, headers=headers, **kwargs)
+        if response.is_error:
+            try:
+                detail = response.json().get("detail", response.text)
+            except Exception:
+                detail = response.text
+            raise ValueError(f"EMS Error ({response.status_code}): {detail}")
+        if response.status_code == 204:
+            return {"status": "success"}
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise ValueError(f"EMS returned HTTP error: {e}") from e
+    except httpx.RequestError as e:
+        raise ValueError(f"EMS backend unreachable: {e}") from e

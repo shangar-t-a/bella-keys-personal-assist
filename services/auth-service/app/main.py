@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api.routers.auth import router as auth_router
+from app.api.routers.oauth import router as oauth_router
 
 app = FastAPI(
     title="Bella Keys Auth Service",
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, tags=["auth"])
+app.include_router(oauth_router, tags=["oauth"])
 
 
 @app.get("/health")

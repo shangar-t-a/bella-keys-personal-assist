@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from app.client import get_auth_headers, get_ems_client
+from app.client import request_ems
 
 
 async def list_spending_entries(
@@ -32,7 +32,6 @@ async def list_spending_entries(
     Use filters (month, year, accountName) to narrow results.
     Use sort_by / sort_order to control ordering.
     """
-    client = get_ems_client()
     params: dict[str, Any] = {
         "page": page,
         "size": size,
@@ -46,11 +45,7 @@ async def list_spending_entries(
     if account_name is not None:
         params["accountName"] = account_name
 
-    response = await client.get(
-        "/v1/spending_account/list", params=params, headers=get_auth_headers()
-    )
-    response.raise_for_status()
-    return response.json()
+    return await request_ems("GET", "/v1/spending_account/list", params=params)
 
 
 async def list_spending_entries_for_account(
@@ -77,7 +72,6 @@ async def list_spending_entries_for_account(
 
     Raises an error if the account_id is not found.
     """
-    client = get_ems_client()
     params: dict[str, Any] = {
         "page": page,
         "size": size,
@@ -89,10 +83,54 @@ async def list_spending_entries_for_account(
     if year is not None:
         params["year"] = year
 
-    response = await client.get(
-        f"/v1/spending_account/{account_id}/list",
-        params=params,
-        headers=get_auth_headers(),
+    return await request_ems(
+        "GET", f"/v1/spending_account/{account_id}/list", params=params
     )
-    response.raise_for_status()
-    return response.json()
+
+
+async def add_spending_entry(
+    account_name: Annotated[str, "Name of the spending account"],
+    month: Annotated[int, "Month of the entry (1-12)"],
+    year: Annotated[int, "Year of the entry (e.g. 2025)"],
+    starting_balance: Annotated[float, "Starting balance of the account"],
+    current_balance: Annotated[float, "Current balance of the account"],
+    current_credit: Annotated[float, "Current credit of the account"],
+) -> dict[str, Any]:
+    """Add a new entry to the spending account."""
+    json_data = {
+        "account_name": account_name,
+        "month": month,
+        "year": year,
+        "starting_balance": starting_balance,
+        "current_balance": current_balance,
+        "current_credit": current_credit,
+    }
+    return await request_ems("POST", "/v1/spending_account", json=json_data)
+
+
+async def edit_spending_entry(
+    entry_id: Annotated[str, "The unique ID of the entry to edit"],
+    account_name: Annotated[str, "Name of the spending account"],
+    month: Annotated[int, "Month of the entry (1-12)"],
+    year: Annotated[int, "Year of the entry (e.g. 2025)"],
+    starting_balance: Annotated[float, "Starting balance of the account"],
+    current_balance: Annotated[float, "Current balance of the account"],
+    current_credit: Annotated[float, "Current credit of the account"],
+) -> dict[str, Any]:
+    """Edit an existing spending account entry."""
+    json_data = {
+        "account_name": account_name,
+        "month": month,
+        "year": year,
+        "starting_balance": starting_balance,
+        "current_balance": current_balance,
+        "current_credit": current_credit,
+    }
+    return await request_ems("PUT", f"/v1/spending_account/{entry_id}", json=json_data)
+
+
+async def delete_spending_entry(
+    entry_id: Annotated[str, "The unique ID of the spending entry to delete"],
+) -> dict[str, Any]:
+    """Delete a spending account entry by its ID."""
+    return await request_ems("DELETE", f"/v1/spending_account/{entry_id}")

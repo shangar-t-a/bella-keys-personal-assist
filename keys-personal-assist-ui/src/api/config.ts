@@ -1,4 +1,4 @@
-const isElectron = import.meta.env.VITE_APP_ENV === 'electron'
+const isElectron = typeof window !== 'undefined' && window.navigator.userAgent.toLowerCase().includes('electron')
 
 export function getEmsBase(): string {
     return isElectron ? 'http://localhost:8000' : '/api/ems'

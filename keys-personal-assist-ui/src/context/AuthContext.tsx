@@ -11,7 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (token: string, refresh_token: string) => void;
+  login: (token: string, refresh_token?: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -71,6 +71,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const checkAuth = async () => {
+      // If we are currently handling the callback, do not perform silent refresh on mount
+      if (
+        window.location.pathname === '/callback' ||
+        window.location.hash.includes('/callback') ||
+        window.location.search.includes('code=') ||
+        window.location.hash.includes('code=')
+      ) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const authBase = getAuthBase();
         const response = await fetch(`${authBase}/refresh`, {

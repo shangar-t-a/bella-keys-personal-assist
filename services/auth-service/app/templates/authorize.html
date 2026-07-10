@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bella Keys - Authorize App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            background: radial-gradient(circle at 50% 50%, #152232 0%, #0c0f17 100%);
+            color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: rgba(30, 45, 61, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 360px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .top-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(135deg, #108cc6 0%, #1e5067 100%);
+        }
+        .logo-container {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #108cc6 0%, #1e5067 100%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(16, 140, 198, 0.3);
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+        h1 {
+            font-family: 'Space Grotesk', -apple-system, sans-serif;
+            margin-top: 0;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #108cc6 0%, #1e5067 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+        .brand-sub {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            color: #9ca3af;
+            margin-top: -6px;
+            margin-bottom: 24px;
+        }
+        p {
+            font-size: 14px;
+            color: #d1d5db;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .client-name {
+            color: #108cc6;
+            font-weight: 600;
+        }
+        .input-group {
+            text-align: left;
+            margin-bottom: 22px;
+        }
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(20, 30, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        input:focus {
+            border-color: #108cc6;
+            box-shadow: 0 0 0 3px rgba(16, 140, 198, 0.15);
+            outline: none;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #108cc6 0%, #1e5067 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(16, 140, 198, 0.25);
+        }
+        .btn:hover {
+            box-shadow: 0 6px 20px rgba(16, 140, 198, 0.4);
+            opacity: 0.95;
+        }
+        .error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 8px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="top-strip"></div>
+        <div class="logo-container">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5 5.5-2.5-5.5-2.5zm7.5 7l-1.25 2.75L15 20l2.75 1.25L19 24l1.25-2.75L23 20l-2.75-1.25L19 17z"/>
+            </svg>
+        </div>
+        <h1>Bella Keys</h1>
+        <div class="brand-sub">Personal Assistant Platform</div>
+        
+        <p>Authorize <span class="client-name">{{ client_name }}</span> to access your resources</p>
+        
+        <form method="POST" action="">
+            <input type="hidden" name="client_id" value="{{ client_id }}">
+            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+            <input type="hidden" name="response_type" value="{{ response_type }}">
+            <input type="hidden" name="code_challenge" value="{{ code_challenge }}">
+            <input type="hidden" name="code_challenge_method" value="{{ code_challenge_method }}">
+            <input type="hidden" name="state" value="{{ state }}">
+            <input type="hidden" name="resource" value="{{ resource }}">
+            <input type="hidden" name="scope" value="{{ scope }}">
+
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" name="username" required autofocus>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <button type="submit" id="authorize-submit-btn" class="btn">Authorize</button>
+            {% if error_html %}
+            <div class="error">{{ error_html }}</div>
+            {% endif %}
+        </form>
+    </div>
+</body>
+</html>
