@@ -38,7 +38,7 @@ Changes under each header must be grouped into the following categories:
 
 ---
 
-## [auth-service@1.2.0] - 2026-07-11
+## [auth-service@2.0.0] - 2026-07-11
 
 ### Added
 
