@@ -13,7 +13,7 @@ from sqlalchemy.future import select
 from app.db.models import OAuthAuthorizationCode
 
 
-async def create_authorization_code(
+async def create_authorization_code(  # noqa: PLR0913
     db: AsyncSession,
     client_id: str,
     redirect_uri: str,

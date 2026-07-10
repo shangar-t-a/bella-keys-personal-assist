@@ -277,10 +277,11 @@ async def oauth_token(
     user = result.scalars().first()
     if user and isinstance(user, User):
         refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
+        expires_days = get_settings().REFRESH_TOKEN_EXPIRE_DAYS
         new_rt = RefreshToken(
             token=refresh_token,
             user_id=user.id,
-            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(days=expires_days),
         )
         db.add(new_rt)
         await db.commit()

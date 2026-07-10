@@ -7,12 +7,14 @@ from httpx import ASGITransport, AsyncClient
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import app.api.routers.oauth as auth_mod
 from app.core.security import create_access_token
 from app.db.database import get_db
 from app.db.models import OAuthAuthorizationCode, User
 from app.main import app
 
 mock_db = AsyncMock()
+mock_db.add = MagicMock()
 
 
 async def override_get_db():
@@ -77,8 +79,6 @@ async def test_oauth_authorize_post_success() -> None:
     mock_db.execute = AsyncMock(return_value=mock_result)
 
     # Mock password validation
-    import app.api.routers.oauth as auth_mod
-
     original_verify = auth_mod.verify_password
     auth_mod.verify_password = lambda p, h: True
 
