@@ -5,9 +5,10 @@ description = "EMS MCP Server - Exposes Expense Manager Service read operations 
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
- "fastmcp>=3.2.0",
+ "fastmcp>=3.4.2",
  "httpx>=0.28.1",
  "pydantic-settings>=2.13.1",
+ "pyjwt>=2.4.0",
  "utilities",
 ]
 
@@ -27,3 +28,12 @@ path = "app/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app/"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "respx>=0.21.0",
+    "ruff>=0.13.3",
+]
+

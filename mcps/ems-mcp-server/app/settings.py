@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +18,8 @@ class EMSMCPSettings(BaseSettings):
     # Server settings
     HOST: str = "0.0.0.0"
     PORT: int = 8001
+    BASE_URL: str = "http://localhost:8001"
+    JWT_SECRET: SecretStr | None = None
 
     # EMS base URL
     EMS_BASE_URL: str = "http://localhost:8000"

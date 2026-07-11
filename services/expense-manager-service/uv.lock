@@ -362,7 +362,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.10" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.0" },
-    { name = "utilities", path = "py_dependencies/utilities-1.0.0-py3-none-any.whl" },
+    { name = "utilities", path = "py_dependencies/utilities-1.0.1-py3-none-any.whl" },
     { name = "uvicorn", specifier = ">=0.37.0" },
 ]
 
@@ -1006,15 +1006,15 @@ wheels = [
 
 [[package]]
 name = "utilities"
-version = "1.0.0"
-source = { path = "py_dependencies/utilities-1.0.0-py3-none-any.whl" }
+version = "1.0.1"
+source = { path = "py_dependencies/utilities-1.0.1-py3-none-any.whl" }
 dependencies = [
     { name = "fastapi" },
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
 ]
 wheels = [
-    { filename = "utilities-1.0.0-py3-none-any.whl", hash = "sha256:a15386a081ab28a41cd1fa26cdc9869d1294ea0f20a91c7059a0646665ea63c5" },
+    { filename = "utilities-1.0.1-py3-none-any.whl", hash = "sha256:b10b08be3a11a7e322490ea4e04bef83da1174ec8ab250d2fda4ea6abe613745" },
 ]
 
 [package.metadata]

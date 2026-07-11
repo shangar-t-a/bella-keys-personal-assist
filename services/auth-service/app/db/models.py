@@ -33,3 +33,22 @@ class RefreshToken(Base):
     user_id = Column(UUID(as_uuid=True), nullable=False)
     expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class OAuthAuthorizationCode(Base):
+    """OAuth 2.1 Authorization Code model to prevent replay attacks and persist authorization states."""
+
+    __tablename__ = "oauth_authorization_codes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    code = Column(String, unique=True, index=True, nullable=False)
+    client_id = Column(String, nullable=False)
+    redirect_uri = Column(String, nullable=False)
+    code_challenge = Column(String, nullable=False)
+    code_challenge_method = Column(String, nullable=False)
+    username = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    resource = Column(String, nullable=True)
+    scope = Column(String, nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

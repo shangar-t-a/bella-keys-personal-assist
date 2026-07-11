@@ -43,4 +43,4 @@ path = "app/__init__.py"
 packages = ["app/"]
 
 [tool.uv.sources]
-utilities = { path = "py_dependencies/utilities-1.0.0-py3-none-any.whl" }
+utilities = { path = "py_dependencies/utilities-1.0.1-py3-none-any.whl" }

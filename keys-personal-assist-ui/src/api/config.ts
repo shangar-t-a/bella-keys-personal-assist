@@ -1,4 +1,4 @@
-const isElectron = import.meta.env.VITE_APP_ENV === 'electron'
+export const isElectron = typeof window !== 'undefined' && window.navigator.userAgent.toLowerCase().includes('electron')
 
 export function getEmsBase(): string {
     return isElectron ? 'http://localhost:8000' : '/api/ems'
@@ -11,3 +11,6 @@ export function getBellaChatBase(): string {
 export function getAuthBase(): string {
     return isElectron ? 'http://localhost:8002' : '/api/auth'
 }
+
+export const OAUTH_CLIENT_ID = 'keys-personal-assist-ui';
+export const PKCE_VERIFIER_STORAGE_KEY = 'pkce_code_verifier';

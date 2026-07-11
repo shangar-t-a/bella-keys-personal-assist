@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Box, CircularProgress } from '@mui/material';
 import { ThemeProvider } from '@/theme/ThemeProvider';
@@ -7,7 +7,8 @@ import AppShell from '@/components/AppShell';
 import { getAvailableServices } from '@/config/features';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-const Router = import.meta.env.VITE_APP_ENV === 'electron' ? HashRouter : BrowserRouter;
+const isElectron = typeof window !== 'undefined' && window.navigator.userAgent.toLowerCase().includes('electron');
+const Router = isElectron ? HashRouter : BrowserRouter;
 
 // Lazy load all route components for code splitting
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -18,6 +19,7 @@ const SavingsFundSegregatorPage = lazy(() => import('@/pages/SavingsFundSegregat
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const WealthPage = lazy(() => import('@/pages/WealthPage'));
 const Login = lazy(() => import('@/pages/Login'));
+const OAuthCallback = lazy(() => import('@/pages/OAuthCallback'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -34,6 +36,26 @@ const LoadingFallback = () => (
 function AppContent() {
   const { isAuthenticated, loading } = useAuth();
   const services = getAvailableServices();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isElectron && window.electronAPI?.onOAuthCallback) {
+      const unsubscribe = window.electronAPI.onOAuthCallback((url: string) => {
+        try {
+          const parsed = new URL(url);
+          const code = parsed.searchParams.get('code');
+          const state = parsed.searchParams.get('state');
+          if (code) {
+            navigate(`/callback?code=${encodeURIComponent(code)}${state ? `&state=${encodeURIComponent(state)}` : ''}`);
+          }
+        } catch (e) {
+          console.error('Failed to parse incoming deep link url:', url, e);
+        }
+      });
+      return unsubscribe;
+    }
+    return undefined;
+  }, [navigate]);
 
   if (loading) {
     return <LoadingFallback />;
@@ -44,6 +66,7 @@ function AppContent() {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/callback" element={<OAuthCallback />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>

@@ -1,42 +1,51 @@
 """API Router for Authentication endpoints."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
+import uuid
 
-from fastapi import (APIRouter,
+from fastapi import (
+    APIRouter,
+    Cookie,
     Depends,
     HTTPException,
-    status,
-    Response,
     Request,
-    Cookie
+    Response,
+    status,
 )
-from fastapi.security import (OAuth2PasswordBearer,
-    OAuth2PasswordRequestForm
+from fastapi.security import (
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
 )
-from jose import (JWTError,
-    jwt
+from jose import (
+    JWTError,
+    jwt,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.config import get_settings
-from app.core.security import (ALGORITHM,
+from app.core.security import (
+    ALGORITHM,
     create_access_token,
     create_refresh_token,
     get_password_hash,
-    verify_password
+    verify_password,
 )
 from app.db.database import get_db
-from app.db.models import (RefreshToken,
-    User
+from app.db.models import (
+    RefreshToken,
+    User,
 )
-from app.schemas.auth import (Token,
+from app.schemas.auth import (
+    Token,
     UserCreate,
-    UserResponse
+    UserResponse,
 )
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+SECONDS_PER_MINUTE = 60
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
@@ -77,14 +86,18 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     return {"message": "User created successfully."}
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token, deprecated=True)
 async def login(
     response: Response,
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    """Authenticate user credentials and return access token."""
+    """[DEPRECATED] Authenticate user credentials and return access token.
+
+    Warning: This endpoint is legacy/deprecated. Use the OAuth 2.1 authorization
+    redirection flow (/oauth/authorize) with PKCE instead.
+    """
     result = await db.execute(select(User).where(User.username == form_data.username))
     user = result.scalars().first()
 
@@ -113,12 +126,7 @@ async def login(
     # Set refresh token in HttpOnly cookie
     secure_flag = request.url.scheme == "https"
     response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=secure_flag,
-        samesite="lax",
-        path="/"
+        key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
     )
 
     return {
@@ -133,7 +141,7 @@ async def refresh(
     response: Response,
     request: Request,
     refresh_token: str | None = Cookie(default=None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Issue a new access token using a valid refresh token cookie."""
     credentials_exception = HTTPException(
@@ -166,8 +174,32 @@ async def refresh(
     if not user:
         raise credentials_exception
 
-    access_token = create_access_token(data={"sub": user.username, "role": user.role})
-    new_refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
+    # Extract client session context from the refresh token payload
+    rt_client_id = payload.get("client_id")
+    rt_scope = payload.get("scope")
+    rt_aud = payload.get("aud") or get_settings().DEFAULT_RESOURCE_AUDIENCE
+
+    access_token_data = {
+        "iss": f"{request.url.scheme}://{request.url.netloc}",
+        "sub": user.username,
+        "aud": rt_aud,
+        "client_id": rt_client_id,
+        "iat": datetime.now(UTC),
+        "nbf": datetime.now(UTC),
+        "jti": uuid.uuid4().hex,
+        "scope": rt_scope or "",
+        "role": user.role,
+    }
+    access_token = create_access_token(data=access_token_data)
+
+    new_rt_data = {
+        "sub": user.username,
+        "role": user.role,
+        "client_id": rt_client_id,
+        "scope": rt_scope or "",
+        "aud": rt_aud,
+    }
+    new_refresh_token = create_refresh_token(data=new_rt_data)
 
     # Rotate refresh token
     rt_record.token = new_refresh_token
@@ -177,18 +209,13 @@ async def refresh(
     # Set rotated refresh token in HttpOnly cookie
     secure_flag = request.url.scheme == "https"
     response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
-        secure=secure_flag,
-        samesite="lax",
-        path="/"
+        key="refresh_token", value=new_refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
     )
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * SECONDS_PER_MINUTE,
     }
 
 

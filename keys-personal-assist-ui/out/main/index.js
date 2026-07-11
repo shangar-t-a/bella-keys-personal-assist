@@ -4,7 +4,23 @@ import __cjs_mod__ from "node:module";
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 const require2 = __cjs_mod__.createRequire(import.meta.url);
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient("bella-app", process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient("bella-app");
+}
 let mainWindow = null;
+let pendingUrl = null;
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  if (mainWindow) {
+    mainWindow.webContents.send("oauth-callback", url);
+  } else {
+    pendingUrl = url;
+  }
+});
 function createWindow() {
   const isDev = !!process.env["ELECTRON_RENDERER_URL"];
   const iconPath = isDev ? path.join(__dirname, "../../public/icon.png") : path.join(__dirname, "../renderer/icon.png");
@@ -31,6 +47,20 @@ function createWindow() {
     shell.openExternal(url);
     return { action: "deny" };
   });
+  const coldStartUrl = process.argv.find((arg) => arg.startsWith("bella-app://"));
+  if (coldStartUrl) {
+    mainWindow.webContents.on("did-finish-load", () => {
+      mainWindow?.webContents.send("oauth-callback", coldStartUrl);
+    });
+  }
+  if (pendingUrl) {
+    mainWindow.webContents.on("did-finish-load", () => {
+      if (pendingUrl) {
+        mainWindow?.webContents.send("oauth-callback", pendingUrl);
+        pendingUrl = null;
+      }
+    });
+  }
   if (process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
@@ -44,12 +74,16 @@ const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
+  app.on("second-instance", (event, commandLine) => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) {
         mainWindow.restore();
       }
       mainWindow.focus();
+    }
+    const url = commandLine.find((arg) => arg.startsWith("bella-app://"));
+    if (url && mainWindow) {
+      mainWindow.webContents.send("oauth-callback", url);
     }
   });
   app.whenReady().then(() => {

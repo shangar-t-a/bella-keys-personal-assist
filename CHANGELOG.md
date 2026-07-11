@@ -28,6 +28,76 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [expense-manager-service@1.5.3] - 2026-07-11
+
+### Changed
+
+- Upgraded shared `utilities` package dependency to `1.0.1`.
+
+---
+
+## [bella-chat-service@1.0.2] - 2026-07-11
+
+### Changed
+
+- Upgraded shared `utilities` package dependency to `1.0.1`.
+
+---
+
+## [utilities@1.0.1] - 2026-07-11
+
+### Fixed
+
+- Added manual CORS headers dynamically to raw responses returned from `JWTAuthMiddleware` (e.g. 401 Unauthorized errors) to prevent browser and Electron preflight blockages during cross-origin API operations.
+- Added `verify_aud: False` option in `JWTAuthMiddleware` decryption step to prevent generic token verification claims failures across distributed services.
+
+---
+
+## [keys-personal-assist-ui@1.8.0] - 2026-07-11
+
+### Added
+
+- Registered `bella-app://` custom protocol deep-link listener inside Electron's main process.
+- Implemented global React hook handler for incoming deep links to auto-route back to `/callback` exchange sequence.
+- Added external system browser redirection for login flows inside desktop container.
+
+### Changed
+
+- Migrated authentication mechanism from standard credential submission to centralized OAuth 2.1 Single Sign-On (SSO) login flow.
+- Added PKCE (`S256`) authorization code request sequence dynamically generated via Web Crypto API.
+- Implemented `/callback` router handler (`OAuthCallback.tsx`) to perform secure token exchange and establish UI sessions.
+
+---
+
+## [auth-service@2.0.0] - 2026-07-11
+
+### Added
+
+- Added support for database-backed OAuth 2.1 authorization code flow with dynamic state and PKCE challenge verification.
+- Introduced OIDC discovery metadata endpoint (`/.well-known/openid-configuration` / `/.well-known/oauth-authorization-server`) and `/oauth/userinfo` endpoints.
+- Built dark glassmorphism consent/login UI template for authorization requests.
+- Integrated `bella-app://callback` custom protocol deep-linking whitelist support.
+- Added OIDC standard claims (`iss`, `aud`, `jti`, `scope`) to access token payloads and session propagation structures.
+
+### Deprecated
+
+- Marked the legacy `POST /login` endpoint as deprecated (`deprecated=True`).
+
+### Fixed
+
+- Resolved warnings inside test suites related to unawaited async-mock coroutines on synchronous SQLAlchemy session operations.
+
+---
+
+## [ems-mcp-server@1.1.0] - 2026-07-11
+
+### Added
+
+- Expanded Model Context Protocol (MCP) server with comprehensive financial query tools for accounts, reporting periods, spending entries, assets, liabilities, savings buckets, net wealth allocations, and monthly planner entries.
+- Implemented extensive unit tests covering the new tools with 100% test coverage using respx mocks.
+
+---
+
 ## [keys-personal-assist-ui@1.7.2] - 2026-06-28
 
 ### Fixed
