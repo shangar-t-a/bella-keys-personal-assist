@@ -440,14 +440,7 @@ async def test_ems_token_verifier() -> None:
     old_settings_secret = settings.JWT_SECRET
     settings.JWT_SECRET = SecretStr("test_mcp_secret")
 
-    # 1. Dev token bypass
-    os.environ["DEV_JWT_TOKEN"] = "dev_token_example"
-    res = await verifier.verify_token("dev_token_example")
-    assert res is not None
-    assert res.client_id == "dev_client"
-    os.environ.pop("DEV_JWT_TOKEN", None)
-
-    # 2. Invalid signature
+    # 1. Invalid signature
     res = await verifier.verify_token("invalid.jwt.token")
     assert res is None
 

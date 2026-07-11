@@ -52,4 +52,3 @@ class OAuthAuthorizationCode(Base):
     scope = Column(String, nullable=True)
     expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-

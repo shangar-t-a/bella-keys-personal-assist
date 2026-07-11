@@ -28,25 +28,19 @@ class EMSTokenVerifier(TokenVerifier):
     async def verify_token(self, token: str) -> AccessToken | None:
         """Verify the access token and validate target audience."""
         settings = get_settings()
-        dev_token = os.environ.get("DEV_JWT_TOKEN") or os.environ.get("EMS_DEV_TOKEN")
-        if dev_token:
-            clean_dev = dev_token.replace("Bearer ", "")
-            clean_token = token.replace("Bearer ", "")
-            if clean_token == clean_dev:
-                return AccessToken(
-                    token=token,
-                    client_id="dev_client",
-                    scopes=[],
-                    claims={"sub": "dev_user"},
-                )
-
-        secret_str = settings.JWT_SECRET.get_secret_value() if settings.JWT_SECRET else None
+        secret_str = (
+            settings.JWT_SECRET.get_secret_value() if settings.JWT_SECRET else None
+        )
         if not secret_str:
-            logger.error("JWT_SECRET is not configured in the environment of EMS MCP Server")
+            logger.error(
+                "JWT_SECRET is not configured in the environment of EMS MCP Server"
+            )
             return None
 
         try:
-            payload = jwt.decode(token, secret_str, algorithms=["HS256"], options={"verify_aud": False})
+            payload = jwt.decode(
+                token, secret_str, algorithms=["HS256"], options={"verify_aud": False}
+            )
         except jwt.PyJWTError as e:
             logger.warning(f"JWT signature validation failed: {e}")
             return None
@@ -58,14 +52,25 @@ class EMSTokenVerifier(TokenVerifier):
             norm_aud = str(aud).rstrip("/")
             norm_expected = settings.BASE_URL.rstrip("/")
 
-            if norm_aud != norm_expected and norm_aud != f"{norm_expected}/mcp" and norm_aud != f"{norm_expected}/sse":
-                logger.warning(f"Token verification failed: Token audience '{aud}' does not match expected '{settings.BASE_URL}'")
+            if (
+                norm_aud != norm_expected
+                and norm_aud != f"{norm_expected}/mcp"
+                and norm_aud != f"{norm_expected}/sse"
+            ):
+                logger.warning(
+                    f"Token verification failed: Token audience '{aud}' does not match expected '{settings.BASE_URL}'"
+                )
                 return None
+
+        scopes_raw = payload.get("scope") or payload.get("scopes") or ""
+        scopes_list = (
+            scopes_raw.split() if isinstance(scopes_raw, str) else list(scopes_raw)
+        )
 
         return AccessToken(
             token=token,
             client_id=payload.get("client_id", "default_client"),
-            scopes=payload.get("scopes", []),
+            scopes=scopes_list,
             expires_at=payload.get("exp"),
             claims=payload,
         )

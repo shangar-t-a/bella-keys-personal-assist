@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
-import { getAuthBase } from '@/api/config';
+import { getAuthBase, OAUTH_CLIENT_ID, PKCE_VERIFIER_STORAGE_KEY, isElectron } from '@/api/config';
 import { toast } from 'sonner';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
@@ -18,7 +18,7 @@ const OAuthCallback: React.FC = () => {
 
     const exchangeCode = async () => {
       const code = searchParams.get('code');
-      const codeVerifier = localStorage.getItem('pkce_code_verifier');
+      const codeVerifier = localStorage.getItem(PKCE_VERIFIER_STORAGE_KEY);
 
       if (!code) {
         toast.error('No authorization code found in URL.');
@@ -37,8 +37,8 @@ const OAuthCallback: React.FC = () => {
         const response = await axios.post(`${authBase}/oauth/token`, {
           grant_type: 'authorization_code',
           code,
-          client_id: 'keys-personal-assist-ui',
-          redirect_uri: `${window.location.origin}/callback`,
+          client_id: OAUTH_CLIENT_ID,
+          redirect_uri: isElectron ? 'bella-app://callback' : `${window.location.origin}/callback`,
           code_verifier: codeVerifier,
         });
 
@@ -46,7 +46,7 @@ const OAuthCallback: React.FC = () => {
         login(access_token);
 
         // Clean up PKCE storage
-        localStorage.removeItem('pkce_code_verifier');
+        localStorage.removeItem(PKCE_VERIFIER_STORAGE_KEY);
 
         toast.success('SSO Authentication successful!');
         navigate('/');

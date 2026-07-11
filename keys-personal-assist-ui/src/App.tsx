@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Box, CircularProgress } from '@mui/material';
 import { ThemeProvider } from '@/theme/ThemeProvider';
@@ -36,6 +36,26 @@ const LoadingFallback = () => (
 function AppContent() {
   const { isAuthenticated, loading } = useAuth();
   const services = getAvailableServices();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isElectron && window.electronAPI?.onOAuthCallback) {
+      const unsubscribe = window.electronAPI.onOAuthCallback((url: string) => {
+        try {
+          const parsed = new URL(url);
+          const code = parsed.searchParams.get('code');
+          const state = parsed.searchParams.get('state');
+          if (code) {
+            navigate(`/callback?code=${encodeURIComponent(code)}${state ? `&state=${encodeURIComponent(state)}` : ''}`);
+          }
+        } catch (e) {
+          console.error('Failed to parse incoming deep link url:', url, e);
+        }
+      });
+      return unsubscribe;
+    }
+    return undefined;
+  }, [navigate]);
 
   if (loading) {
     return <LoadingFallback />;

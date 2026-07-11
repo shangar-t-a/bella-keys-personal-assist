@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAuthBase } from '@/api/config';
+import { getAuthBase, OAUTH_CLIENT_ID, PKCE_VERIFIER_STORAGE_KEY, isElectron } from '@/api/config';
 import { toast } from 'sonner';
 import {
   Box,
@@ -16,23 +16,36 @@ import {
   Login as LoginIcon,
 } from '@mui/icons-material';
 
-// Helper functions for PKCE Code Challenge generation using standard Web Crypto API
+// Helper functions for PKCE Code Challenge generation (RFC 7636) using standard Web Crypto API.
+// PKCE (Proof Key for Code Exchange) protects public clients (like SPAs) from Authorization Code interception.
+
+const CODE_VERIFIER_BYTE_LENGTH = 28; // 56 characters when hex encoded (56 / 2)
+const STATE_RANDOM_RADIX = 36;
+const STATE_SUBSTRING_START = 2;
+const STATE_SUBSTRING_END = 15;
+
+// Converts a decimal number to a 2-character hexadecimal string
 function dec2hex(dec: number): string {
   return dec.toString(16).padStart(2, '0');
 }
 
+// Generates a random high-entropy cryptographically secure string to serve as the code verifier.
+// The code_verifier is a high-entropy cryptographic key that must be kept secret on the client.
 function generateCodeVerifier(): string {
-  const array = new Uint32Array(56 / 2);
+  const array = new Uint32Array(CODE_VERIFIER_BYTE_LENGTH);
   window.crypto.getRandomValues(array);
   return Array.from(array, dec2hex).join('');
 }
 
+// Computes the SHA-256 digest of the plaintext code verifier.
 async function sha256(plain: string): Promise<ArrayBuffer> {
   const encoder = new TextEncoder();
   const data = encoder.encode(plain);
   return window.crypto.subtle.digest('SHA-256', data);
 }
 
+// Encodes an ArrayBuffer using Base64URL encoding (RFC 4648).
+// It replaces '+' with '-', '/' with '_', and strips trailing '=' padding.
 function base64urlencode(a: ArrayBuffer): string {
   let str = '';
   const bytes = new Uint8Array(a);
@@ -46,6 +59,8 @@ function base64urlencode(a: ArrayBuffer): string {
     .replace(/=+$/, '');
 }
 
+// Generates the code challenge by hashing the code verifier with SHA-256 and base64url-encoding the result.
+// This is the S256 code challenge method defined in RFC 7636.
 async function generateCodeChallenge(v: string): Promise<string> {
   const hashed = await sha256(v);
   return base64urlencode(hashed);
@@ -66,12 +81,12 @@ const Login: React.FC = () => {
       const codeChallenge = await generateCodeChallenge(codeVerifier);
       
       // Store code_verifier locally to execute exchange later
-      localStorage.setItem('pkce_code_verifier', codeVerifier);
+      localStorage.setItem(PKCE_VERIFIER_STORAGE_KEY, codeVerifier);
 
       const authBase = getAuthBase();
-      const clientId = 'keys-personal-assist-ui';
-      const redirectUri = `${window.location.origin}/callback`;
-      const state = Math.random().toString(36).substring(2, 15);
+      const clientId = OAUTH_CLIENT_ID;
+      const redirectUri = isElectron ? 'bella-app://callback' : `${window.location.origin}/callback`;
+      const state = Math.random().toString(STATE_RANDOM_RADIX).substring(STATE_SUBSTRING_START, STATE_SUBSTRING_END);
 
       // Build OAuth 2.1 authorization URL
       const authorizeUrl = `${authBase}/oauth/authorize?client_id=${encodeURIComponent(
@@ -84,8 +99,13 @@ const Login: React.FC = () => {
         state
       )}&scope=openid%20profile%20email`;
 
-      // Redirect client browser to central IdP Login Consent Page
-      window.location.href = authorizeUrl;
+      // For Electron desktop apps, open the IdP Login Consent Page in the external system browser.
+      // For web/browser applications, redirect the active browser tab.
+      if (isElectron) {
+        window.open(authorizeUrl);
+      } else {
+        window.location.href = authorizeUrl;
+      }
     } catch (err: any) {
       console.error('SSO Initialization Error:', err);
       toast.error('Failed to initialize SSO authentication flow.');

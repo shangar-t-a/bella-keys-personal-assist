@@ -1,7 +1,27 @@
 import { app, BrowserWindow, shell, nativeImage } from 'electron'
 import path from 'path'
 
+// Register custom protocol handler for Windows/macOS/Linux
+if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient('bella-app', process.execPath, [path.resolve(process.argv[1])])
+    }
+} else {
+    app.setAsDefaultProtocolClient('bella-app')
+}
+
 let mainWindow: BrowserWindow | null = null
+let pendingUrl: string | null = null
+
+// Handle macOS custom protocol activation when app is running or cold-started
+app.on('open-url', (event, url) => {
+    event.preventDefault()
+    if (mainWindow) {
+        mainWindow.webContents.send('oauth-callback', url)
+    } else {
+        pendingUrl = url
+    }
+})
 
 function createWindow(): void {
     const isDev = !!process.env['ELECTRON_RENDERER_URL']
@@ -36,6 +56,24 @@ function createWindow(): void {
         return { action: 'deny' }
     })
 
+    // Handle cold start URL delivery on Windows/Linux
+    const coldStartUrl = process.argv.find((arg) => arg.startsWith('bella-app://'))
+    if (coldStartUrl) {
+        mainWindow.webContents.on('did-finish-load', () => {
+            mainWindow?.webContents.send('oauth-callback', coldStartUrl)
+        })
+    }
+
+    // Handle cold start URL delivery on macOS
+    if (pendingUrl) {
+        mainWindow.webContents.on('did-finish-load', () => {
+            if (pendingUrl) {
+                mainWindow?.webContents.send('oauth-callback', pendingUrl)
+                pendingUrl = null
+            }
+        })
+    }
+
     if (process.env['ELECTRON_RENDERER_URL']) {
         // Dev: electron-vite injects this env var pointing to the Vite dev server
         mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
@@ -54,12 +92,18 @@ const gotSingleInstanceLock = app.requestSingleInstanceLock()
 if (!gotSingleInstanceLock) {
     app.quit()
 } else {
-    app.on('second-instance', () => {
+    app.on('second-instance', (event, commandLine) => {
         if (mainWindow) {
             if (mainWindow.isMinimized()) {
                 mainWindow.restore()
             }
             mainWindow.focus()
+        }
+
+        // Handle custom protocol URL delivery for secondary instances on Windows/Linux
+        const url = commandLine.find((arg) => arg.startsWith('bella-app://'))
+        if (url && mainWindow) {
+            mainWindow.webContents.send('oauth-callback', url)
         }
     })
 

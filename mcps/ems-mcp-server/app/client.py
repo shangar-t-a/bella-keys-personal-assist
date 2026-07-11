@@ -42,12 +42,6 @@ def get_auth_headers() -> dict[str, str]:
             token = f"Bearer {token}"
         return {"Authorization": token}
 
-    dev_token = os.environ.get("DEV_JWT_TOKEN") or os.environ.get("EMS_DEV_TOKEN")
-    if dev_token:
-        if not dev_token.startswith("Bearer "):
-            dev_token = f"Bearer {dev_token}"
-        return {"Authorization": dev_token}
-
     return {}
 
 

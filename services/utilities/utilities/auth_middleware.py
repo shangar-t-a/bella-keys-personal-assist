@@ -47,7 +47,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             return JSONResponse(status_code=500, content={"detail": "JWT_SECRET is not configured on this service"})
 
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=["HS256"])
+            payload = jwt.decode(token, self.secret_key, algorithms=["HS256"], options={"verify_aud": False})
             # Attach user info to request state
             request.state.user = payload
         except JWTError:

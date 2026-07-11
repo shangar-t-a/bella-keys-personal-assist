@@ -16,6 +16,7 @@ VALID_CLIENTS = {
         "redirect_uris": [
             "http://localhost:3000/callback",
             "http://127.0.0.1:3000/callback",
+            "bella-app://callback",
         ],
         "public": True,
     },

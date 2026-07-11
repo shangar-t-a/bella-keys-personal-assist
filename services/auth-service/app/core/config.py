@@ -17,6 +17,8 @@ class AuthSettings(BaseSettings):
     JWT_SECRET: SecretStr = SecretStr("super_secret_dev_key_change_me_in_prod")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    OAUTH_CODE_EXPIRE_MINUTES: int = 5
+    DEFAULT_RESOURCE_AUDIENCE: str = "http://localhost:8001"
 
     DATABASE_URL: SecretStr = SecretStr("postgresql+asyncpg://postgres:postgres@localhost:5432/bella_keys")
     LOG_DB_QUERIES: bool = False

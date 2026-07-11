@@ -78,7 +78,7 @@ Use the MCP Inspector to verify tool behaviors via HTTP/SSE. Since the downstrea
      ```
 
 2. **Obtain a JWT token:**
-   Register or log in to the Auth Service (running on port `8002`) via the main application UI or by using curl to `/login`.
+   Register or log in to the Auth Service (running on port `8002`) via the main application UI authentication flow.
 
 3. **Start the MCP Inspector:**
    Run the inspector in proxy-only mode (without any server command arguments):

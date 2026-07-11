@@ -33,6 +33,7 @@ if config.config_file_name is not None:
 # Target Metadata for autogenerate
 target_metadata = Base.metadata
 
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")

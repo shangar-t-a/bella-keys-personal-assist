@@ -3,6 +3,8 @@
 import contextlib
 from datetime import datetime, UTC, timedelta
 import os
+from typing import Any
+import uuid
 
 from fastapi import (
     APIRouter,
@@ -38,17 +40,28 @@ from app.services.oauth import (
 
 router = APIRouter()
 
+SECONDS_PER_MINUTE = 60
+
 # Initialize templates folder relative to this file
-TEMPLATES_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "templates"
-)
+TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "templates")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 @router.get("/.well-known/oauth-authorization-server")
 @router.get("/.well-known/openid-configuration")
-async def oauth_metadata(request: Request):
-    """Serve metadata configuration for OAuth 2.1 / OIDC discovery."""
+async def oauth_metadata(request: Request) -> dict[str, Any]:
+    """Serve metadata configuration for OAuth 2.1 / OIDC discovery.
+
+    Complies with OAuth 2.0 Authorization Server Metadata (RFC 8414) and OpenID
+    Connect Discovery 1.0 specifications.
+
+    Args:
+        request: The incoming FastAPI Request object to construct base URLs.
+
+    Returns:
+        A dictionary containing OAuth 2.1 metadata endpoints, scopes,
+        grant types, and token signature algorithms supported by this server.
+    """
     base_url = f"{request.url.scheme}://{request.url.netloc}"
     return {
         "issuer": base_url,
@@ -69,16 +82,24 @@ async def oauth_metadata(request: Request):
 async def oauth_authorize_get(
     request: Request,
     params: OAuthAuthorizeParams = Depends(),
-):
-    """Render the OAuth 2.1 login and consent form."""
+) -> HTMLResponse:
+    """Render the OAuth 2.1 login and consent form.
+
+    Validates the client identity and redirect URI, then presents the login
+    consent HTML page with the requested authorization details (PKCE, state, scopes, etc.).
+
+    Args:
+        request: The incoming FastAPI Request object.
+        params: The dependency injected OAuth 2.1 authorization query parameters
+            containing client_id, redirect_uri, code_challenge, and code_challenge_method.
+
+    Returns:
+        An HTMLResponse rendering the authorize/consent page context.
+    """
     # Strict validation of client ID and redirect URI
     validate_client(params.client_id, params.redirect_uri)
 
-    client_name = (
-        params.client_id.rsplit("/", 1)[-1]
-        if "/" in params.client_id
-        else params.client_id
-    )
+    client_name = params.client_id.rsplit("/", 1)[-1] if "/" in params.client_id else params.client_id
     if client_name.endswith(".json"):
         client_name = client_name[:-5]
 
@@ -106,22 +127,34 @@ async def oauth_authorize_post(
     response: Response,
     form: OAuthAuthorizeForm = Depends(),
     db: AsyncSession = Depends(get_db),
-):
-    """Authenticate credentials and redirect back with authorization code."""
+) -> Response:
+    """Authenticate credentials and redirect back with authorization code.
+
+    Performs strict validation of credentials and client details. Upon successful
+    authentication, generates a temporary authorization code bound to the PKCE
+    challenge, establishes a long-term session via an HttpOnly refresh token cookie,
+    and returns a 303 Redirect back to the client callback URI.
+
+    Args:
+        request: The incoming FastAPI Request object.
+        response: The outgoing FastAPI Response object used to set HttpOnly cookies.
+        form: Form data containing credentials, client_id, redirect_uri,
+            and PKCE parameters.
+        db: The asynchronous database session.
+
+    Returns:
+        A RedirectResponse back to client redirect_uri with the code,
+        or an HTMLResponse containing the authorization/login form with error messages
+        on validation failure.
+    """
     # Strict validation of client ID and redirect URI
     validate_client(form.client_id, form.redirect_uri)
 
-    client_name = (
-        form.client_id.rsplit("/", 1)[-1]
-        if "/" in form.client_id
-        else form.client_id
-    )
+    client_name = form.client_id.rsplit("/", 1)[-1] if "/" in form.client_id else form.client_id
     if client_name.endswith(".json"):
         client_name = client_name[:-5]
 
-    result = await db.execute(
-        select(User).where(User.username == form.username)
-    )
+    result = await db.execute(select(User).where(User.username == form.username))
     user = result.scalars().first()
 
     if not user or not verify_password(form.password, user.password_hash):
@@ -161,7 +194,14 @@ async def oauth_authorize_post(
     )
 
     # Generate refresh token to establish session (for React/Electron silent refresh compatibility)
-    refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
+    rt_payload = {
+        "sub": user.username,
+        "role": user.role,
+        "client_id": form.client_id,
+        "scope": form.scope or "",
+        "aud": form.resource or get_settings().DEFAULT_RESOURCE_AUDIENCE,
+    }
+    refresh_token = create_refresh_token(data=rt_payload)
     new_rt = RefreshToken(
         token=refresh_token,
         user_id=user.id,
@@ -180,12 +220,7 @@ async def oauth_authorize_post(
     # Set refresh token in HttpOnly cookie on client response
     secure_flag = request.url.scheme == "https"
     redirect_response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=secure_flag,
-        samesite="lax",
-        path="/"
+        key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
     )
 
     return redirect_response
@@ -196,8 +231,23 @@ async def oauth_token(
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
-):
-    """Exchange authorization code for JWT access token with target resource indicator binding."""
+) -> dict[str, Any]:
+    """Exchange authorization code for JWT access token with target resource indicator binding.
+
+    Implements the token endpoint of the OAuth 2.1 authorization code flow. Validates
+    the client request, performs PKCE verifier validation (RFC 7636), consumes the
+    temporary code (replay protection), issues a target-bounded access token (RFC 8707),
+    optionally generates an OIDC ID token, and rotates the refresh token cookie.
+
+    Args:
+        request: The incoming FastAPI Request object containing request payload.
+        response: The outgoing FastAPI Response object used to update cookies.
+        db: The asynchronous database session.
+
+    Returns:
+        A dictionary containing access_token, token_type, expires_in, and optional
+        id_token / refresh_token parameters.
+    """
     await prune_expired_codes(db)
 
     # Attempt to handle both form-urlencoded and JSON bodies
@@ -212,12 +262,8 @@ async def oauth_token(
     grant_type = form_data.get("grant_type") or json_data.get("grant_type")
     code = form_data.get("code") or json_data.get("code")
     client_id = form_data.get("client_id") or json_data.get("client_id")
-    redirect_uri = (
-        form_data.get("redirect_uri") or json_data.get("redirect_uri")
-    )
-    code_verifier = (
-        form_data.get("code_verifier") or json_data.get("code_verifier")
-    )
+    redirect_uri = form_data.get("redirect_uri") or json_data.get("redirect_uri")
+    code_verifier = form_data.get("code_verifier") or json_data.get("code_verifier")
     req_resource = form_data.get("resource") or json_data.get("resource")
 
     if grant_type != "authorization_code":
@@ -239,28 +285,29 @@ async def oauth_token(
     )
 
     # Bind token to target audience resource indicator (RFC 8707)
-    target_resource = (
-        db_code.resource or req_resource or "http://localhost:8001"
-    )
+    target_resource = db_code.resource or req_resource or get_settings().DEFAULT_RESOURCE_AUDIENCE
 
     token_data = {
+        "iss": f"{request.url.scheme}://{request.url.netloc}",
         "sub": db_code.username,
-        "role": db_code.role,
-        "client_id": client_id,
         "aud": target_resource,
+        "client_id": client_id,
+        "iat": datetime.now(UTC),
+        "nbf": datetime.now(UTC),
+        "jti": uuid.uuid4().hex,
+        "scope": db_code.scope or "",
+        "role": db_code.role,
     }
 
     access_token = create_access_token(data=token_data)
     response_data = {
         "access_token": access_token,
         "token_type": "Bearer",
-        "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * SECONDS_PER_MINUTE,
     }
 
     # Generate standard OIDC ID token if openid scope is requested
-    requested_scopes = [
-        s.strip() for s in (db_code.scope or "").split() if s.strip()
-    ]
+    requested_scopes = [s.strip() for s in (db_code.scope or "").split() if s.strip()]
     if "openid" in requested_scopes:
         id_token_payload = {
             "iss": f"{request.url.scheme}://{request.url.netloc}",
@@ -276,7 +323,14 @@ async def oauth_token(
     result = await db.execute(select(User).where(User.username == db_code.username))
     user = result.scalars().first()
     if user and isinstance(user, User):
-        refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
+        rt_payload = {
+            "sub": user.username,
+            "role": user.role,
+            "client_id": client_id,
+            "scope": db_code.scope or "",
+            "aud": target_resource,
+        }
+        refresh_token = create_refresh_token(data=rt_payload)
         expires_days = get_settings().REFRESH_TOKEN_EXPIRE_DAYS
         new_rt = RefreshToken(
             token=refresh_token,
@@ -289,12 +343,7 @@ async def oauth_token(
         # Set refresh token in HttpOnly cookie on client response
         secure_flag = request.url.scheme == "https"
         response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=secure_flag,
-            samesite="lax",
-            path="/"
+            key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
         )
         response_data["refresh_token"] = refresh_token
 
@@ -302,8 +351,19 @@ async def oauth_token(
 
 
 @router.get("/oauth/userinfo")
-async def oauth_userinfo(request: Request, db: AsyncSession = Depends(get_db)):
-    """Serve the standard OIDC UserInfo endpoint returning user profile claims."""
+async def oauth_userinfo(request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Serve the standard OIDC UserInfo endpoint returning user profile claims.
+
+    Authenticates the incoming Bearer access token, decodes the JWT payload,
+    validates user presence, and returns claims (subject, role).
+
+    Args:
+        request: The incoming FastAPI Request object containing authorization headers.
+        db: The asynchronous database session.
+
+    Returns:
+        A dictionary containing standard subject ('sub') and 'role' profile claims.
+    """
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(
@@ -332,9 +392,7 @@ async def oauth_userinfo(request: Request, db: AsyncSession = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    result = await db.execute(
-        select(User).where(User.username == username)
-    )
+    result = await db.execute(select(User).where(User.username == username))
     user = result.scalars().first()
     if not user:
         raise HTTPException(

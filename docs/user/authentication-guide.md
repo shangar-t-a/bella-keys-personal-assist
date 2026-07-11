@@ -1,14 +1,14 @@
 # Authentication Guide
 
-Bella Keys uses a centralized Single Sign-On (SSO) authentication system designed to keep your data secure on your own device. When you step away, your personal assistant remains locked and protected.
+Bella Keys uses a centralized Single Sign-On (SSO) authentication system designed to keep your data secure on your own device. When you log out, your personal assistant session is terminated and remains protected.
 
 ## Logging In
 
 1. Open Bella Keys.
-2. At the **Lock Screen**, click **Sign In with SSO**.
-3. You will be redirected to the central **Bella Keys login & authorization page**.
+2. At the **Login Screen**, click **Sign In with SSO**.
+3. You will be redirected to the central **Bella Keys login & authorization page** (if running the desktop app, this page will open in your default system browser).
 4. Enter your Master Username and Password, and click **Authorize**.
-5. Once authorized, you will be securely redirected back to the application dashboard.
+5. Once authorized, you will be redirected back to the application. If using the desktop app, your browser will prompt you to open the link in the "Bella Keys" app (using the `bella-app://` custom protocol) which will log you in and show the dashboard.
 
 *Note: Your credentials are only stored locally on your machine. They are never sent to a cloud server.*
 
@@ -16,17 +16,17 @@ Bella Keys uses a centralized Single Sign-On (SSO) authentication system designe
 
 To ensure your data remains secure:
 
-- **Automatic Lock:** Your active session securely expires after **1 hour** of inactivity.
+- **Automatic Session Expiration:** Your active session securely expires after **1 hour** of inactivity, logging you out of the application.
 - **Silent Refresh:** If you are actively using the application, Bella Keys will silently refresh your session in the background using HttpOnly cookies so you are not repeatedly asked for your password.
 - **Full Expiration:** If the app is closed or inactive for **7 days**, your background session token fully expires. On your next visit, you will need to log in again.
 
-## Locking the App Manually
+## Logging Out Manually
 
-If you need to leave your computer and want to secure Bella Keys immediately:
+If you need to leave your computer and want to end your session immediately:
 
-1. Locate the sidebar menu.
-2. Click **Lock App**.
-3. You will immediately be returned to the Lock Screen, requiring a password for the next access.
+1. Click on your profile menu in the bottom-left sidebar corner.
+2. Click **Log Out**.
+3. You will immediately be logged out and returned to the Login Screen, requiring you to sign in again for subsequent access.
 
 ## Authentication Flow Diagram
 
@@ -56,7 +56,7 @@ sequenceDiagram
     Auth->>Auth: Verify PKCE verifier against code_challenge
     Auth->>DB: Consume & delete temporary code
     Auth-->>UI: Return Access Token & set HttpOnly Refresh Cookie
-    UI-->>User: Unlock App & show Dashboard
+    UI-->>User: Authenticate & show Dashboard
 
     Note over User, DB: 2. Accessing Protected Resources
     UI->>API: API Request (Authorization: Bearer <access_token>)
@@ -77,4 +77,3 @@ sequenceDiagram
     API-->>UI: Protected Data Response
     UI-->>User: Update UI
 ```
-

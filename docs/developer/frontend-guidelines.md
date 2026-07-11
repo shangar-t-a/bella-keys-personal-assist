@@ -30,7 +30,7 @@ const response = await fetch(`${emsBase}/assets`, {
 
 1. Always attempt a silent refresh by calling `/refresh` with credentials included (the browser automatically transmits the `refresh_token` cookie).
 2. On success: store the new access token in the in-memory `tokenStore`, and update the React `AuthContext` state.
-3. On authentication failure (e.g. cookie expired, missing, or revoked): trigger `logout()` immediately to return to the Lock Screen.
+3. On authentication failure (e.g. cookie expired, missing, or revoked): trigger `logout()` immediately to return to the Login Screen.
 4. On network connectivity failure (e.g. offline): log the connection error but do not log the user out.
 
 ### Cross-Layer Auth Sync
