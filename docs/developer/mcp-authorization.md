@@ -116,3 +116,114 @@ To ensure robust security and defense against Cross-Site Scripting (XSS) and tok
    - The desktop app registers this protocol with the OS on startup using `app.setAsDefaultProtocolClient('bella-app')`.
    - Once authorized, the system browser redirects to the custom protocol URL, triggering the app's `open-url` (macOS) or `second-instance` (Windows/Linux) listeners.
    - The main process sends this URL to the React frontend via IPC (`oauth-callback` event), which parses the code and state, and navigates to the callback page to finalize login.
+
+---
+
+## 5. Scopes, Roles & Token Anatomy
+
+### Roles
+
+Roles are set at account creation time and stored on the `users` table (`role` column). Every issued JWT embeds the user's role in the `role` claim. Roles control **who** can act in the system.
+
+| Role | Description |
+|---|---|
+| `user` | Default role for all authenticated users. Full access to their own data. |
+| `admin` | Reserved for future admin tooling. Not used by any route today. |
+
+Roles are **not** scope-equivalents. A `user` can hold any granted scope; roles exist as a separate authorization axis for future RBAC expansion.
+
+---
+
+### Scopes
+
+Scopes control **what** the token is permitted to do against a specific resource service. They follow the `<bella-service>:<action>` naming convention and are registered in `services/auth-service/app/core/scopes.py`.
+
+#### Registered Scope Set
+
+| Scope | Service | Meaning |
+|---|---|---|
+| `openid` | Auth Service (OIDC) | Include identity claims; triggers ID token issuance |
+| `profile` | Auth Service (OIDC) | Read the user's name and profile claims |
+| `email` | Auth Service (OIDC) | Read the user's email address |
+| `bella-ems:read` | Expense Manager Service | Read-only access to all EMS resources (accounts, entries, periods, assets, liabilities, wealth) |
+| `bella-ems:write` | Expense Manager Service | Write access to EMS resources (create, update, delete) |
+| `bella-chat:read` | Bella Chat Service | Read-only access to chat resources (history, sessions) |
+| `bella-chat:write` | Bella Chat Service | Send messages and manage chat sessions on behalf of the user |
+
+> `bella-ems:write` and `bella-chat:write` cover create, update, and delete — matching the GitHub/Stripe convention. There is no separate `:delete` scope.
+
+#### Per-Client Allowed Scopes
+
+Each registered client is limited to a maximum set of scopes defined in `CLIENT_ALLOWED_SCOPES` in `scopes.py`. The auth server silently drops any requested scope outside this set before issuing the authorization code.
+
+| Client | Allowed Scopes |
+|---|---|
+| `keys-personal-assist-ui` | All scopes (openid, profile, email, bella-ems:read/write, bella-chat:read/write) |
+| `ems-mcp-server` | bella-ems:read, bella-ems:write |
+
+#### How Scopes Are Granted
+
+Scopes are **not stored in the database**. They flow through the authorization code record and are embedded as a space-separated string in the `scope` claim of the issued JWT.
+
+1. Client requests scopes via the `scope` query parameter on `/oauth/authorize`.
+2. Auth server intersects requested scopes with the client's allowed set (`filter_scopes()`).
+3. The filtered scope string is stored in the `oauth_authorization_codes` DB record.
+4. At `/oauth/token`, the scope string from the code record is embedded directly into the JWT.
+
+---
+
+### JWT Token Anatomy
+
+Every access token issued by the auth service is a signed HS256 JWT with the following claims:
+
+| Claim | Type | Description |
+|---|---|---|
+| `iss` | string | Issuer — the base URL of the auth service (e.g. `http://localhost:8002`) |
+| `sub` | string | Subject — the authenticated username |
+| `aud` | string | Audience — the target resource server URL (e.g. `http://localhost:8001`) |
+| `iat` | integer | Issued At — Unix timestamp of token creation |
+| `nbf` | integer | Not Before — Unix timestamp before which the token is invalid |
+| `jti` | string | JWT ID — unique hex UUID for this token (prevents replay) |
+| `scope` | string | Space-separated list of granted scopes |
+| `role` | string | User role (`user` or `admin`) |
+| `client_id` | string | The OAuth client that initiated the authorization |
+
+---
+
+### Scope Enforcement Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant MW as JWTAuthMiddleware
+    participant SG as Scope Guard (require_scope)
+    participant H as Route Handler
+
+    C->>MW: Request with Authorization: Bearer <token>
+    MW->>MW: Verify token signature & expiry (HS256)
+    alt Token invalid
+        MW-->>C: 401 Unauthorized
+    else Token valid
+        MW->>MW: Attach payload to request.state.user
+        MW->>SG: Forward request
+        SG->>SG: Parse scope claim from request.state.user
+        alt Required scopes missing
+            SG-->>C: 403 insufficient_scope
+        else All required scopes present
+            SG->>H: Forward request
+            H-->>C: 200 OK + response data
+        end
+    end
+```
+
+---
+
+### Adding Scopes for New Services
+
+To add scopes for a new resource service:
+
+1. Add the scope strings to `VALID_SCOPES` in `services/auth-service/app/core/scopes.py`.
+2. Add the client allowed scope entries to `CLIENT_ALLOWED_SCOPES`.
+3. Create a `scope_guard` dependency in the new service's router using `require_scope()` from `utilities.scope_guard`.
+4. Update `scopes_supported` in the `/.well-known` metadata — this is automatic since it reads from `VALID_SCOPES`.
+5. Update this document and the user-facing `authentication-guide.md` with the new scope description.

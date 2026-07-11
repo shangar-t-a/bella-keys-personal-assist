@@ -136,6 +136,38 @@
             padding: 8px;
             border-radius: 6px;
         }
+        .permissions {
+            text-align: left;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            padding: 14px 16px;
+            background: rgba(16, 140, 198, 0.05);
+        }
+        .permissions-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #9ca3af;
+            margin-bottom: 10px;
+        }
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #d1d5db;
+            padding: 4px 0;
+        }
+        .permission-item::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #108cc6;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -150,7 +182,23 @@
         <div class="brand-sub">Personal Assistant Platform</div>
         
         <p>Authorize <span class="client-name">{{ client_name }}</span> to access your resources</p>
-        
+
+        {% if scope %}
+        <div class="permissions">
+            <div class="permissions-title">Permissions requested</div>
+            {% for s in scope.split() %}
+                {% if s == 'openid' %}<div class="permission-item">Verify your identity</div>
+                {% elif s == 'profile' %}<div class="permission-item">Read your name and profile</div>
+                {% elif s == 'email' %}<div class="permission-item">Read your email address</div>
+                {% elif s == 'bella-ems:read' %}<div class="permission-item">View your expense data</div>
+                {% elif s == 'bella-ems:write' %}<div class="permission-item">Manage your expenses</div>
+                {% elif s == 'bella-chat:read' %}<div class="permission-item">View your chat history</div>
+                {% elif s == 'bella-chat:write' %}<div class="permission-item">Send messages on your behalf</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <form method="POST" action="">
             <input type="hidden" name="client_id" value="{{ client_id }}">
             <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
