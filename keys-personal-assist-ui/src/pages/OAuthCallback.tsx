@@ -34,12 +34,16 @@ const OAuthCallback: React.FC = () => {
 
       try {
         const authBase = getAuthBase();
+        // We pass withCredentials: true so that the browser or Electron client will accept and save
+        // the HttpOnly refresh_token cookie returned by the cross-origin Auth Service.
         const response = await axios.post(`${authBase}/oauth/token`, {
           grant_type: 'authorization_code',
           code,
           client_id: OAUTH_CLIENT_ID,
           redirect_uri: isElectron ? 'bella-app://callback' : `${window.location.origin}/callback`,
           code_verifier: codeVerifier,
+        }, {
+          withCredentials: true,
         });
 
         const { access_token } = response.data;

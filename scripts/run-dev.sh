@@ -119,6 +119,17 @@ case "$CHOICE" in
         cd "$UI_DIR"
         node "$REPO_ROOT/scripts/electron/setup-electron.js"
         npm run dev:electron
+
+        # On Windows/Bash environments, launching the Electron GUI window detaches the process immediately.
+        # This causes this script to think execution is complete, exiting and triggering the EXIT/cleanup trap,
+        # which shuts down the backend Docker containers prematurely.
+        # We block here with a read prompt to keep the containers running while the desktop app is active.
+        echo ""
+        echo "========================================================"
+        echo " Electron app is running in development mode."
+        echo " Press [Enter] to shut down backend services and exit."
+        echo "========================================================"
+        read -r
         ;;
     "backend-only")
         echo "Starting backend services ($SERVICE_LABEL)..."

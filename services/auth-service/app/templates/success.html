@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Successful</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            max-width: 480px;
+            padding: 40px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #38bdf8;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            background-color: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #7dd3fc;
+        }
+    </style>
+    <script>
+        window.onload = function() {
+            const redirectUrl = "{{ redirect_url }}";
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Authentication Successful</h1>
+        <p>You have successfully logged in. You can now close this browser tab and return to the Bella Keys desktop application.</p>
+        <a href="{{ redirect_url }}" class="btn">Return to Desktop App</a>
+    </div>
+</body>
+</html>

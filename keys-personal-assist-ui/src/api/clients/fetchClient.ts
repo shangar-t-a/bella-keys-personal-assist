@@ -1,4 +1,4 @@
-import { getAuthBase } from '../config';
+import { getAuthBase, isElectron } from '../config';
 import { getAccessToken, setAccessToken } from '../tokenStore';
 
 /**
@@ -95,7 +95,10 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
         
         // Redirect to login page unless we are already on it (handling both BrowserRouter and HashRouter paths)
         if (window.location.pathname !== '/login' && window.location.hash !== '#/login') {
-          if (import.meta.env.VITE_APP_ENV === 'electron') {
+          // Electron uses HashRouter where all routes are prefix-mapped under '#/'.
+          // Redirecting via pathname (window.location.href) changes the base URL index structure and breaks
+          // subsequent hash routing navigation. We must use window.location.hash for Electron redirects.
+          if (isElectron) {
             window.location.hash = '#/login';
           } else if (window.location.hash.startsWith('#/')) {
             window.location.hash = '#/login';

@@ -214,16 +214,28 @@ async def oauth_authorize_post(
     if form.state:
         redirect_url += f"&state={form.state}"
 
-    # Use 303 Redirect so the browser redirects using GET request
-    redirect_response = RedirectResponse(url=redirect_url, status_code=303)
-
-    # Set refresh token in HttpOnly cookie on client response
     secure_flag = request.url.scheme == "https"
-    redirect_response.set_cookie(
-        key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
-    )
 
-    return redirect_response
+    # HTTP/HTTPS redirect URIs indicate web-based clients; we can redirect directly using a 303 response.
+    # Custom protocols (like bella-app://) are native desktop clients; redirecting raw schemes causes
+    # browsers to display a blank/broken window. Instead, we render a successful login HTML landing page
+    # that prompts the user to close the tab and triggers the deep-link automatically via JavaScript.
+    if form.redirect_uri.startswith("http://") or form.redirect_uri.startswith("https://"):
+        redirect_response = RedirectResponse(url=redirect_url, status_code=303)
+        redirect_response.set_cookie(
+            key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
+        )
+        return redirect_response
+    else:
+        success_response = templates.TemplateResponse(
+            request=request,
+            name="success.html",
+            context={"redirect_url": redirect_url},
+        )
+        success_response.set_cookie(
+            key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
+        )
+        return success_response
 
 
 @router.post("/oauth/token")

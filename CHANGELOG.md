@@ -48,6 +48,7 @@ Changes under each header must be grouped into the following categories:
 
 ### Fixed
 
+- Added manual CORS headers dynamically to raw responses returned from `JWTAuthMiddleware` (e.g. 401 Unauthorized errors) to prevent browser and Electron preflight blockages during cross-origin API operations.
 - Added `verify_aud: False` option in `JWTAuthMiddleware` decryption step to prevent generic token verification claims failures across distributed services.
 
 ---

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAuthBase } from './config';
+import { getAuthBase, isElectron } from './config';
 import { getAccessToken, setAccessToken } from './tokenStore';
 
 // Create an Axios instance
@@ -50,8 +50,10 @@ api.interceptors.response.use(
         // If refresh fails (e.g. refresh token expired), clear everything and redirect
         setAccessToken(null);
         localStorage.removeItem('refresh_token');
-        // Force reload or redirect to login (can be handled better via React Router, but this is a fail-safe)
-        if (import.meta.env.VITE_APP_ENV === 'electron') {
+        // Electron uses HashRouter where all routes are prefix-mapped under '#/'.
+        // Redirecting via pathname (window.location.href) changes the base URL index structure and breaks
+        // subsequent hash routing navigation. We must use window.location.hash for Electron redirects.
+        if (isElectron) {
           window.location.hash = '#/login';
         } else {
           window.location.href = '/login';
