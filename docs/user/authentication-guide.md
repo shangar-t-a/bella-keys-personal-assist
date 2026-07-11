@@ -77,3 +77,25 @@ sequenceDiagram
     API-->>UI: Protected Data Response
     UI-->>User: Update UI
 ```
+
+## Permissions
+
+When you log in for the first time, you will see a list of **Permissions Requested** on the authorization screen before entering your credentials. This tells you exactly what the app is being allowed to do on your behalf.
+
+### What each permission means
+
+| Permission shown | What it does |
+|---|---|
+| Verify your identity | Confirms who you are so the app can personalise your experience |
+| Read your name and profile | Displays your name in the app interface |
+| Read your email address | Associates your email with your session |
+| View your expense data | Lets the app read your spending accounts, entries, savings buckets, and wealth summary |
+| Manage your expenses | Lets the app create, update, and delete expense records on your behalf |
+| View your chat history | Lets the app display your past AI assistant conversations |
+| Send messages on your behalf | Lets the app send queries to the Bella AI assistant |
+
+### Important notes
+
+- **All data stays on your device.** Bella Keys runs entirely locally — your data is never sent to a cloud server.
+- **These permissions apply only to this app.** No external service can use these permissions.
+- **You can revoke access at any time** by logging out. On your next login you will be shown the consent screen again.

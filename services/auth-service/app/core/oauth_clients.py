@@ -2,6 +2,8 @@
 
 from fastapi import HTTPException, status
 
+from app.core.scopes import CLIENT_ALLOWED_SCOPES
+
 VALID_CLIENTS = {
     "ems-mcp-server": {
         "client_name": "EMS MCP Server",
@@ -10,6 +12,8 @@ VALID_CLIENTS = {
             "http://127.0.0.1:8001/callback",
         ],
         "public": True,
+        # Allowed scopes are defined centrally in scopes.py and referenced here for discoverability.
+        "allowed_scopes": CLIENT_ALLOWED_SCOPES["ems-mcp-server"],
     },
     "keys-personal-assist-ui": {
         "client_name": "Bella Keys Personal Assist UI",
@@ -19,6 +23,8 @@ VALID_CLIENTS = {
             "bella-app://callback",
         ],
         "public": True,
+        # Allowed scopes are defined centrally in scopes.py and referenced here for discoverability.
+        "allowed_scopes": CLIENT_ALLOWED_SCOPES["keys-personal-assist-ui"],
     },
 }
 

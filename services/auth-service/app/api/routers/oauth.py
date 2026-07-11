@@ -21,6 +21,7 @@ from sqlalchemy.future import select
 
 from app.core.config import get_settings
 from app.core.oauth_clients import validate_client
+from app.core.scopes import VALID_SCOPES, filter_scopes
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -71,7 +72,7 @@ async def oauth_metadata(request: Request) -> dict[str, Any]:
         "response_types_supported": ["code"],
         "grant_types_supported": ["authorization_code"],
         "code_challenge_methods_supported": ["S256"],
-        "scopes_supported": ["openid", "profile", "email"],
+        "scopes_supported": sorted(VALID_SCOPES),
         "subject_types_supported": ["public"],
         "id_token_signing_alg_values_supported": ["HS256"],
         "client_id_metadata_document_supported": True,
@@ -180,6 +181,10 @@ async def oauth_authorize_post(
     # Evict expired authorization codes to prevent database bloat
     await prune_expired_codes(db)
 
+    # Filter the requested scopes against what this client is permitted to receive.
+    # Any scope not in the client's allowed set is silently dropped (OAuth 2.1 best practice).
+    validated_scope = filter_scopes(form.client_id, form.scope or "")
+
     # Generate and persist temporary authorization code in DB
     code = await create_authorization_code(
         db=db,
@@ -190,7 +195,7 @@ async def oauth_authorize_post(
         username=form.username,
         role=user.role,
         resource=form.resource,
-        scope=form.scope,
+        scope=validated_scope,
     )
 
     # Generate refresh token to establish session (for React/Electron silent refresh compatibility)

@@ -97,7 +97,7 @@ const Login: React.FC = () => {
         codeChallenge
       )}&code_challenge_method=S256&state=${encodeURIComponent(
         state
-      )}&scope=openid%20profile%20email`;
+      )}&scope=openid%20profile%20email%20bella-ems%3Aread%20bella-ems%3Awrite%20bella-chat%3Aread%20bella-chat%3Awrite`;
 
       // For Electron desktop apps, open the IdP Login Consent Page in the external system browser.
       // For web/browser applications, redirect the active browser tab.

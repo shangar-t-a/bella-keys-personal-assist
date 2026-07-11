@@ -71,8 +71,11 @@ async def init_and_drop_db(patch_settings):
 @pytest_asyncio.fixture(scope="session")
 async def client(patch_settings, init_and_drop_db) -> AsyncClient:
     """Provide an httpx AsyncClient wired to the FastAPI app."""
-    # Generate a mock JWT token using the configured secret key
-    token = jwt.encode({"sub": "test_user"}, "test_secret_for_integration_testing", algorithm="HS256")
+    token = jwt.encode(
+        {"sub": "test_user", "scope": "bella-ems:read bella-ems:write"},
+        "test_secret_for_integration_testing",
+        algorithm="HS256",
+    )
     headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", headers=headers) as ac:
         yield ac

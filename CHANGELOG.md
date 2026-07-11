@@ -28,6 +28,50 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [expense-manager-service@1.6.0] - 2026-07-11
+
+### Changed
+
+- Integrated scope-based access controls enforcing the `bella-ems:read` scope dynamically on all v1 router endpoints.
+
+### Fixed
+
+- Updated integration test client token generator to inject valid `"scope"` claims, resolving all integration test failures under scope enforcement.
+
+---
+
+## [bella-chat-service@1.1.0] - 2026-07-11
+
+### Changed
+
+- Integrated scope-based access controls enforcing the `bella-chat:write` scope dynamically on all message endpoints.
+
+---
+
+## [utilities@1.1.0] - 2026-07-11
+
+### Added
+
+- Added reusable FastAPI scope enforcement dependency guard `require_scope` under `utilities.scope_guard` to perform authorization checks against JWT scope claims.
+
+---
+
+## [keys-personal-assist-ui@1.9.0] - 2026-07-11
+
+### Changed
+
+- Updated authentication client configuration to request full resource scopes (`openid`, `profile`, `email`, `bella-ems:read`, `bella-ems:write`, `bella-chat:read`, `bella-chat:write`) during login authorization.
+
+---
+
+## [auth-service@2.1.0] - 2026-07-11
+
+### Added
+
+- Introduced centralized scope registry `scopes.py` and integrated scope filtering / validation at authorization time.
+
+---
+
 ## [expense-manager-service@1.5.3] - 2026-07-11
 
 ### Changed

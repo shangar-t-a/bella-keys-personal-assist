@@ -119,7 +119,7 @@ requires-dist = [
     { name = "sentence-transformers", marker = "extra == 'local-llm'", specifier = ">=5.1.1" },
     { name = "torch", marker = "extra == 'local-llm'", specifier = ">=2.9.1", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torchvision", marker = "extra == 'local-llm'", specifier = ">=0.24.1", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "utilities", path = "py_dependencies/utilities-1.0.1-py3-none-any.whl" },
+    { name = "utilities", path = "py_dependencies/utilities-1.1.0-py3-none-any.whl" },
     { name = "uvicorn", specifier = ">=0.37.0" },
 ]
 provides-extras = ["local-llm"]
@@ -2685,15 +2685,15 @@ wheels = [
 
 [[package]]
 name = "utilities"
-version = "1.0.1"
-source = { path = "py_dependencies/utilities-1.0.1-py3-none-any.whl" }
+version = "1.1.0"
+source = { path = "py_dependencies/utilities-1.1.0-py3-none-any.whl" }
 dependencies = [
     { name = "fastapi" },
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
 ]
 wheels = [
-    { filename = "utilities-1.0.1-py3-none-any.whl", hash = "sha256:b10b08be3a11a7e322490ea4e04bef83da1174ec8ab250d2fda4ea6abe613745" },
+    { filename = "utilities-1.1.0-py3-none-any.whl", hash = "sha256:6799a2357abd9788d4f5ce1ee90c507b9073ef479d8527bc8e62b27885802be3" },
 ]
 
 [package.metadata]
