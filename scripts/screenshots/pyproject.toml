@@ -6,6 +6,8 @@ requires-python = ">=3.13"
 dependencies = [
     "playwright>=1.45",
     "python-dotenv>=1.0",
+    "sqlalchemy>=2.0",
+    "asyncpg>=0.29",
 ]
 
 [dependency-groups]
