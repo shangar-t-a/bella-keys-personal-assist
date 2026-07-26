@@ -87,13 +87,19 @@ async def mcp_lifespan(server: FastMCP) -> AsyncIterator[None]:
 
 # Setup Auth Providers
 settings = get_settings()
-verifier = EMSTokenVerifier()
-auth_provider = RemoteAuthProvider(
-    token_verifier=verifier,
-    authorization_servers=[settings.AUTH_SERVICE_URL],
-    base_url=settings.BASE_URL,
-    resource_name="EMS MCP Server",
-)
+disable_auth = os.environ.get("DISABLE_MCP_AUTH", "false").lower() == "true"
+
+if disable_auth:
+    logger.info("Authentication is DISABLED for EMS MCP Server")
+    auth_provider = None
+else:
+    verifier = EMSTokenVerifier()
+    auth_provider = RemoteAuthProvider(
+        token_verifier=verifier,
+        authorization_servers=[settings.AUTH_SERVICE_URL],
+        base_url=settings.BASE_URL,
+        resource_name="EMS MCP Server",
+    )
 
 mcp = FastMCP(
     name="ems-mcp-server",

@@ -140,6 +140,7 @@ services:
       - EMS_BASE_URL=${EMS_MCP_EMS_BASE_URL:-http://ems:8000}
       - AUTH_SERVICE_URL=${EMS_MCP_AUTH_SERVICE_URL:-http://auth-service:8002}
       - JWT_SECRET=${JWT_SECRET}
+      - DISABLE_MCP_AUTH=true
     depends_on:
       ems:
         condition: service_healthy

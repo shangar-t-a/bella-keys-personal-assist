@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bella Keys — User Journey</title>
+  <meta name="description" content="Interactive user journey showcase for Bella Keys: a desktop personal finance and AI assistant application. Browse every screen in light and dark themes." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+    /* Design tokens */
+    :root {
+      --bg:             #0a0f1e;
+      --bg-card:        #111827;
+      --bg-card-2:      #1a2235;
+      --bg-elevated:    #1e2d47;
+      --border:         rgba(99, 130, 190, 0.15);
+      --border-hover:   rgba(99, 130, 190, 0.35);
+      --text-primary:   #f0f4ff;
+      --text-secondary: #8b9fc8;
+      --text-muted:     #4e608a;
+      --accent:         #6366f1;
+      --accent-glow:    rgba(99, 102, 241, 0.25);
+      --shadow-card:    0 4px 24px rgba(0, 0, 0, 0.45);
+      --shadow-hover:   0 8px 40px rgba(0, 0, 0, 0.65);
+      --radius:         12px;
+      --radius-sm:      8px;
+      --transition:     0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 15, 30, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .header-logo .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+      animation: pulse 2.5s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 6px var(--accent-glow); }
+      50%       { box-shadow: 0 0 18px rgba(99,102,241,0.55); }
+    }
+
+    .version-badge {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 0;
+      transition: border-color var(--transition);
+    }
+    .theme-toggle:hover { border-color: var(--border-hover); }
+
+    .theme-btn {
+      padding: 5px 16px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all var(--transition);
+    }
+    .theme-btn.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 230px 1fr;
+      max-width: 1560px;
+      margin: 0 auto;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+      padding: 2rem 1rem;
+      border-right: 1px solid var(--border);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .sidebar-label {
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      padding-left: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: var(--bg-card-2); color: var(--text-primary); }
+    .nav-item.active { background: var(--bg-card-2); color: var(--text-primary); }
+
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .nav-count {
+      margin-left: auto;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      background: var(--bg-elevated);
+      padding: 1px 7px;
+      border-radius: 999px;
+    }
+
+    /* Main */
+    .main { padding: 2.5rem 2rem 5rem; min-width: 0; }
+
+    /* Hero */
+    .hero { margin-bottom: 3.5rem; }
+
+    .hero-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+
+    .hero-desc {
+      font-size: 1rem;
+      line-height: 1.75;
+      color: var(--text-secondary);
+      max-width: 620px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat { display: flex; flex-direction: column; gap: 0.15rem; }
+
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* Section block */
+    .section-block {
+      margin-bottom: 3.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .section-block.visible { opacity: 1; transform: translateY(0); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-accent {
+      width: 4px; height: 32px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Grid */
+    .screen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* Screenshot card */
+    .screen-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-card);
+    }
+    .screen-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
+    }
+    .screen-card:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .screen-img-wrap {
+      position: relative;
+      background: var(--bg-card-2);
+      overflow: hidden;
+      aspect-ratio: 16 / 10;
+    }
+    .screen-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .screen-card:hover .screen-img-wrap img { transform: scale(1.03); }
+
+    .screen-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(10,15,30,0.88) 100%);
+      opacity: 0;
+      transition: opacity var(--transition);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+    }
+    .screen-card:hover .screen-overlay { opacity: 1; }
+
+    .overlay-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .screen-info { padding: 0.875rem 1rem; }
+
+    .screen-slug {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.3rem;
+    }
+
+    .screen-desc {
+      font-size: 0.74rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(4, 7, 18, 0.96);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+
+    .lb-close {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.5rem;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+    .lb-close:hover { background: var(--bg-card-2); border-color: var(--border-hover); }
+
+    .lb-img-wrap {
+      max-width: min(calc(100vw - 7rem), 1200px);
+      max-height: calc(100vh - 200px);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+    }
+    .lb-img-wrap img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 200px);
+      object-fit: contain;
+    }
+
+    .lb-info {
+      margin-top: 1.25rem;
+      text-align: center;
+      max-width: 560px;
+      padding: 0 1rem;
+    }
+    .lb-slug {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+    .lb-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
+
+    .lb-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .lb-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+    .lb-btn:hover { background: var(--bg-card-2); border-color: var(--border-hover); }
+    .lb-btn:disabled { opacity: 0.25; cursor: default; }
+
+    .lb-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* States */
+    .state-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      gap: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 0.75rem 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        overflow-x: auto;
+      }
+      .sidebar-label { display: none; }
+      .nav-item { padding: 0.4rem 0.75rem; white-space: nowrap; width: auto; }
+      .nav-count { display: none; }
+      .main { padding: 1.5rem 1rem 3rem; }
+      .hero h1 { font-size: 1.7rem; }
+    }
+
+    @media (max-width: 540px) {
+      .header { padding: 0 1rem; }
+      .screen-grid { grid-template-columns: 1fr; }
+      .lb-img-wrap { max-width: calc(100vw - 1rem); }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="pulse"></div>
+    Bella Keys
+    <span id="version-badge" class="version-badge"></span>
+  </div>
+  <div class="theme-toggle" role="group" aria-label="Image theme">
+    <button class="theme-btn active" id="btn-light" onclick="setTheme('light')">Light</button>
+    <button class="theme-btn"        id="btn-dark"  onclick="setTheme('dark')">Dark</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Journey sections">
+    <div class="sidebar-label">Sections</div>
+  </nav>
+
+  <main class="main" id="main-content">
+    <div id="loading" class="state-center">
+      <div class="spinner"></div>
+      <span>Loading journey…</span>
+    </div>
+    <div id="content" style="display:none;">
+      <div class="hero">
+        <div class="hero-tag">User Journey Showcase</div>
+        <h1>Bella Keys in Action</h1>
+        <p class="hero-desc">
+          A complete walkthrough of every screen in Bella Keys — personal expense management
+          meets private AI assistance. Toggle between Light and Dark themes, then click any
+          screenshot to explore it fullscreen.
+        </p>
+        <div class="hero-stats" id="hero-stats"></div>
+      </div>
+      <div id="sections-container"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot viewer">
+  <button class="lb-close" onclick="closeLightbox()" aria-label="Close">✕</button>
+  <div class="lb-img-wrap">
+    <img id="lb-img" src="" alt="" />
+  </div>
+  <div class="lb-info">
+    <div class="lb-slug" id="lb-slug"></div>
+    <div class="lb-desc"  id="lb-desc"></div>
+  </div>
+  <div class="lb-controls">
+    <button class="lb-btn" id="lb-prev" onclick="lbStep(-1)" aria-label="Previous">&#8592;</button>
+    <span   class="lb-counter" id="lb-counter"></span>
+    <button class="lb-btn" id="lb-next" onclick="lbStep(1)"  aria-label="Next">&#8594;</button>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// EMBEDDED MANIFEST — updated automatically by capture_screens.py after each
+// capture run. When this is non-null the page works with no server required
+// (file://, GitHub Pages, Docusaurus — all work identically).
+// ---------------------------------------------------------------------------
+const EMBEDDED_MANIFEST = {"app": "Bella Keys", "version": "1.9", "ui_version": "1.9.0", "generated_at": "2026-07-19T13:51:16.674707+00:00", "themes": ["light", "dark"], "sections": [{"id": "auth", "label": "Authentication", "color": "#6366f1", "steps": [{"slug": "login", "description": "Secure OAuth 2.1 SSO login page — the first touchpoint of every session.", "optional": false, "captured": true, "files": {"light": "light/login.png", "dark": "dark/login.png"}}, {"slug": "login-consent", "description": "OAuth 2.1 SSO Consent & Authorization portal.", "optional": false, "captured": true, "files": {"light": "light/login-consent.png", "dark": "dark/login-consent.png"}}]}, {"id": "dashboard", "label": "Dashboard", "color": "#0ea5e9", "steps": [{"slug": "home", "description": "Hero landing page showing financial health at a glance.", "optional": false, "captured": true, "files": {"light": "light/home.png", "dark": "dark/home.png"}}, {"slug": "spending-accounts", "description": "Spending account summary with balance trends and quick-add transactions.", "optional": false, "captured": true, "files": {"light": "light/spending-accounts.png", "dark": "dark/spending-accounts.png"}}, {"slug": "savings-envelopes", "description": "Savings envelope overview with allocation donut chart.", "optional": false, "captured": true, "files": {"light": "light/savings-envelopes.png", "dark": "dark/savings-envelopes.png"}}, {"slug": "savings-envelopes-transactions", "description": "Savings envelope transaction ledger scrolled into view.", "optional": false, "captured": true, "files": {"light": "light/savings-envelopes-transactions.png", "dark": "dark/savings-envelopes-transactions.png"}}]}, {"id": "budget", "label": "Monthly Budget", "color": "#10b981", "steps": [{"slug": "budget-checklist", "description": "Monthly budget checklist — planned vs actual spend per category.", "optional": false, "captured": true, "files": {"light": "light/budget-checklist.png", "dark": "dark/budget-checklist.png"}}, {"slug": "budget-visuals", "description": "Budget visualisation tab — pie chart breakdown of spending categories.", "optional": false, "captured": true, "files": {"light": "light/budget-visuals.png", "dark": "dark/budget-visuals.png"}}]}, {"id": "wealth", "label": "Wealth Manager", "color": "#f59e0b", "steps": [{"slug": "wealth-assets", "description": "Assets tab — grouped table of investments with returns and allocation.", "optional": false, "captured": true, "files": {"light": "light/wealth-assets.png", "dark": "dark/wealth-assets.png"}}, {"slug": "wealth-liabilities", "description": "Liabilities tab — active loans with EMI schedules and outstanding balances.", "optional": false, "captured": true, "files": {"light": "light/wealth-liabilities.png", "dark": "dark/wealth-liabilities.png"}}, {"slug": "wealth-liabilities-charts", "description": "Payoff projection charts showing ideal vs actual debt reduction curves.", "optional": false, "captured": true, "files": {"light": "light/wealth-liabilities-charts.png", "dark": "dark/wealth-liabilities-charts.png"}}, {"slug": "wealth-liabilities-ledger", "description": "Transaction ledger modal for detailed liability repayment history.", "optional": false, "captured": true, "files": {"light": "light/wealth-liabilities-ledger.png", "dark": "dark/wealth-liabilities-ledger.png"}}, {"slug": "wealth-networth", "description": "Net worth timeline — composed chart of assets vs liabilities over time.", "optional": false, "captured": true, "files": {"light": "light/wealth-networth.png", "dark": "dark/wealth-networth.png"}}, {"slug": "wealth-allocation", "description": "Portfolio allocation — category distribution, leverage, and health metrics.", "optional": false, "captured": true, "files": {"light": "light/wealth-allocation.png", "dark": "dark/wealth-allocation.png"}}]}, {"id": "ai-chat", "label": "Bella AI Chat", "color": "#8b5cf6", "steps": [{"slug": "chat-empty", "description": "Bella AI chat in empty state — prompt suggestions and assistant branding.", "optional": false, "captured": true, "files": {"light": "light/chat-empty.png", "dark": "dark/chat-empty.png"}}, {"slug": "chat-conversation", "description": "Bella AI answering a financial query with context from the user's data.", "optional": false, "captured": true, "files": {"light": "light/chat-conversation.png", "dark": "dark/chat-conversation.png"}}]}, {"id": "settings", "label": "Settings", "color": "#64748b", "steps": [{"slug": "settings-accounts", "description": "Settings — bank accounts management panel.", "optional": false, "captured": true, "files": {"light": "light/settings-accounts.png", "dark": "dark/settings-accounts.png"}}, {"slug": "settings-categories", "description": "Settings — budget category configuration.", "optional": false, "captured": true, "files": {"light": "light/settings-categories.png", "dark": "dark/settings-categories.png"}}]}]};
+
+// Image path prefix — resolved relative to this HTML file's location.
+// latest/ lives next to user-journey.html in docs/screens/.
+const IMG_PREFIX = "latest/";
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let currentTheme = "light";
+let allSteps     = [];   // flat list of captured steps for lightbox nav
+let lbIndex      = 0;
+
+// ---------------------------------------------------------------------------
+// Theme
+// ---------------------------------------------------------------------------
+function setTheme(theme) {
+  currentTheme = theme;
+  document.getElementById("btn-light").classList.toggle("active", theme === "light");
+  document.getElementById("btn-dark").classList.toggle("active",  theme === "dark");
+
+  document.querySelectorAll(".screen-img[data-light][data-dark]").forEach(img => {
+    const rel = img.dataset[theme];
+    if (rel) img.src = IMG_PREFIX + rel;
+  });
+
+  if (document.getElementById("lightbox").classList.contains("open")) {
+    updateLightbox(lbIndex);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Lightbox
+// ---------------------------------------------------------------------------
+function openLightbox(index) {
+  lbIndex = index;
+  updateLightbox(index);
+  document.getElementById("lightbox").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  document.getElementById("lightbox").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function lbStep(dir) {
+  const next = lbIndex + dir;
+  if (next >= 0 && next < allSteps.length) {
+    lbIndex = next;
+    updateLightbox(lbIndex);
+  }
+}
+
+function updateLightbox(index) {
+  const step = allSteps[index];
+  if (!step) return;
+  const relPath = step.files[currentTheme] || Object.values(step.files)[0];
+  document.getElementById("lb-img").src = IMG_PREFIX + relPath;
+  document.getElementById("lb-img").alt = step.slug;
+  document.getElementById("lb-slug").textContent    = step.slug;
+  document.getElementById("lb-desc").textContent    = step.description;
+  document.getElementById("lb-counter").textContent = `${index + 1} / ${allSteps.length}`;
+  document.getElementById("lb-prev").disabled = index === 0;
+  document.getElementById("lb-next").disabled = index === allSteps.length - 1;
+}
+
+document.addEventListener("keydown", e => {
+  if (!document.getElementById("lightbox").classList.contains("open")) return;
+  if (e.key === "Escape")      closeLightbox();
+  if (e.key === "ArrowLeft")   lbStep(-1);
+  if (e.key === "ArrowRight")  lbStep(1);
+});
+
+document.getElementById("lightbox").addEventListener("click", e => {
+  if (e.target === document.getElementById("lightbox")) closeLightbox();
+});
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function renderHero(manifest) {
+  const totalCaptured = manifest.sections.reduce(
+    (n, s) => n + s.steps.filter(st => st.captured).length, 0
+  );
+  document.getElementById("version-badge").textContent = `v${manifest.version}`;
+  document.getElementById("hero-stats").innerHTML = `
+    <div class="stat">
+      <div class="stat-value">${manifest.sections.length}</div>
+      <div class="stat-label">Sections</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">${totalCaptured}</div>
+      <div class="stat-label">Screens</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">${manifest.themes.length}</div>
+      <div class="stat-label">Themes</div>
+    </div>
+  `;
+}
+
+function renderSidebar(sections) {
+  const sidebar = document.getElementById("sidebar");
+  sections.forEach(section => {
+    const count = section.steps.filter(s => s.captured).length;
+    if (count === 0) return;
+    const btn = document.createElement("button");
+    btn.className = "nav-item";
+    btn.id = `nav-${section.id}`;
+    btn.innerHTML = `
+      <span class="nav-dot" style="background:${section.color}"></span>
+      ${section.label}
+      <span class="nav-count">${count}</span>
+    `;
+    btn.addEventListener("click", () =>
+      document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+    sidebar.appendChild(btn);
+  });
+}
+
+function renderSections(sections) {
+  const container = document.getElementById("sections-container");
+  let globalIndex = 0;
+
+  sections.forEach(section => {
+    const capturedSteps = section.steps.filter(s => s.captured);
+    if (capturedSteps.length === 0) return;
+
+    const block = document.createElement("div");
+    block.className = "section-block";
+    block.id = `section-${section.id}`;
+
+    const cards = capturedSteps.map(step => {
+      const idx      = globalIndex++;
+      const lightSrc = IMG_PREFIX + (step.files.light || Object.values(step.files)[0]);
+      const darkSrc  = IMG_PREFIX + (step.files.dark  || Object.values(step.files)[0]);
+      allSteps.push(step);
+
+      return `
+        <div class="screen-card" tabindex="0" role="button"
+             aria-label="View ${step.slug} fullscreen"
+             onclick="openLightbox(${idx})"
+             onkeydown="if(event.key==='Enter')openLightbox(${idx})">
+          <div class="screen-img-wrap">
+            <img class="screen-img"
+                 src="${lightSrc}"
+                 data-light="${step.files.light || ''}"
+                 data-dark="${step.files.dark   || ''}"
+                 alt="${step.slug}" loading="lazy" />
+            <div class="screen-overlay">
+              <div class="overlay-label">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                </svg>
+                View fullscreen
+              </div>
+            </div>
+          </div>
+          <div class="screen-info">
+            <div class="screen-slug">${step.slug}</div>
+            <div class="screen-desc">${step.description}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    block.innerHTML = `
+      <div class="section-header">
+        <div class="section-accent" style="background:${section.color}"></div>
+        <div>
+          <div class="section-title">${section.label}</div>
+          <div class="section-subtitle">${capturedSteps.length} screen${capturedSteps.length !== 1 ? "s" : ""}</div>
+        </div>
+      </div>
+      <div class="screen-grid">${cards}</div>
+    `;
+
+    container.appendChild(block);
+  });
+}
+
+function initReveal() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add("visible");
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.07 });
+  document.querySelectorAll(".section-block").forEach(el => observer.observe(el));
+}
+
+function initScrollSpy() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id.replace("section-", "");
+        document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+        document.getElementById(`nav-${id}`)?.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-35% 0px -60% 0px" });
+  document.querySelectorAll(".section-block[id]").forEach(el => observer.observe(el));
+}
+
+// ---------------------------------------------------------------------------
+// Boot — uses embedded manifest directly; no network required
+// ---------------------------------------------------------------------------
+function boot(manifest) {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("content").style.display  = "block";
+  renderHero(manifest);
+  renderSidebar(manifest.sections);
+  renderSections(manifest.sections);
+  initReveal();
+  initScrollSpy();
+}
+
+boot(EMBEDDED_MANIFEST);
+</script>
+</body>
+</html>
