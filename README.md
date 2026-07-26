@@ -6,6 +6,7 @@ The project uses a hybrid "inside-out" architecture: application logic is contai
 
 ## Documentation
 
+* [User Journey Showcase](docs/screens/user-journey.html): Interactive portfolio showcase of all app screens (also hosted live on [GitHub Pages](https://shangar-t-a.github.io/bella-keys-personal-assist/)).
 * [User Setup Guide](docs/user/setup-guide.md): Installing dependencies, initializing databases, and running the application.
 * [Developer Workflow](docs/developer/development-workflow.md): Project structure, local development environment, and build commands.
 * [Git Guidelines](.agents/rules/git-guidelines.md): Rules for branch naming, commits, and pull requests.
