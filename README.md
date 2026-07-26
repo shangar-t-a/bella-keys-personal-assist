@@ -4,6 +4,13 @@ Bella Keys is a desktop application that combines professional-grade expense man
 
 The project uses a hybrid "inside-out" architecture: application logic is containerized via Docker while user data (PostgreSQL database and Ollama models) remains on the host machine to ensure privacy and data sovereignty.
 
+## User Journey & Portfolio Showcase
+
+Explore every screen of the application in light and dark themes, including SSO authentication, budget tracking, wealth management, and AI chat:
+
+* **[Live User Journey Showcase](https://shangar-t-a.github.io/bella-keys-personal-assist/)** (Hosted on GitHub Pages)
+* **[Local Showcase File](docs/screens/user-journey.html)**
+
 ## Documentation
 
 * [User Setup Guide](docs/user/setup-guide.md): Installing dependencies, initializing databases, and running the application.
