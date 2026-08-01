@@ -3,14 +3,25 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.entities.models.backup import BackupExportResult, BackupMetadata, RestoreResult
+from app.entities.models.backup import BackupConfig, BackupExportResult, BackupMetadata, RestoreResult
 
 
 class BackupRepositoryInterface(ABC):
     """Interface defining database backup and restore infrastructure operations."""
 
     @abstractmethod
+    def get_backup_config(self) -> BackupConfig:
+        """Get current backup directory configuration."""
+        pass
+
+    @abstractmethod
+    def set_backup_dir(self, new_dir: str) -> BackupConfig:
+        """Update target backup directory path."""
+        pass
+
+    @abstractmethod
     async def export_backup(self) -> BackupExportResult:
+
         """Export database tables to local folder snapshot."""
         pass
 

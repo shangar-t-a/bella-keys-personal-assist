@@ -24,6 +24,7 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme,
+  TextField,
 } from '@mui/material';
 import {
   CloudDownload,
@@ -36,9 +37,10 @@ import {
   WarningAmber,
   CheckCircle,
   Laptop,
+  FolderOpen,
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
-import type { BackupMetadata } from '@/types/api';
+import type { BackupConfigResponse, BackupMetadata } from '@/types/api';
 import { toast } from 'sonner';
 
 export default function BackupRestoreTab() {
@@ -49,20 +51,30 @@ export default function BackupRestoreTab() {
   const [exporting, setExporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [snapshots, setSnapshots] = useState<BackupMetadata[]>([]);
+  const [backupConfig, setBackupConfig] = useState<BackupConfigResponse | null>(null);
 
   // Dialog States
   const [confirmRestoreFilename, setConfirmRestoreFilename] = useState<string | null>(null);
   const [confirmDeleteFilename, setConfirmDeleteFilename] = useState<string | null>(null);
+  const [changeFolderOpen, setChangeFolderOpen] = useState(false);
+  const [customFolderPath, setCustomFolderPath] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedMetadata, setUploadedMetadata] = useState<Record<string, any> | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const loadSnapshots = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await emsClient.listBackups();
-      setSnapshots(data);
+      const [snapData, cfgData] = await Promise.all([
+        emsClient.listBackups(),
+        emsClient.getBackupConfig().catch(() => null),
+      ]);
+      setSnapshots(snapData);
+      if (cfgData) {
+        setBackupConfig(cfgData);
+        setCustomFolderPath(cfgData.backup_dir);
+      }
     } catch {
       toast.error('Failed to load backup snapshots');
     } finally {
@@ -71,15 +83,51 @@ export default function BackupRestoreTab() {
   };
 
   useEffect(() => {
-    loadSnapshots();
+    loadData();
   }, []);
+
+  const handleChangeFolder = async () => {
+    // If running in Desktop Electron environment, use native OS folder picker dialog
+    if (window.electronAPI?.selectDirectory) {
+      try {
+        const selected = await window.electronAPI.selectDirectory();
+        if (selected) {
+          const updated = await emsClient.updateBackupConfig(selected);
+          setBackupConfig(updated);
+          setCustomFolderPath(updated.backup_dir);
+          toast.success(`Backup folder updated to: ${updated.absolute_backup_dir}`);
+          await loadData();
+        }
+      } catch (e: any) {
+        toast.error(e.message || 'Failed to select directory');
+      }
+      return;
+    }
+
+    // Otherwise, open input dialog for web mode
+    setCustomFolderPath(backupConfig?.backup_dir || '');
+    setChangeFolderOpen(true);
+  };
+
+  const handleSaveCustomFolder = async () => {
+    if (!customFolderPath.trim()) return;
+    try {
+      const updated = await emsClient.updateBackupConfig(customFolderPath.trim());
+      setBackupConfig(updated);
+      setChangeFolderOpen(false);
+      toast.success(`Backup folder updated to: ${updated.absolute_backup_dir}`);
+      await loadData();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update backup folder location');
+    }
+  };
 
   const handleExportBackup = async () => {
     setExporting(true);
     try {
       const res = await emsClient.exportBackup();
       toast.success(`Backup exported: ${res.filename} (${res.formatted_size})`);
-      await loadSnapshots();
+      await loadData();
     } catch (e: any) {
       toast.error(e.message || 'Failed to export backup');
     } finally {
@@ -100,13 +148,12 @@ export default function BackupRestoreTab() {
     const targetFile = confirmRestoreFilename;
     setConfirmRestoreFilename(null);
     setRestoring(true);
-
     try {
       const res = await emsClient.restoreSnapshot(targetFile);
-      toast.success(`Database restored successfully! (${res.restored_records} records)`);
-      await loadSnapshots();
+      toast.success(`Database restored successfully! (${res.restored_records} records restored)`);
+      await loadData();
     } catch (e: any) {
-      toast.error(e.message || 'Restore failed. Original data preserved.');
+      toast.error(e.message || 'Failed to restore snapshot');
     } finally {
       setRestoring(false);
     }
@@ -116,44 +163,52 @@ export default function BackupRestoreTab() {
     if (!confirmDeleteFilename) return;
     const targetFile = confirmDeleteFilename;
     setConfirmDeleteFilename(null);
-    setLoading(true);
-
     try {
       await emsClient.deleteBackup(targetFile);
-      toast.success(`Snapshot ${targetFile} deleted`);
-      await loadSnapshots();
+      toast.success(`Deleted snapshot: ${targetFile}`);
+      await loadData();
     } catch (e: any) {
       toast.error(e.message || 'Failed to delete snapshot');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const processSelectedFile = (file: File) => {
     if (!file.name.endsWith('.json')) {
-      toast.error('Please select a valid .json backup file');
+      toast.error('Please select a valid JSON backup file.');
       return;
     }
-    setUploadedFile(file);
 
-    // Pre-flight inspection
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (event) => {
       try {
-        const json = JSON.parse(e.target?.result as string);
-        if (json && json.metadata) {
-          setUploadedMetadata(json.metadata);
-        } else {
-          setUploadedMetadata({ total_records: 'Unknown', version: '1.0' });
+        const json = JSON.parse(event.target?.result as string);
+        if (!json || typeof json !== 'object' || !json.tables) {
+          toast.error('Invalid backup file structure: missing tables envelope.');
+          return;
         }
+        setUploadedFile(file);
+        setUploadedMetadata(json.metadata || {});
       } catch {
-        setUploadedMetadata(null);
+        toast.error('Selected file is not valid JSON.');
       }
     };
     reader.readAsText(file);
   };
 
-  const handleConfirmUploadedRestore = async () => {
+  const handleConfirmUploadRestore = async () => {
     if (!uploadedFile) return;
     const fileToRestore = uploadedFile;
     setUploadedFile(null);
@@ -162,10 +217,10 @@ export default function BackupRestoreTab() {
 
     try {
       const res = await emsClient.uploadAndRestoreBackup(fileToRestore);
-      toast.success(`External file restored successfully! (${res.restored_records} records)`);
-      await loadSnapshots();
+      toast.success(`Restored from uploaded file! (${res.restored_records} records restored)`);
+      await loadData();
     } catch (e: any) {
-      toast.error(e.message || 'External restore failed. Original data preserved.');
+      toast.error(e.message || 'Failed to restore uploaded file');
     } finally {
       setRestoring(false);
     }
@@ -174,8 +229,7 @@ export default function BackupRestoreTab() {
   const latestSnapshot = snapshots.length > 0 ? snapshots[0] : null;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* Mobile Fallback Warning */}
+    <Stack spacing={3}>
       {!isDesktop && (
         <Alert severity="info" icon={<Laptop />} sx={{ borderRadius: 2 }}>
           Backup & Restore operations are optimized for Desktop resolution. Full folder management is active.
@@ -186,7 +240,7 @@ export default function BackupRestoreTab() {
       <Card variant="outlined" sx={{ borderRadius: 2, borderColor: 'divider', boxShadow: 'none' }}>
         <CardContent sx={{ p: 3 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-start" spacing={2}>
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
                 <FolderZip color="primary" />
                 <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
@@ -195,16 +249,41 @@ export default function BackupRestoreTab() {
                 <Chip label="5-File Quota" size="small" color="default" variant="outlined" sx={{ fontWeight: 600, height: 22 }} />
               </Stack>
 
-              <Typography variant="body2" color="text.secondary">
-                Storage Directory: <Box component="code" sx={{ bgcolor: 'action.hover', px: 1, py: 0.2, borderRadius: 1 }}>./backups/</Box> (Local Disk)
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1, mb: 1, flexWrap: 'wrap' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Target Backup Location:
+                </Typography>
+                <Box
+                  component="code"
+                  sx={{
+                    bgcolor: 'action.hover',
+                    px: 1,
+                    py: 0.3,
+                    borderRadius: 1,
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {backupConfig?.absolute_backup_dir || './backups/'}
+                </Box>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<FolderOpen fontSize="small" />}
+                  onClick={handleChangeFolder}
+                  sx={{ py: 0.2, px: 1.2, height: 26, fontSize: '0.75rem', fontWeight: 600 }}
+                >
+                  Change Folder
+                </Button>
+              </Stack>
 
               {latestSnapshot ? (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontWeight: 500 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontWeight: 500 }}>
                   Last Backup: <strong>{new Date(latestSnapshot.created_at).toLocaleString()}</strong> ({latestSnapshot.formatted_size})
                 </Typography>
               ) : (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontWeight: 500 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontWeight: 500 }}>
                   No local backup files created yet.
                 </Typography>
               )}
@@ -256,15 +335,15 @@ export default function BackupRestoreTab() {
             </Box>
           ) : snapshots.length === 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-              No snapshots found in local ./backups/ folder. Click "Export Backup File" to create one.
+              No snapshots found in backup folder. Click "Export Backup File" to create one.
             </Typography>
           ) : (
-            <TableContainer sx={{ borderRadius: 1, border: 1, borderColor: 'divider' }}>
+            <TableContainer>
               <Table size="small">
-                <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : '#f8fafc' }}>
+                <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>FILE NAME</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>TIMESTAMP</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>SNAPSHOT FILE</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>CREATED AT</TableCell>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>TYPE</TableCell>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>SIZE</TableCell>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem', textAlign: 'right' }}>ACTIONS</TableCell>
@@ -291,7 +370,6 @@ export default function BackupRestoreTab() {
                           />
                         </TableCell>
                         <TableCell variant="body">{snap.formatted_size}</TableCell>
-
                         <TableCell align="right">
                           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                             <Tooltip title="Restore this snapshot">
@@ -299,13 +377,12 @@ export default function BackupRestoreTab() {
                                 size="small"
                                 color="primary"
                                 onClick={() => setConfirmRestoreFilename(snap.filename)}
-                                disabled={restoring}
+                                disabled={restoring || exporting}
                               >
                                 <Restore fontSize="small" />
                               </IconButton>
                             </Tooltip>
-
-                            <Tooltip title="Download file to computer">
+                            <Tooltip title="Download snapshot JSON">
                               <IconButton
                                 size="small"
                                 color="info"
@@ -316,13 +393,12 @@ export default function BackupRestoreTab() {
                                 <Download fontSize="small" />
                               </IconButton>
                             </Tooltip>
-
-                            <Tooltip title="Delete snapshot file">
+                            <Tooltip title="Delete snapshot">
                               <IconButton
                                 size="small"
                                 color="error"
                                 onClick={() => setConfirmDeleteFilename(snap.filename)}
-                                disabled={restoring}
+                                disabled={restoring || exporting}
                               >
                                 <Trash2 fontSize="small" />
                               </IconButton>
@@ -339,110 +415,114 @@ export default function BackupRestoreTab() {
         </CardContent>
       </Card>
 
-      {/* Card 3: External File Upload Zone */}
+      {/* Card 3: External Backup File Upload Restore */}
       <Card variant="outlined" sx={{ borderRadius: 2, borderColor: 'divider', boxShadow: 'none' }}>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif', mb: 1 }}>
-            Restore from External Backup File
+            Restore External Backup File
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Upload a timestamped <Box component="code">.json</Box> backup file from an external disk or another machine.
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Drag and drop an external JSON backup file or choose a file from your computer to inspect and restore.
           </Typography>
-
-          <input
-            type="file"
-            accept=".json"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                handleFileSelect(e.target.files[0]);
-              }
-            }}
-          />
 
           <Box
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleFileDrop}
             onClick={() => fileInputRef.current?.click()}
             sx={{
               border: '2px dashed',
-              borderColor: 'divider',
+              borderColor: 'primary.main',
               borderRadius: 2,
               p: 4,
               textAlign: 'center',
               cursor: 'pointer',
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.2)' : '#fafafa',
-              transition: 'all 0.2s',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : '#f0f7ff',
-              },
+              bgcolor: 'action.hover',
+              transition: 'background-color 0.2s',
+              '&:hover': { bgcolor: 'action.selected' },
             }}
           >
-            <UploadFile color="primary" sx={{ fontSize: 40, mb: 1 }} />
+            <input
+              type="file"
+              accept=".json"
+              ref={fileInputRef}
+              onChange={handleFileInputChange}
+              style={{ display: 'none' }}
+            />
+            <UploadFile sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Click to select or Drag & Drop a .json backup file
+              Click or drag a `.json` backup file here to inspect & restore
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Pre-flight data inspection will be performed before restoring.
+              Only valid `.json` export envelopes from Expense Manager are supported.
             </Typography>
           </Box>
         </CardContent>
       </Card>
 
-      {/* Dialog: Confirm Snapshot Restore */}
-      <Dialog
-        open={confirmRestoreFilename !== null}
-        onClose={() => setConfirmRestoreFilename(null)}
-        maxWidth="xs"
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main', fontWeight: 700 }}>
-          <WarningAmber /> Confirm Restore?
-        </DialogTitle>
+      {/* Dialog 1: Change Backup Folder */}
+      <Dialog open={changeFolderOpen} onClose={() => setChangeFolderOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Configure Backup Storage Folder</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Are you sure you want to restore data from <strong>{confirmRestoreFilename}</strong>?
+          <DialogContentText sx={{ mb: 2 }}>
+            Specify the folder path on your computer where database backups should be stored:
           </DialogContentText>
-          <Alert severity="info" sx={{ mt: 2 }}>
-            Current database records will be replaced. A pre-restore safety snapshot will automatically be created before proceeding.
-          </Alert>
+          <TextField
+            fullWidth
+            size="small"
+            label="Folder Path"
+            value={customFolderPath}
+            onChange={(e) => setCustomFolderPath(e.target.value)}
+            placeholder="e.g. C:\Users\Username\BellaKeys\backups"
+          />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={() => setConfirmRestoreFilename(null)}>Cancel</Button>
-          <Button onClick={handleConfirmRestoreSnapshot} variant="contained" color="warning">
-            Restore Snapshot
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setChangeFolderOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveCustomFolder}>
+            Save Location
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialog: Confirm Snapshot Delete */}
-      <Dialog
-        open={confirmDeleteFilename !== null}
-        onClose={() => setConfirmDeleteFilename(null)}
-        maxWidth="xs"
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main', fontWeight: 700 }}>
-          <WarningAmber /> Delete Snapshot File?
+      {/* Dialog 2: Snapshot Restore Confirmation */}
+      <Dialog open={confirmRestoreFilename !== null} onClose={() => setConfirmRestoreFilename(null)} maxWidth="xs">
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main', fontWeight: 700 }}>
+          <WarningAmber /> Confirm Database Restore
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Delete <strong>{confirmDeleteFilename}</strong> permanently from local storage?
+            Are you sure you want to restore database state from snapshot <strong>{confirmRestoreFilename}</strong>?
+            <br /><br />
+            Current database tables will be cleared and replaced with this snapshot data. A safety snapshot will be created automatically before restoring.
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmRestoreFilename(null)}>Cancel</Button>
+          <Button variant="contained" color="warning" onClick={handleConfirmRestoreSnapshot} disabled={restoring}>
+            {restoring ? <CircularProgress size={18} color="inherit" /> : 'Confirm & Restore'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog 3: Delete Snapshot Confirmation */}
+      <Dialog open={confirmDeleteFilename !== null} onClose={() => setConfirmDeleteFilename(null)} maxWidth="xs">
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main', fontWeight: 700 }}>
+          <WarningAmber /> Delete Snapshot File
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to permanently delete snapshot file <strong>{confirmDeleteFilename}</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setConfirmDeleteFilename(null)}>Cancel</Button>
-          <Button onClick={handleDeleteSnapshot} variant="contained" color="error">
+          <Button variant="contained" color="error" onClick={handleDeleteSnapshot}>
             Delete File
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialog: Pre-flight External Upload Restore Inspection */}
-      <Dialog
-        open={uploadedFile !== null}
-        onClose={() => { setUploadedFile(null); setUploadedMetadata(null); }}
-        maxWidth="sm"
-        fullWidth
-      >
+      {/* Dialog 4: Uploaded External File Inspection Dialog */}
+      <Dialog open={uploadedFile !== null} onClose={() => setUploadedFile(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main', fontWeight: 700 }}>
           <CheckCircle color="success" /> External Backup File Inspected
         </DialogTitle>
@@ -454,7 +534,6 @@ export default function BackupRestoreTab() {
           {uploadedMetadata && (
             <Card variant="outlined" sx={{ p: 2, bgcolor: 'action.hover', mb: 2 }}>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1, textTransform: 'uppercase' }}>
-
                 Backup File Payload Inspection
               </Typography>
               <Typography variant="body2">
@@ -467,16 +546,16 @@ export default function BackupRestoreTab() {
           )}
 
           <Alert severity="warning">
-            Restoring this file will overwrite existing database records. A pre-restore safety snapshot will automatically be saved to disk first.
+            Restoring from this file will replace current database state. An automatic safety snapshot will be created first.
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={() => { setUploadedFile(null); setUploadedMetadata(null); }}>Cancel</Button>
-          <Button onClick={handleConfirmUploadedRestore} variant="contained" color="primary">
-            Restore External File
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setUploadedFile(null)}>Cancel</Button>
+          <Button variant="contained" color="warning" onClick={handleConfirmUploadRestore} disabled={restoring}>
+            {restoring ? <CircularProgress size={18} color="inherit" /> : 'Confirm & Restore Upload'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Stack>
   );
 }

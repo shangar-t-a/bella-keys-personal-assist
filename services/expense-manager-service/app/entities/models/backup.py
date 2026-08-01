@@ -35,3 +35,12 @@ class RestoreResult:
 
     status: str
     restored_records: int
+
+
+@dataclass
+class BackupConfig:
+    """Domain model representing backup directory configuration."""
+
+    backup_dir: str
+    absolute_backup_dir: str
+

@@ -1,5 +1,6 @@
 """Base settings for the expense manager service."""
 
+import os
 from typing import Literal
 
 from pydantic import SecretStr
@@ -12,6 +13,12 @@ from app import __version__ as _app_version
 
 ENV_TYPES = Literal["dev", "prod", "test"]
 STORAGE_TYPES = Literal["inmemory", "sqlite", "postgresql"]
+
+
+def get_default_user_backup_dir() -> str:
+    """Get default user home directory for desktop backups."""
+    return os.path.join(os.path.expanduser("~"), ".bella-keys", "backups")
+
 
 
 class ExpenseManagerBaseSettings(BaseSettings):
@@ -32,6 +39,9 @@ class ExpenseManagerBaseSettings(BaseSettings):
     DATABASE_URL: SecretStr = SecretStr("")
     PG_DB_HOST: str = "localhost"
     LOG_DB_QUERIES: bool = False
+    BACKUP_DIR: str = get_default_user_backup_dir()
+
+
 
     # Logging settings
     LOG_LEVEL: str = "INFO"

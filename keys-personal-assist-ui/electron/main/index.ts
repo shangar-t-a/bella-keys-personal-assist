@@ -1,5 +1,18 @@
-import { app, BrowserWindow, shell, nativeImage } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
 import path from 'path'
+
+// Handle native directory picker dialog requests
+ipcMain.handle('dialog:selectDirectory', async () => {
+    const result = await dialog.showOpenDialog({
+        title: 'Select Backup Folder Location',
+        properties: ['openDirectory', 'createDirectory']
+    })
+    if (!result.canceled && result.filePaths.length > 0) {
+        return result.filePaths[0]
+    }
+    return null
+})
+
 
 // Register custom protocol handler for Windows/macOS/Linux
 if (process.defaultApp) {

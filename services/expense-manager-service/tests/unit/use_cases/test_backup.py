@@ -5,10 +5,9 @@ import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.entities.models.backup import BackupExportResult, BackupMetadata, RestoreResult
+from app.entities.models.backup import BackupConfig, BackupExportResult, BackupMetadata, RestoreResult
 from app.entities.repositories.backup import BackupRepositoryInterface
 from app.infrastructures.postgres_db.backup import (
-    BACKUP_DIR,
     PostgresBackupRepository,
     ensure_backup_dir,
     format_file_size,
@@ -19,9 +18,9 @@ from app.use_cases.backup import BackupService
 
 def test_ensure_backup_dir(tmp_path):
     """Test backup directory creation."""
-    with patch("app.infrastructures.postgres_db.backup.BACKUP_DIR", str(tmp_path / "test_backups")):
-        d = ensure_backup_dir()
-        assert os.path.exists(d)
+    test_dir = str(tmp_path / "test_backups")
+    d = ensure_backup_dir(test_dir)
+    assert os.path.exists(d)
 
 
 def test_format_file_size():
@@ -36,23 +35,23 @@ def test_prune_manual_backups(tmp_path):
     test_dir = str(tmp_path / "prune_test")
     os.makedirs(test_dir, exist_ok=True)
 
-    with patch("app.infrastructures.postgres_db.backup.BACKUP_DIR", test_dir):
-        for i in range(7):
-            fpath = os.path.join(test_dir, f"ems_backup_20260801_00000{i}.json")
-            with open(fpath, "w") as f:
-                f.write("{}")
-            os.utime(fpath, (1000 + i * 10, 1000 + i * 10))
-
-        safety_path = os.path.join(test_dir, "pre_restore_20260801_000000.json")
-        with open(safety_path, "w") as f:
+    for i in range(7):
+        fpath = os.path.join(test_dir, f"ems_backup_20260801_00000{i}.json")
+        with open(fpath, "w") as f:
             f.write("{}")
+        os.utime(fpath, (1000 + i * 10, 1000 + i * 10))
 
-        prune_manual_backups(max_limit=5)
+    safety_path = os.path.join(test_dir, "pre_restore_20260801_000000.json")
+    with open(safety_path, "w") as f:
+        f.write("{}")
 
-        remaining_files = os.listdir(test_dir)
-        manual_files = [f for f in remaining_files if f.startswith("ems_backup_")]
-        assert len(manual_files) == 5
-        assert "pre_restore_20260801_000000.json" in remaining_files
+    prune_manual_backups(test_dir, max_limit=5)
+
+    remaining_files = os.listdir(test_dir)
+    manual_files = [f for f in remaining_files if f.startswith("ems_backup_")]
+    assert len(manual_files) == 5
+    assert "pre_restore_20260801_000000.json" in remaining_files
+
 
 
 @pytest.mark.asyncio

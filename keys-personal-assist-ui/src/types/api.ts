@@ -176,3 +176,10 @@ export interface RestoreResultResponse {
   restored_records: number;
 }
 
+export interface BackupConfigResponse {
+  backup_dir: string;
+  absolute_backup_dir: string;
+}
+
+
+

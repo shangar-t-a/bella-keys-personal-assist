@@ -7,17 +7,17 @@ from typing import Any
 
 from sqlalchemy import DateTime, select
 
-from app.entities.models.backup import BackupExportResult, BackupMetadata, RestoreResult
+from app.entities.models.backup import BackupConfig, BackupExportResult, BackupMetadata, RestoreResult
 from app.entities.repositories.backup import BackupRepositoryInterface
 from app.infrastructures.postgres_db.database import Base, get_async_session
+from app.settings import get_settings
 
-BACKUP_DIR = os.path.abspath("./backups")
 
-
-def ensure_backup_dir() -> str:
+def ensure_backup_dir(target_dir: str | None = None) -> str:
     """Ensure local backup directory exists."""
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-    return BACKUP_DIR
+    path = os.path.abspath(target_dir or get_settings().BACKUP_DIR)
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 def format_file_size(size_bytes: int) -> str:
@@ -37,12 +37,12 @@ def serialize_value(val: Any) -> Any:
     return val
 
 
-def prune_manual_backups(max_limit: int = 5) -> None:
+def prune_manual_backups(target_dir: str | None = None, max_limit: int = 5) -> None:
     """Prune oldest manual backup files when exceeding max_limit.
 
     Safety snapshots (pre_restore_*.json) are preserved and excluded from manual pruning.
     """
-    backup_dir = ensure_backup_dir()
+    backup_dir = ensure_backup_dir(target_dir)
     files = []
     for f in os.listdir(backup_dir):
         if f.startswith("ems_backup_") and f.endswith(".json"):
@@ -62,9 +62,37 @@ def prune_manual_backups(max_limit: int = 5) -> None:
 class PostgresBackupRepository(BackupRepositoryInterface):
     """PostgreSQL implementation for backup export, listing, and atomic restore."""
 
+    _custom_backup_dir: str | None = None
+
+    def __init__(self, backup_dir: str | None = None):
+        """Initialize PostgresBackupRepository with optional custom backup directory."""
+        if backup_dir:
+            self._custom_backup_dir = backup_dir
+
+    def _get_active_backup_dir(self) -> str:
+        """Get active resolved absolute backup directory path."""
+        configured = self._custom_backup_dir or get_settings().BACKUP_DIR
+        return ensure_backup_dir(configured)
+
+    def get_backup_config(self) -> BackupConfig:
+        """Get current backup directory configuration."""
+        active_dir = self._get_active_backup_dir()
+        raw_dir = self._custom_backup_dir or get_settings().BACKUP_DIR
+        return BackupConfig(backup_dir=raw_dir, absolute_backup_dir=active_dir)
+
+    def set_backup_dir(self, new_dir: str) -> BackupConfig:
+        """Update target backup directory path."""
+        if not new_dir or not new_dir.strip():
+            raise ValueError("Backup directory path cannot be empty.")
+        clean_dir = new_dir.strip()
+        PostgresBackupRepository._custom_backup_dir = clean_dir
+        self._custom_backup_dir = clean_dir
+        return self.get_backup_config()
+
+
     async def export_backup(self) -> BackupExportResult:
         """Export database tables to a JSON payload file in local backup folder."""
-        backup_dir = ensure_backup_dir()
+        backup_dir = self._get_active_backup_dir()
         table_data: dict[str, list[dict[str, Any]]] = {}
         record_counts: dict[str, int] = {}
 
@@ -101,7 +129,7 @@ class PostgresBackupRepository(BackupRepositoryInterface):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
 
-        prune_manual_backups(max_limit=5)
+        prune_manual_backups(backup_dir, max_limit=5)
 
         return BackupExportResult(
             filename=filename,
@@ -114,7 +142,7 @@ class PostgresBackupRepository(BackupRepositoryInterface):
 
     def list_backups(self) -> list[BackupMetadata]:
         """List all available backup snapshots in the local backups folder."""
-        backup_dir = ensure_backup_dir()
+        backup_dir = self._get_active_backup_dir()
         snapshots = []
 
         for f in os.listdir(backup_dir):
@@ -157,9 +185,9 @@ class PostgresBackupRepository(BackupRepositoryInterface):
         snapshots.sort(key=lambda x: x.created_at, reverse=True)
         return snapshots
 
-    async def create_pre_restore_snapshot() -> str:
+    async def create_pre_restore_snapshot(self) -> str:
         """Create automatic safety snapshot before performing restore."""
-        backup_dir = ensure_backup_dir()
+        backup_dir = self._get_active_backup_dir()
         table_data: dict[str, list[dict[str, Any]]] = {}
         record_counts: dict[str, int] = {}
 
@@ -255,10 +283,11 @@ class PostgresBackupRepository(BackupRepositoryInterface):
         if not safe_filename.endswith(".json"):
             raise ValueError("Invalid backup file extension.")
 
-        backup_dir = ensure_backup_dir()
+        backup_dir = self._get_active_backup_dir()
         file_path = os.path.join(backup_dir, safe_filename)
 
         if not os.path.isfile(file_path):
             raise FileNotFoundError(f"Backup file '{safe_filename}' not found.")
 
         os.remove(file_path)
+

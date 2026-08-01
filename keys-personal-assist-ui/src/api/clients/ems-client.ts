@@ -20,8 +20,10 @@ import type {
   SavingsBucketTransactionResponse,
   SavingsBucketTransactionsPageResponse,
   BackupMetadata,
+  BackupConfigResponse,
   RestoreResultResponse,
 } from '@/types/api';
+
 
 import type {
   AssetCategory,
@@ -596,15 +598,28 @@ class EMSClient {
     return response.json();
   }
 
-  // Backup & Restore endpoints
+  // Backup and Restore Endpoints
 
-  async exportBackup(): Promise<{
-    status: string;
-    filename: string;
-    formatted_size: string;
-    size_bytes: number;
-    metadata: Record<string, any>;
-  }> {
+  async getBackupConfig(): Promise<BackupConfigResponse> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/config`);
+    if (!response.ok) throw new Error('Failed to fetch backup configuration');
+    return response.json();
+  }
+
+  async updateBackupConfig(backupDir: string): Promise<BackupConfigResponse> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/config`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backup_dir: backupDir }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to update backup folder location');
+    }
+    return response.json();
+  }
+
+  async exportBackup(): Promise<BackupMetadata> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/backup/export`, {
       method: 'POST',
     });

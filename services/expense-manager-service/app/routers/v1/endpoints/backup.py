@@ -15,7 +15,8 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from app.infrastructures.postgres_db.backup import BACKUP_DIR, ensure_backup_dir
+from app.infrastructures.postgres_db.backup import ensure_backup_dir
+
 from app.routers.v1.services import get_backup_service
 from app.use_cases.backup import BackupService
 
@@ -28,7 +29,51 @@ class RestoreSnapshotRequest(BaseModel):
     filename: str
 
 
+class UpdateBackupConfigRequest(BaseModel):
+    """Request schema for updating active backup directory."""
+
+    backup_dir: str
+
+
+@backup_router.get("/config")
+async def get_backup_config(
+    backup_service: BackupService = Depends(get_backup_service),
+) -> dict[str, str]:
+    """Get active backup directory configuration."""
+    cfg = backup_service.get_backup_config()
+    return {
+        "backup_dir": cfg.backup_dir,
+        "absolute_backup_dir": cfg.absolute_backup_dir,
+    }
+
+
+@backup_router.patch("/config")
+async def update_backup_config(
+    request: UpdateBackupConfigRequest,
+    backup_service: BackupService = Depends(get_backup_service),
+) -> dict[str, str]:
+    """Update active backup directory path."""
+    try:
+        cfg = backup_service.set_backup_dir(request.backup_dir)
+        return {
+            "status": "success",
+            "backup_dir": cfg.backup_dir,
+            "absolute_backup_dir": cfg.absolute_backup_dir,
+        }
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve),
+        ) from ve
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update backup location: {str(e)}",
+        ) from e
+
+
 @backup_router.post("/export")
+
 async def export_backup(
     backup_service: BackupService = Depends(get_backup_service),
 ) -> dict[str, Any]:
