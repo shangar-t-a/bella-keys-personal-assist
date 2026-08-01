@@ -639,8 +639,18 @@ async def seed_liabilities(session) -> None:
     print("[seed]   OK Liabilities done")
 
 
-async def clean_database(session) -> None:
-    print("[seed] Cleaning/wiping development database tables...")
+async def clean_database(session, db_url: str | None = None) -> None:
+    url = db_url or _db_url()
+    db_name = url.rsplit("/", 1)[-1].split("?")[0]
+    app_env = os.getenv("APP_ENV", "dev").lower()
+
+    if app_env == "prod" or not (db_name.endswith("_dev") or db_name.endswith("_test")):
+        raise RuntimeError(
+            f"[seed] SAFETY ERROR: Refusing to clean database '{db_name}' in environment '{app_env}'. "
+            "Target database must end with '_dev' or '_test' and APP_ENV must not be 'prod'."
+        )
+
+    print(f"[seed] Cleaning/wiping development database tables in '{db_name}'...")
     tables = [
         "spending_entry",
         "savings_bucket_transaction",
@@ -667,12 +677,13 @@ async def clean_database(session) -> None:
 
 
 async def main() -> None:
+    url = _db_url()
     print(f"[seed] Connecting to database...")
-    engine = create_async_engine(_db_url(), echo=False)
+    engine = create_async_engine(url, echo=False)
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_maker() as session:
-        await clean_database(session)
+        await clean_database(session, db_url=url)
         await seed_spending(session)
         await seed_budget(session)
         await seed_savings(session)
