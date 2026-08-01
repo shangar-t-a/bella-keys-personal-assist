@@ -2,3 +2,8 @@
 *.log
 *.db/
 build/*
+.ai-assets/
+__pycache__/
+*.py[cod]
+*$py.class
+backups/

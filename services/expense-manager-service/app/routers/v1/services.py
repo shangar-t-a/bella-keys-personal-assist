@@ -5,6 +5,7 @@ from functools import lru_cache
 
 from app.entities.repositories.account import AccountRepositoryInterface
 from app.entities.repositories.asset import AssetRepositoryInterface
+from app.entities.repositories.backup import BackupRepositoryInterface
 from app.entities.repositories.liability import LiabilityRepositoryInterface
 from app.entities.repositories.monthly_planner import MonthlyPlannerRepositoryInterface
 from app.entities.repositories.period import PeriodRepositoryInterface
@@ -12,6 +13,7 @@ from app.entities.repositories.savings_bucket import SavingsBucketRepositoryInte
 from app.entities.repositories.spending_entry import SpendingEntryRepositoryInterface
 from app.infrastructures.postgres_db.account import PostgresAccountRepository
 from app.infrastructures.postgres_db.asset import PostgresAssetRepository
+from app.infrastructures.postgres_db.backup import PostgresBackupRepository
 from app.infrastructures.postgres_db.liability import PostgresLiabilityRepository
 from app.infrastructures.postgres_db.monthly_planner import PostgresMonthlyPlannerRepository
 from app.infrastructures.postgres_db.period import PostgresPeriodRepository
@@ -20,12 +22,14 @@ from app.infrastructures.postgres_db.spending_entry import PostgresSpendingEntry
 from app.settings import get_settings
 from app.use_cases.account import AccountService
 from app.use_cases.asset import AssetService
+from app.use_cases.backup import BackupService
 from app.use_cases.liability import LiabilityService
 from app.use_cases.monthly_planner import MonthlyPlannerService
 from app.use_cases.period import PeriodService
 from app.use_cases.savings_bucket import SavingsBucketService
 from app.use_cases.spending_entry import SpendingEntryService
 from app.use_cases.wealth import WealthService
+
 
 
 class StorageType(StrEnum):
@@ -186,3 +190,22 @@ def get_wealth_service() -> WealthService:
         asset_repository=get_asset_repository(),
         liability_repository=get_liability_repository(),
     )
+
+
+def get_backup_repository() -> BackupRepositoryInterface:
+    """Get the appropriate backup repository based on settings."""
+    settings = get_settings()
+    storage_type = StorageType(settings.STORAGE_TYPE)
+
+    if storage_type in (StorageType.INMEMORY, StorageType.SQLITE):
+        raise ValueError(f"Storage type {storage_type} is deprecated and not supported as of February 2026.")
+    if storage_type == StorageType.POSTGRES:
+        return PostgresBackupRepository()
+    raise ValueError(f"Unsupported storage type: {storage_type}. Supported types: [{StorageType.POSTGRES}]")
+
+
+@lru_cache
+def get_backup_service() -> BackupService:
+    """Get the Backup Service."""
+    backup_repository = get_backup_repository()
+    return BackupService(backup_repository=backup_repository)

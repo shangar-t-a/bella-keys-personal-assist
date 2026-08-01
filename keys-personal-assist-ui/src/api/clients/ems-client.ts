@@ -19,7 +19,10 @@ import type {
   SavingsBucketTransactionCreateRequest,
   SavingsBucketTransactionResponse,
   SavingsBucketTransactionsPageResponse,
+  BackupMetadata,
+  RestoreResultResponse,
 } from '@/types/api';
+
 import type {
   AssetCategory,
   Asset,
@@ -592,7 +595,83 @@ class EMSClient {
     if (!response.ok) throw new Error('Failed to fetch wealth allocation');
     return response.json();
   }
+
+  // Backup & Restore endpoints
+
+  async exportBackup(): Promise<{
+    status: string;
+    filename: string;
+    formatted_size: string;
+    size_bytes: number;
+    metadata: Record<string, any>;
+  }> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/export`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to export backup');
+    return response.json();
+  }
+
+  async listBackups(): Promise<BackupMetadata[]> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/list`);
+    if (!response.ok) throw new Error('Failed to list backups');
+    return response.json();
+  }
+
+  async restoreLatestBackup(): Promise<RestoreResultResponse> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/restore/latest`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to restore latest backup');
+    }
+    return response.json();
+  }
+
+  async restoreSnapshot(filename: string): Promise<RestoreResultResponse> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/restore/snapshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to restore snapshot');
+    }
+    return response.json();
+  }
+
+  async uploadAndRestoreBackup(file: File): Promise<RestoreResultResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/restore/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to upload and restore backup file');
+    }
+    return response.json();
+  }
+
+  getBackupDownloadUrl(filename: string): string {
+    return `${this.baseURL}/v1/backup/download/${encodeURIComponent(filename)}`;
+  }
+
+  async deleteBackup(filename: string): Promise<void> {
+    const response = await fetchWithAuth(`${this.baseURL}/v1/backup/delete/${encodeURIComponent(filename)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to delete backup file');
+    }
+  }
 }
 
 // Export singleton instance
 export const emsClient = new EMSClient();
+

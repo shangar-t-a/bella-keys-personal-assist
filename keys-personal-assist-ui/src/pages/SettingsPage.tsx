@@ -37,14 +37,16 @@ import {
   WarningAmber,
   AccountBalance,
   Category as CategoryIcon,
+  CloudDownload,
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
 import type { AccountNameResponse, MonthlyCategory } from '@/types/api';
 import { toast } from 'sonner';
+import BackupRestoreTab from '@/components/settings/BackupRestoreTab';
 
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTabParam = searchParams.get('tab') === 'categories' ? 1 : 0;
+  const activeTabParam = searchParams.get('tab') === 'backup' ? 2 : searchParams.get('tab') === 'categories' ? 1 : 0;
   
   const [activeTab, setActiveTab] = useState(activeTabParam);
   const [loading, setLoading] = useState(false);
@@ -69,8 +71,10 @@ export default function SettingsPage() {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-    setSearchParams({ tab: newValue === 1 ? 'categories' : 'accounts' });
+    const tabName = newValue === 2 ? 'backup' : newValue === 1 ? 'categories' : 'accounts';
+    setSearchParams({ tab: tabName });
   };
+
 
   // Load Data
   const loadData = async () => {
@@ -230,11 +234,13 @@ export default function SettingsPage() {
           >
             <Tab icon={<AccountBalance />} iconPosition="start" label="Bank Accounts" value={0} />
             <Tab icon={<CategoryIcon />} iconPosition="start" label="Budget Categories" value={1} />
+            <Tab icon={<CloudDownload />} iconPosition="start" label="Backup & Restore" value={2} />
           </Tabs>
 
           <CardContent sx={{ p: 4 }}>
             {/* TAB 1: ACCOUNTS */}
             {activeTab === 0 && (
+
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                   Manage Accounts
@@ -472,7 +478,11 @@ export default function SettingsPage() {
                 </Grid>
               </Box>
             )}
+
+            {/* TAB 3: BACKUP & RESTORE */}
+            {activeTab === 2 && <BackupRestoreTab />}
           </CardContent>
+
         </Card>
       </Container>
 
