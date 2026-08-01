@@ -25,7 +25,9 @@ import {
   useMediaQuery,
   useTheme,
   TextField,
+  Paper,
 } from '@mui/material';
+
 import {
   CloudDownload,
   FolderZip,
@@ -38,7 +40,9 @@ import {
   CheckCircle,
   Laptop,
   FolderOpen,
+  Refresh,
 } from '@mui/icons-material';
+
 import { emsClient } from '@/api/clients/ems-client';
 import type { BackupConfigResponse, BackupMetadata } from '@/types/api';
 import { toast } from 'sonner';
@@ -76,7 +80,7 @@ export default function BackupRestoreTab() {
         setActiveHostDir(activeDir);
 
         const hostSnapshots = await window.electronAPI.listHostBackups(activeDir);
-        setSnapshots(hostSnapshots);
+        setSnapshots(hostSnapshots.slice(0, 5));
         setBackupConfig({
           backup_dir: activeDir,
           absolute_backup_dir: activeDir,
@@ -87,7 +91,7 @@ export default function BackupRestoreTab() {
           emsClient.listBackups(),
           emsClient.getBackupConfig().catch(() => null),
         ]);
-        setSnapshots(snapData);
+        setSnapshots(snapData.slice(0, 5));
         if (cfgData) {
           setBackupConfig(cfgData);
           setCustomFolderPath(cfgData.backup_dir);
@@ -98,6 +102,11 @@ export default function BackupRestoreTab() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSyncFolder = async () => {
+    await loadData();
+    toast.success('Folder synced with disk');
   };
 
   useEffect(() => {
@@ -355,37 +364,64 @@ export default function BackupRestoreTab() {
                 <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
                   Local Folder Backups
                 </Typography>
-                <Chip label="5-File Quota" size="small" color="default" variant="outlined" sx={{ fontWeight: 600, height: 22 }} />
+                <Chip label="Top 5 Limit" size="small" color="default" variant="outlined" sx={{ fontWeight: 600, height: 22 }} />
+                <Tooltip title="Sync / Refresh folder with disk">
+                  <IconButton size="small" color="primary" onClick={handleSyncFolder} sx={{ ml: 0.5 }}>
+                    <Refresh fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Stack>
 
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1, mb: 1, flexWrap: 'wrap' }}>
-                <Typography variant="body2" color="text.secondary">
-                  Target Backup Location:
+              <Box sx={{ mt: 1.5, mb: 1.5, maxWidth: 540 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.5 }}
+                >
+                  Target Backup Directory
                 </Typography>
-                <Box
-                  component="code"
+                <Paper
+                  variant="outlined"
                   sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'space-between',
+                    gap: 1.5,
+                    p: '3px 6px 3px 12px',
+                    borderRadius: 1.5,
                     bgcolor: 'action.hover',
-                    px: 1,
-                    py: 0.3,
-                    borderRadius: 1,
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    wordBreak: 'break-all',
+                    borderColor: 'divider',
                   }}
                 >
-                  {backupConfig?.absolute_backup_dir || './backups/'}
-                </Box>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<FolderOpen fontSize="small" />}
-                  onClick={handleChangeFolder}
-                  sx={{ py: 0.2, px: 1.2, height: 26, fontSize: '0.75rem', fontWeight: 600 }}
-                >
-                  Change Folder
-                </Button>
-              </Stack>
+                  <Typography
+                    variant="body2"
+                    title={backupConfig?.absolute_backup_dir || ''}
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      color: 'text.primary',
+                      flex: 1,
+                    }}
+                  >
+                    {backupConfig?.absolute_backup_dir || './backups/'}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<FolderOpen fontSize="small" />}
+                    onClick={handleChangeFolder}
+                    sx={{ py: 0.3, px: 1.2, height: 26, fontSize: '0.75rem', fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}
+                  >
+                    Change
+                  </Button>
+                </Paper>
+              </Box>
+
+
 
 
 
