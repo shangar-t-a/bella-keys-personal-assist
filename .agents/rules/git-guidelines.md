@@ -65,7 +65,7 @@ Confirm the staged changes and commit metadata with the user before pushing the 
 
 ## 3. Pull Request Management
 
-All Pull Requests (PRs) must be created and managed using the GitHub CLI (`gh`).
+All Pull Requests (PRs) must be created and managed using the GitHub CLI (`gh`) and follow the project PR template located at `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ### Pull Request Process
 
@@ -86,16 +86,21 @@ git log main..HEAD
 - **New Pull Request:**
 
   ```bash
-  gh pr create --title "Descriptive Title" --body "Comprehensive Summary"
+  gh pr create --title "Descriptive Title" --body-file .github/PULL_REQUEST_TEMPLATE.md
   ```
 
 - **Update Existing Pull Request:**
 
   ```bash
-  gh pr edit --title "Updated Descriptive Title" --body "Updated Comprehensive Summary"
+  gh pr edit --title "Updated Descriptive Title" --body-file path/to/pr_body.md
   ```
 
 ### Pull Request Title and Body Formatting
 
 - **Title:** Use a clean, professional description. Do not include Conventional Commit prefixes (such as `feat:` or `fix:`) in the pull request title.
-- **Body:** Provide a detailed description of all changes introduced by the pull request.
+- **Body:** Follow the standard structure in [.github/PULL_REQUEST_TEMPLATE.md](../../.github/PULL_REQUEST_TEMPLATE.md):
+  - **Summary**: Concise explanation of the changes.
+  - **Motivation & Context**: Why the change is necessary.
+  - **Proposed Changes**: Itemized list of changes made.
+  - **Verification & Testing**: Automated/manual test verification results.
+  - **Checklist**: Completion checklist for standards, DCO sign-off, and clean titles.
