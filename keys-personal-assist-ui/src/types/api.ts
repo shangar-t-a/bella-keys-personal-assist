@@ -164,11 +164,11 @@ export interface SavingsBucketTransactionsPageResponse {
 export interface BackupMetadata {
   filename: string;
   created_at: string;
-  type: 'manual' | 'pre_restore' | 'other';
+  type?: 'manual' | 'pre_restore' | 'other';
   size_bytes: number;
   formatted_size: string;
-  record_counts: Record<string, number>;
-  total_records: number;
+  record_counts?: Record<string, number>;
+  total_records?: number;
 }
 
 export interface RestoreResultResponse {

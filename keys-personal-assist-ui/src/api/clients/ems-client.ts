@@ -676,6 +676,18 @@ class EMSClient {
     return `${this.baseURL}/v1/backup/download/${encodeURIComponent(filename)}`;
   }
 
+  async downloadBackupText(filename: string): Promise<string> {
+    const response = await fetchWithAuth(this.getBackupDownloadUrl(filename), {
+      method: 'GET',
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to download backup content');
+    }
+    return response.text();
+  }
+
+
   async deleteBackup(filename: string): Promise<void> {
     const response = await fetchWithAuth(`${this.baseURL}/v1/backup/delete/${encodeURIComponent(filename)}`, {
       method: 'DELETE',

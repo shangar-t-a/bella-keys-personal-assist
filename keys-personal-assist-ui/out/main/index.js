@@ -1,4 +1,5 @@
 import { ipcMain, dialog, app, BrowserWindow, nativeImage, shell } from "electron";
+import fs from "fs";
 import path from "path";
 import __cjs_mod__ from "node:module";
 const __filename = import.meta.filename;
@@ -11,6 +12,32 @@ ipcMain.handle("dialog:selectDirectory", async () => {
   });
   if (!result.canceled && result.filePaths.length > 0) {
     return result.filePaths[0];
+  }
+  return null;
+});
+ipcMain.handle("dialog:saveBackupFile", async (_event, defaultFilename, content) => {
+  const result = await dialog.showSaveDialog({
+    title: "Save Backup File to PC Folder",
+    defaultPath: defaultFilename,
+    filters: [{ name: "JSON Backup File", extensions: ["json"] }]
+  });
+  if (!result.canceled && result.filePath) {
+    fs.writeFileSync(result.filePath, content, "utf-8");
+    return result.filePath;
+  }
+  return null;
+});
+ipcMain.handle("dialog:openBackupFile", async () => {
+  const result = await dialog.showOpenDialog({
+    title: "Select Backup File from PC",
+    properties: ["openFile"],
+    filters: [{ name: "JSON Backup File", extensions: ["json"] }]
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    const filePath = result.filePaths[0];
+    const content = fs.readFileSync(filePath, "utf-8");
+    const filename = path.basename(filePath);
+    return { filePath, filename, content };
   }
   return null;
 });

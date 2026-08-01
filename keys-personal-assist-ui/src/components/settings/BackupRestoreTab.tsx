@@ -63,17 +63,35 @@ export default function BackupRestoreTab() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [activeHostDir, setActiveHostDir] = useState<string>('');
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [snapData, cfgData] = await Promise.all([
-        emsClient.listBackups(),
-        emsClient.getBackupConfig().catch(() => null),
-      ]);
-      setSnapshots(snapData);
-      if (cfgData) {
-        setBackupConfig(cfgData);
-        setCustomFolderPath(cfgData.backup_dir);
+      if (window.electronAPI?.listHostBackups && window.electronAPI?.getDefaultBackupDir) {
+        // Desktop Electron mode: resolve real host absolute path directly on PC
+        const storedDir = localStorage.getItem('bella_backup_dir');
+        const defaultDir = await window.electronAPI.getDefaultBackupDir();
+        const activeDir = storedDir || defaultDir;
+        setActiveHostDir(activeDir);
+
+        const hostSnapshots = await window.electronAPI.listHostBackups(activeDir);
+        setSnapshots(hostSnapshots);
+        setBackupConfig({
+          backup_dir: activeDir,
+          absolute_backup_dir: activeDir,
+        });
+      } else {
+        // Web mode: query backend EMS API
+        const [snapData, cfgData] = await Promise.all([
+          emsClient.listBackups(),
+          emsClient.getBackupConfig().catch(() => null),
+        ]);
+        setSnapshots(snapData);
+        if (cfgData) {
+          setBackupConfig(cfgData);
+          setCustomFolderPath(cfgData.backup_dir);
+        }
       }
     } catch {
       toast.error('Failed to load backup snapshots');
@@ -92,10 +110,13 @@ export default function BackupRestoreTab() {
       try {
         const selected = await window.electronAPI.selectDirectory();
         if (selected) {
-          const updated = await emsClient.updateBackupConfig(selected);
-          setBackupConfig(updated);
-          setCustomFolderPath(updated.backup_dir);
-          toast.success(`Backup folder updated to: ${updated.absolute_backup_dir}`);
+          localStorage.setItem('bella_backup_dir', selected);
+          setActiveHostDir(selected);
+          setBackupConfig({
+            backup_dir: selected,
+            absolute_backup_dir: selected,
+          });
+          toast.success(`Backup target folder set to: ${selected}`);
           await loadData();
         }
       } catch (e: any) {
@@ -122,30 +143,89 @@ export default function BackupRestoreTab() {
     }
   };
 
-  const handleResetFolder = async () => {
-    try {
-      const updated = await emsClient.updateBackupConfig('default');
-      setBackupConfig(updated);
-      setCustomFolderPath(updated.backup_dir);
-      toast.success(`Backup location reset to default: ${updated.absolute_backup_dir}`);
-      await loadData();
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to reset backup folder location');
-    }
-  };
-
   const handleExportBackup = async () => {
-
     setExporting(true);
     try {
       const res = await emsClient.exportBackup();
-      toast.success(`Backup exported: ${res.filename} (${res.formatted_size})`);
+      const jsonText = await emsClient.downloadBackupText(res.filename);
+
+      if (window.electronAPI?.writeHostBackup && activeHostDir) {
+        // Write backup file directly into active host PC directory
+        await window.electronAPI.writeHostBackup(activeHostDir, res.filename, jsonText);
+        toast.success(`Backup exported directly to PC folder: ${res.filename} (${res.formatted_size})`);
+      } else if (window.electronAPI?.saveBackupFile) {
+        const savedPath = await window.electronAPI.saveBackupFile(res.filename, jsonText);
+        if (savedPath) {
+          toast.success(`Backup saved directly to PC folder: ${savedPath}`);
+        }
+      } else {
+        // Web browser mode: trigger authenticated file download
+        const blob = new Blob([jsonText], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = res.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast.success(`Backup exported and downloaded: ${res.filename} (${res.formatted_size})`);
+      }
       await loadData();
     } catch (e: any) {
       toast.error(e.message || 'Failed to export backup');
     } finally {
       setExporting(false);
     }
+  };
+
+  const handleDownloadSnapshot = async (filename: string) => {
+    try {
+      if (window.electronAPI?.readHostBackup && activeHostDir) {
+        const jsonText = await window.electronAPI.readHostBackup(activeHostDir, filename);
+        if (window.electronAPI?.saveBackupFile) {
+          await window.electronAPI.saveBackupFile(filename, jsonText);
+        }
+      } else {
+        const jsonText = await emsClient.downloadBackupText(filename);
+        const blob = new Blob([jsonText], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      toast.success(`Downloaded backup file: ${filename}`);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to download snapshot');
+    }
+  };
+
+  const handleNativeOpenFileFromPC = async () => {
+    if (window.electronAPI?.openBackupFile) {
+      try {
+        const result = await window.electronAPI.openBackupFile();
+        if (result) {
+          const json = JSON.parse(result.content);
+          if (!json || typeof json !== 'object' || !json.tables) {
+            toast.error('Invalid backup file structure: missing tables envelope.');
+            return;
+          }
+          const blob = new Blob([result.content], { type: 'application/json' });
+          const file = new File([blob], result.filename, { type: 'application/json' });
+          setUploadedFile(file);
+          setUploadedMetadata(json.metadata || {});
+        }
+      } catch (e: any) {
+        toast.error(e.message || 'Failed to open backup file from PC');
+      }
+      return;
+    }
+    fileInputRef.current?.click();
   };
 
   const handleRestoreLatest = async () => {
@@ -161,9 +241,18 @@ export default function BackupRestoreTab() {
     const targetFile = confirmRestoreFilename;
     setConfirmRestoreFilename(null);
     setRestoring(true);
+
     try {
-      const res = await emsClient.restoreSnapshot(targetFile);
-      toast.success(`Database restored successfully! (${res.restored_records} records restored)`);
+      if (window.electronAPI?.readHostBackup && activeHostDir) {
+        const jsonText = await window.electronAPI.readHostBackup(activeHostDir, targetFile);
+        const blob = new Blob([jsonText], { type: 'application/json' });
+        const file = new File([blob], targetFile, { type: 'application/json' });
+        const res = await emsClient.uploadAndRestoreBackup(file);
+        toast.success(`Database restored successfully from PC folder! (${res.restored_records} records restored)`);
+      } else {
+        const res = await emsClient.restoreSnapshot(targetFile);
+        toast.success(`Database restored successfully! (${res.restored_records} records restored)`);
+      }
       await loadData();
     } catch (e: any) {
       toast.error(e.message || 'Failed to restore snapshot');
@@ -176,14 +265,21 @@ export default function BackupRestoreTab() {
     if (!confirmDeleteFilename) return;
     const targetFile = confirmDeleteFilename;
     setConfirmDeleteFilename(null);
+
     try {
-      await emsClient.deleteBackup(targetFile);
-      toast.success(`Deleted snapshot: ${targetFile}`);
+      if (window.electronAPI?.deleteHostBackup && activeHostDir) {
+        await window.electronAPI.deleteHostBackup(activeHostDir, targetFile);
+        toast.success(`Deleted snapshot from PC folder: ${targetFile}`);
+      } else {
+        await emsClient.deleteBackup(targetFile);
+        toast.success(`Deleted snapshot: ${targetFile}`);
+      }
       await loadData();
     } catch (e: any) {
       toast.error(e.message || 'Failed to delete snapshot');
     }
   };
+
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -289,16 +385,8 @@ export default function BackupRestoreTab() {
                 >
                   Change Folder
                 </Button>
-                <Button
-                  size="small"
-                  variant="text"
-                  color="inherit"
-                  onClick={handleResetFolder}
-                  sx={{ py: 0.2, px: 1, height: 26, fontSize: '0.75rem', fontWeight: 500, textTransform: 'none' }}
-                >
-                  Reset Default
-                </Button>
               </Stack>
+
 
 
               {latestSnapshot ? (
@@ -409,13 +497,12 @@ export default function BackupRestoreTab() {
                               <IconButton
                                 size="small"
                                 color="info"
-                                component="a"
-                                href={emsClient.getBackupDownloadUrl(snap.filename)}
-                                download={snap.filename}
+                                onClick={() => handleDownloadSnapshot(snap.filename)}
                               >
                                 <Download fontSize="small" />
                               </IconButton>
                             </Tooltip>
+
                             <Tooltip title="Delete snapshot">
                               <IconButton
                                 size="small"
@@ -451,7 +538,8 @@ export default function BackupRestoreTab() {
           <Box
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleFileDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleNativeOpenFileFromPC}
+
             sx={{
               border: '2px dashed',
               borderColor: 'primary.main',
