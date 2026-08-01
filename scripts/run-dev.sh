@@ -25,18 +25,19 @@ show_menu() {
     echo
     echo "Select a development configuration:"
     echo
-    echo "  1. EMS only          - Auth + Expense Manager"
-    echo "  2. AI Chat           - Auth + EMS + Bella Chat + Qdrant  [recommended]"
+    echo "  1. EMS only          - Auth + Expense Manager  [default]"
+    echo "  2. AI Chat           - Auth + EMS + Bella Chat + Qdrant"
     echo "  3. AI Chat + Monitor - Everything above + Phoenix observability"
     echo
-    read -p "Select services [1-3]: " service_choice
+    read -p "Select services [1-3] (default: 1 - EMS only): " service_choice
+    service_choice="${service_choice:-1}"
 
     AI_CHAT_ENABLED=false
     case "$service_choice" in
         1) PROFILES=()             ; SERVICE_LABEL="EMS only" ;;
         2) PROFILES=("ai-chat")    ; AI_CHAT_ENABLED=true ; SERVICE_LABEL="AI Chat" ;;
         3) PROFILES=("ai-chat" "monitor") ; AI_CHAT_ENABLED=true ; SERVICE_LABEL="AI Chat + Monitor" ;;
-        *) echo "Invalid choice." ; show_menu ; return ;;
+        *) echo "Invalid choice: $service_choice" ; show_menu ; return ;;
     esac
 
     # Step 2: Launch mode
@@ -44,21 +45,22 @@ show_menu() {
     echo "How do you want to run the UI?"
     echo
     echo "  1. Web UI (Docker/nginx)"
-    echo "  2. Desktop (Electron)"
+    echo "  2. Desktop (Electron)  [default]"
     echo "  3. No UI (backend only)"
     echo
-    read -p "Select launch mode [1-3]: " ui_choice
+    read -p "Select launch mode [1-3] (default: 2 - Desktop): " ui_choice
+    ui_choice="${ui_choice:-2}"
 
     case "$ui_choice" in
         1)
             if [ "$AI_CHAT_ENABLED" = true ]; then
                 echo
                 echo "  Which services should the Web UI expose?"
-                echo "  1. EMS only"
+                echo "  1. EMS only  [default]"
                 echo "  2. EMS + AI Chat"
                 echo
-                read -p "Select UI scope [1-2] (default: 2): " ui_scope
-                ui_scope="${ui_scope:-2}"
+                read -p "Select UI scope [1-2] (default: 1 - EMS only): " ui_scope
+                ui_scope="${ui_scope:-1}"
                 if [ "$ui_scope" = "1" ]; then
                     PROFILES+=("ui-ems")
                     CHOICE="web-ui-ems"
@@ -73,7 +75,7 @@ show_menu() {
             ;;
         2) CHOICE="desktop" ;;
         3) CHOICE="backend-only" ;;
-        *) echo "Invalid choice." ; show_menu ; return ;;
+        *) echo "Invalid choice: $ui_choice" ; show_menu ; return ;;
     esac
 }
 
@@ -120,10 +122,6 @@ case "$CHOICE" in
         node "$REPO_ROOT/scripts/electron/setup-electron.js"
         npm run dev:electron
 
-        # On Windows/Bash environments, launching the Electron GUI window detaches the process immediately.
-        # This causes this script to think execution is complete, exiting and triggering the EXIT/cleanup trap,
-        # which shuts down the backend Docker containers prematurely.
-        # We block here with a read prompt to keep the containers running while the desktop app is active.
         echo ""
         echo "========================================================"
         echo " Electron app is running in development mode."

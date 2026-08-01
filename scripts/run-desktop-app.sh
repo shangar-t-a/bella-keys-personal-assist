@@ -36,12 +36,14 @@ check_prerequisites_prompt() {
     echo -e "  5. ${BLUE}Ollama${NC} (Optional - required if using local-first AI models)"
     echo
     
-    read -p "Have you installed and started all the required prerequisites? (y/N): " response
+    read -p "Have you installed and started all the required prerequisites? [Y/n] (default: Y): " response
+    response="${response:-Y}"
     if [[ ! "$response" =~ ^[Yy]$ ]]; then
         echo -e "${RED}❌ Aborted. Please install and run all prerequisites before launching the app.${NC}"
         echo "For detailed setup instructions, please refer to: docs/user/setup-guide.md"
         exit 1
     fi
+
 }
 
 check_docker() {
@@ -83,7 +85,9 @@ show_service_menu() {
     echo "4) Enhanced (Expense Manager + Bella Chat + Observability)"
     echo "5) Custom selection"
     echo
-    read -p "Enter your choice (1-5): " choice
+    read -p "Enter your choice [1-5] (default: 1 - Build configuration): " choice
+    choice="${choice:-1}"
+
     
     case $choice in
         1)
