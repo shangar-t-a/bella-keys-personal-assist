@@ -21,7 +21,6 @@ class BackupRepositoryInterface(ABC):
 
     @abstractmethod
     async def export_backup(self) -> BackupExportResult:
-
         """Export database tables to local folder snapshot."""
         pass
 

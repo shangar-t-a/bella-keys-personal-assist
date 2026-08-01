@@ -277,9 +277,7 @@ class WealthService:
 
         if ppu is None:
             latest_ppu_txs = [
-                t
-                for t in txs_chrono
-                if t.price_per_unit is not None and t.transaction_type in ("BUY", "REVALUE")
+                t for t in txs_chrono if t.price_per_unit is not None and t.transaction_type in ("BUY", "REVALUE")
             ]
             ppu = latest_ppu_txs[-1].price_per_unit if latest_ppu_txs else 0.0
 

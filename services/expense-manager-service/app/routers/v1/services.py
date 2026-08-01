@@ -31,7 +31,6 @@ from app.use_cases.spending_entry import SpendingEntryService
 from app.use_cases.wealth import WealthService
 
 
-
 class StorageType(StrEnum):
     """Storage type enum."""
 

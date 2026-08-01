@@ -22,7 +22,6 @@ class BackupService:
         return self.backup_repository.set_backup_dir(new_dir)
 
     async def export_backup(self) -> BackupExportResult:
-
         """Export database state to timestamped JSON backup file."""
         return await self.backup_repository.export_backup()
 

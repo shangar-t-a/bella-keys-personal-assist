@@ -13,8 +13,8 @@ ipcMain.handle('dialog:selectDirectory', async () => {
     return null
 })
 
-
 // Register custom protocol handler for Windows/macOS/Linux
+
 if (process.defaultApp) {
     if (process.argv.length >= 2) {
         app.setAsDefaultProtocolClient('bella-app', process.execPath, [path.resolve(process.argv[1])])

@@ -7,6 +7,6 @@ declare global {
       selectDirectory?: () => Promise<string | null>;
       onOAuthCallback: (callback: (url: string) => void) => () => void;
     };
-
   }
 }
+

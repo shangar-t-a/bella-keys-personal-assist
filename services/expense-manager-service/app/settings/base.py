@@ -20,7 +20,6 @@ def get_default_user_backup_dir() -> str:
     return os.path.join(os.path.expanduser("~"), ".bella-keys", "backups")
 
 
-
 class ExpenseManagerBaseSettings(BaseSettings):
     """Base settings for the expense manager service."""
 
@@ -40,8 +39,6 @@ class ExpenseManagerBaseSettings(BaseSettings):
     PG_DB_HOST: str = "localhost"
     LOG_DB_QUERIES: bool = False
     BACKUP_DIR: str = get_default_user_backup_dir()
-
-
 
     # Logging settings
     LOG_LEVEL: str = "INFO"

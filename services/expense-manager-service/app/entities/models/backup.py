@@ -43,4 +43,3 @@ class BackupConfig:
 
     backup_dir: str
     absolute_backup_dir: str
-

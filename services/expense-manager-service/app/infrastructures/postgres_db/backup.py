@@ -89,7 +89,6 @@ class PostgresBackupRepository(BackupRepositoryInterface):
         self._custom_backup_dir = clean_dir
         return self.get_backup_config()
 
-
     async def export_backup(self) -> BackupExportResult:
         """Export database tables to a JSON payload file in local backup folder."""
         backup_dir = self._get_active_backup_dir()
@@ -290,4 +289,3 @@ class PostgresBackupRepository(BackupRepositoryInterface):
             raise FileNotFoundError(f"Backup file '{safe_filename}' not found.")
 
         os.remove(file_path)
-

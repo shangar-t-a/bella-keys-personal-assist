@@ -180,6 +180,3 @@ export interface BackupConfigResponse {
   backup_dir: string;
   absolute_backup_dir: string;
 }
-
-
-

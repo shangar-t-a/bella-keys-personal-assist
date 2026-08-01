@@ -73,7 +73,6 @@ async def update_backup_config(
 
 
 @backup_router.post("/export")
-
 async def export_backup(
     backup_service: BackupService = Depends(get_backup_service),
 ) -> dict[str, Any]:

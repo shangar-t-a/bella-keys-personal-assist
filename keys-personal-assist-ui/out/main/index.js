@@ -1,9 +1,19 @@
-import { app, BrowserWindow, nativeImage, shell } from "electron";
+import { ipcMain, dialog, app, BrowserWindow, nativeImage, shell } from "electron";
 import path from "path";
 import __cjs_mod__ from "node:module";
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 const require2 = __cjs_mod__.createRequire(import.meta.url);
+ipcMain.handle("dialog:selectDirectory", async () => {
+  const result = await dialog.showOpenDialog({
+    title: "Select Backup Folder Location",
+    properties: ["openDirectory", "createDirectory"]
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient("bella-app", process.execPath, [path.resolve(process.argv[1])]);
