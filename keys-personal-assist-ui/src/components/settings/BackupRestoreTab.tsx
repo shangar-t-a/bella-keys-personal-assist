@@ -122,7 +122,20 @@ export default function BackupRestoreTab() {
     }
   };
 
+  const handleResetFolder = async () => {
+    try {
+      const updated = await emsClient.updateBackupConfig('default');
+      setBackupConfig(updated);
+      setCustomFolderPath(updated.backup_dir);
+      toast.success(`Backup location reset to default: ${updated.absolute_backup_dir}`);
+      await loadData();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to reset backup folder location');
+    }
+  };
+
   const handleExportBackup = async () => {
+
     setExporting(true);
     try {
       const res = await emsClient.exportBackup();
@@ -276,7 +289,17 @@ export default function BackupRestoreTab() {
                 >
                   Change Folder
                 </Button>
+                <Button
+                  size="small"
+                  variant="text"
+                  color="inherit"
+                  onClick={handleResetFolder}
+                  sx={{ py: 0.2, px: 1, height: 26, fontSize: '0.75rem', fontWeight: 500, textTransform: 'none' }}
+                >
+                  Reset Default
+                </Button>
               </Stack>
+
 
               {latestSnapshot ? (
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontWeight: 500 }}>

@@ -13,9 +13,26 @@ from app.infrastructures.postgres_db.database import Base, get_async_session
 from app.settings import get_settings
 
 
+def normalize_backup_path(raw_path: str) -> str:
+    """Normalize and resolve backup path cleanly across OS and container environments."""
+    if not raw_path:
+        return os.path.abspath(get_settings().BACKUP_DIR)
+
+    clean = raw_path.strip().replace("\\", "/")
+
+    # Handle Windows drive letters (e.g. C:/Users/...) when running in POSIX/Linux container environments
+    if os.name != "nt" and len(clean) >= 2 and clean[1] == ":":
+        rest = clean[2:]
+        if not rest.startswith("/"):
+            rest = "/" + rest
+        clean = rest
+
+    return os.path.abspath(os.path.expanduser(clean))
+
+
 def ensure_backup_dir(target_dir: str | None = None) -> str:
     """Ensure local backup directory exists."""
-    path = os.path.abspath(target_dir or get_settings().BACKUP_DIR)
+    path = normalize_backup_path(target_dir or get_settings().BACKUP_DIR)
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -81,13 +98,16 @@ class PostgresBackupRepository(BackupRepositoryInterface):
         return BackupConfig(backup_dir=raw_dir, absolute_backup_dir=active_dir)
 
     def set_backup_dir(self, new_dir: str) -> BackupConfig:
-        """Update target backup directory path."""
-        if not new_dir or not new_dir.strip():
-            raise ValueError("Backup directory path cannot be empty.")
-        clean_dir = new_dir.strip()
-        PostgresBackupRepository._custom_backup_dir = clean_dir
-        self._custom_backup_dir = clean_dir
+        """Update target backup directory path. Reset to default if empty or 'default'."""
+        if not new_dir or not new_dir.strip() or new_dir.strip().lower() == "default":
+            PostgresBackupRepository._custom_backup_dir = None
+            self._custom_backup_dir = None
+        else:
+            clean_dir = new_dir.strip()
+            PostgresBackupRepository._custom_backup_dir = clean_dir
+            self._custom_backup_dir = clean_dir
         return self.get_backup_config()
+
 
     async def export_backup(self) -> BackupExportResult:
         """Export database tables to a JSON payload file in local backup folder."""
