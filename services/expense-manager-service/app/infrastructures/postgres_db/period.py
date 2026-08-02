@@ -1,6 +1,7 @@
 """Postgres repository implementation for period."""
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entities.errors.period import PeriodNotFoundError
@@ -33,7 +34,16 @@ class PostgresPeriodRepository(PeriodRepositoryInterface):
                 # Create new month-year
                 period = PeriodModel(month=month, year=year)
                 session.add(period)
-                await session.commit()
+                try:
+                    await session.commit()
+                except IntegrityError as ie:
+                    await session.rollback()
+                    result = await session.execute(stmt)
+                    existing = result.scalar_one_or_none()
+                    if existing is not None:
+                        period = existing
+                    else:
+                        raise ie
 
             return Period(id=period.id, month=period.month, year=period.year)
 

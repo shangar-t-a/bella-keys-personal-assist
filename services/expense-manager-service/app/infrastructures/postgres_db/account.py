@@ -1,6 +1,7 @@
 """Postgres repository implementation for accounts."""
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entities.errors.account import AccountNotFoundError
@@ -23,17 +24,27 @@ class PostgresAccountRepository(AccountRepositoryInterface):
 
     async def get_or_create_account(self, account_name: str) -> Account:
         """Retrieve an existing account or create a new one with the provided name."""
+        clean_name = account_name.upper()
         async with await self._get_session() as session:
             # Check if account exists
-            stmt = select(AccountModel).where(AccountModel.account_name == account_name.upper())
+            stmt = select(AccountModel).where(AccountModel.account_name == clean_name)
             result = await session.execute(stmt)
             account = result.scalar_one_or_none()
 
             if account is None:
                 # Create new account
-                account = AccountModel(account_name=account_name.upper())
+                account = AccountModel(account_name=clean_name)
                 session.add(account)
-                await session.commit()
+                try:
+                    await session.commit()
+                except IntegrityError as ie:
+                    await session.rollback()
+                    result = await session.execute(stmt)
+                    existing = result.scalar_one_or_none()
+                    if existing is not None:
+                        account = existing
+                    else:
+                        raise ie
 
             return Account(id=account.id, account_name=account.account_name)
 
