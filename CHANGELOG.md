@@ -28,6 +28,30 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.10.0] - 2026-08-02
+
+### Added
+
+- Added **Backup & Restore** manager tab under Settings with folder configuration, snapshot list, export, download, deletion, and atomic restore operations.
+- Integrated native Electron directory selection dialog (`dialog:selectDirectory`) via preload IPC for desktop mode, with fallback modal for web mode.
+- Added unified path container pill component for desktop target directory selection.
+
+---
+
+## [expense-manager-service@1.7.0] - 2026-08-02
+
+### Added
+
+- Added user-configurable local database backup directory support (`~/.bella-keys/backups` by default).
+- Added API endpoints `GET /v1/backup/config`, `PATCH /v1/backup/config`, `POST /v1/backup/export`, `GET /v1/backup/list`, and `POST /v1/backup/restore/snapshot`.
+- Added automatic pre-restore safety snapshot generation (`pre_restore_<timestamp>.json`) prior to database clearing.
+
+### Fixed
+
+- Handled transaction `IntegrityError` in `get_or_create_period` and `get_or_create_account` to prevent race conditions and 500 errors under parallel UI requests.
+
+---
+
 ## [expense-manager-service@1.6.0] - 2026-07-11
 
 ### Changed
