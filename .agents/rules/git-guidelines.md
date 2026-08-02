@@ -15,7 +15,7 @@ All new work must be performed in a dedicated feature branch.
 
 - **Branch Naming Convention:** `users/shangar/<description>`
 
-**Branch Creation Flow:**
+#### Branch Creation Flow
 
 ```bash
 git checkout main
@@ -31,20 +31,20 @@ Commits must follow the Conventional Commits specification and include a mandato
 
 ### Commit Process
 
-**Step 1: Stage modified files**
+#### Step 1: Stage modified files
 
 ```bash
 git add <files>
 ```
 
-**Step 2: Retrieve the git user configuration**
+#### Step 2: Retrieve the git user configuration
 
 ```bash
 git config user.name
 git config user.email
 ```
 
-**Step 3: Create the commit using the template**
+#### Step 3: Create the commit using the template
 
 Replace the placeholder details with the retrieved user configuration:
 
@@ -57,7 +57,7 @@ feat(scope): descriptive title
 Signed-off-by: Name <email@example.com>
 ```
 
-**Step 4: Confirm changes**
+#### Step 4: Confirm changes
 
 Confirm the staged changes and commit metadata with the user before pushing the branch to the remote repository.
 
@@ -72,19 +72,19 @@ All Pull Requests (PRs) must be created and managed using the GitHub CLI (`gh`) 
 
 ### Pull Request Process
 
-**Step 1: Check for an existing pull request for the active branch**
+#### Step 1: Check for an existing pull request for the active branch
 
 ```bash
 gh pr list
 ```
 
-**Step 2: Review the commit log to construct a summary of proposed changes**
+#### Step 2: Review the commit log to construct a summary of proposed changes
 
 ```bash
 git log main..HEAD
 ```
 
-**Step 3: Create or update the pull request**
+#### Step 3: Create or update the pull request
 
 - **New Pull Request:**
 

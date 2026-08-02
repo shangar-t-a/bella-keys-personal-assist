@@ -40,13 +40,15 @@ To install Bella Keys on a new PC without downloading the full repository, open 
 curl -sSL "https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main/scripts/deploy/install-prod.sh" | bash
 ```
 
-**What this does:**
+### What this does
 
 * Downloads the necessary configuration files.
 * Prompts you to configure your `.env` secrets interactively or offline.
 * Pulls and starts the latest Docker containers.
 
-**Note:** You must have Docker, PostgreSQL, and Ollama installed natively on your host PC before running this script.
+> [!NOTE]
+> You must have Docker, PostgreSQL, and Ollama installed natively on your host PC before running this script.
 
-**Managing Services:**
+### Managing Services
+
 Once installed, use the downloaded `run-prod.ps1` script (on Windows) to easily start, stop, or restart the background services.

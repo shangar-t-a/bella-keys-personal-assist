@@ -77,14 +77,14 @@ Rather than assuming monthly compounding, the simulation respects the configured
 
 ### Month-by-Month Logic
 
-**Month 0 (Disbursal Month):**
+#### Month 0 (Disbursal Month)
 
 - Opening principal = sum of all BORROW amounts; accrued interest = 0.0.
 - Any extra BORROWs in the same month increase principal.
 - Any REPAYs in the same month are applied to accrued interest first (if any), then reduce principal.
 - No interest is accrued in the disbursal month.
 
-**Months 1 to N (up_to_date):**
+#### Months 1 to N (up_to_date)
 
 If a `REVALUE` exists in the month:
 
