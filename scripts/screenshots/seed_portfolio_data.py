@@ -322,23 +322,31 @@ async def seed_savings(session) -> None:
 async def seed_assets(session) -> None:
     print("[seed] Assets + transactions...")
 
-    # Category IDs from the existing seed migration (3b043e0f)
-    cat_codes = {
-        "EQUITY":      "5d287bc128794c4fae855f75e7a9e6b1",
-        "DEBT":        "2f4a47da2f174780a424e7561a09d3b4",
-        "REAL_ESTATE": "e439bb7f10b741008d5b88c426f6e522",
-        "COMMODITIES": "a434c382103b417e914e9f7823f6e111",
-        "CASH_BANK":   "c831c382123b417e914e9f7823f6e222",
-    }
-
-    # Fetch actual category IDs from DB (in case they differ)
+    default_asset_cats = [
+        ("EQUITY", "Equity", "Stocks, Mutual Funds, ETFs"),
+        ("DEBT", "Debt", "Fixed Deposits, PPF, Bonds, EPF"),
+        ("REAL_ESTATE", "Real Estate", "Land, Residential/Commercial Properties"),
+        ("COMMODITIES", "Commodities", "Physical/Digital Gold, Silver"),
+        ("CASH_BANK", "Cash / Bank", "Savings accounts, Cash"),
+    ]
     actual_cat = {}
-    for code, fallback_id in cat_codes.items():
+    for code, name, desc in default_asset_cats:
         res = await session.execute(
             text("SELECT id FROM asset_category WHERE code = :c"), {"c": code}
         )
         row = res.fetchone()
-        actual_cat[code] = row[0] if row else fallback_id
+        if row:
+            actual_cat[code] = row[0]
+        else:
+            cid = _uid()
+            await session.execute(
+                text(
+                    "INSERT INTO asset_category (id, name, code, description, created_at, updated_at) "
+                    "VALUES (:id, :n, :c, :d, NOW(), NOW())"
+                ),
+                {"id": cid, "n": name, "c": code, "d": desc},
+            )
+            actual_cat[code] = cid
 
     # Fetch subcategory IDs
     sub_res = await session.execute(text("SELECT code, id FROM asset_subcategory"))
@@ -554,9 +562,30 @@ async def seed_assets(session) -> None:
 async def seed_liabilities(session) -> None:
     print("[seed] Liabilities + repayment history...")
 
-    # Fetch liability category IDs
-    res = await session.execute(text("SELECT code, id FROM liability_category"))
-    lib_cats = {r[0]: r[1] for r in res.fetchall()}
+    default_liability_cats = [
+        ("SECURED_LOAN", "Secured Loans", "Loans backed by collateral like home, vehicle"),
+        ("UNSECURED_LOAN", "Unsecured Loans", "Loans with no collateral like personal, education loans"),
+        ("REVOLVING_CREDIT", "Revolving Credit", "Lines of credit like credit cards"),
+        ("OTHER", "Other Liabilities", "Family loans, hand loans, or general liabilities"),
+    ]
+    lib_cats = {}
+    for code, name, desc in default_liability_cats:
+        res = await session.execute(
+            text("SELECT id FROM liability_category WHERE code = :c"), {"c": code}
+        )
+        row = res.fetchone()
+        if row:
+            lib_cats[code] = row[0]
+        else:
+            cid = _uid()
+            await session.execute(
+                text(
+                    "INSERT INTO liability_category (id, name, code, description, created_at, updated_at) "
+                    "VALUES (:id, :n, :c, :d, NOW(), NOW())"
+                ),
+                {"id": cid, "n": name, "c": code, "d": desc},
+            )
+            lib_cats[code] = cid
 
     res = await session.execute(text("SELECT code, id FROM liability_subcategory"))
     lib_subs = {r[0]: r[1] for r in res.fetchall()}
@@ -639,6 +668,63 @@ async def seed_liabilities(session) -> None:
     print("[seed]   OK Liabilities done")
 
 
+async def seed_backups(session) -> None:
+    print("[seed] Backup snapshots...")
+    import json
+    backup_dir = os.path.expanduser(os.path.join("~", ".bella-keys", "backups"))
+    os.makedirs(backup_dir, exist_ok=True)
+
+    existing_files = [f for f in os.listdir(backup_dir) if f.endswith(".json")]
+    if existing_files:
+        print(f"[seed]   OK {len(existing_files)} existing backup snapshot(s) found.")
+        return
+
+    timestamp_str = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    filename = f"ems_backup_{timestamp_str}.json"
+    file_path = os.path.join(backup_dir, filename)
+
+    tables = [
+        "account", "period", "monthly_category", "monthly_summary", "monthly_expense_item",
+        "savings_bucket", "savings_bucket_transaction", "asset_category", "asset_subcategory",
+        "asset", "asset_transaction", "liability_category", "liability_subcategory",
+        "liability", "liability_transaction", "spending_entry"
+    ]
+
+    table_data = {}
+    record_counts = {}
+    for table_name in tables:
+        res = await session.execute(text(f"SELECT * FROM {table_name}"))
+        keys = res.keys()
+        rows = res.fetchall()
+        serialized_rows = []
+        for r in rows:
+            row_dict = {}
+            for col_name, val in zip(keys, r):
+                if isinstance(val, datetime):
+                    row_dict[col_name] = val.isoformat()
+                else:
+                    row_dict[col_name] = val
+            serialized_rows.append(row_dict)
+        table_data[table_name] = serialized_rows
+        record_counts[table_name] = len(serialized_rows)
+
+    payload = {
+        "metadata": {
+            "version": "1.0",
+            "service": "expense_manager",
+            "exported_at": datetime.now(UTC).isoformat(),
+            "record_counts": record_counts,
+            "total_records": sum(record_counts.values()),
+        },
+        "tables": table_data,
+    }
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+    print(f"[seed]   OK Initial backup snapshot created: {filename}")
+
+
 async def clean_database(session, db_url: str | None = None) -> None:
     url = db_url or _db_url()
     db_name = url.rsplit("/", 1)[-1].split("?")[0]
@@ -678,7 +764,7 @@ async def clean_database(session, db_url: str | None = None) -> None:
 
 async def main() -> None:
     url = _db_url()
-    print(f"[seed] Connecting to database...")
+    print("[seed] Connecting to database...")
     engine = create_async_engine(url, echo=False)
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -689,9 +775,10 @@ async def main() -> None:
         await seed_savings(session)
         await seed_assets(session)
         await seed_liabilities(session)
+        await seed_backups(session)
 
     await engine.dispose()
-    print("\n[seed] OK All demo data seeded successfully.")
+    print("\n[seed] OK All portfolio workflow data seeded successfully.")
 
 
 if __name__ == "__main__":

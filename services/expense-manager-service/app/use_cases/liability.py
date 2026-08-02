@@ -56,8 +56,6 @@ def _get_compounding_months(compounding: CompoundingFrequency | None) -> int:
     }.get(compounding, 1)
 
 
-
-
 def _simulate_amortization(
     original_value: float,
     interest_rate: float,
@@ -124,7 +122,7 @@ def _simulate_amortization(
 
     # Month 0: Disbursal month
     p = first_borrow.amount  # opening principal from first borrow
-    i_acc = 0.0              # accrued uncompounded interest
+    i_acc = 0.0  # accrued uncompounded interest
     accum_interest = 0.0
     accum_repaid = 0.0
 
@@ -137,12 +135,12 @@ def _simulate_amortization(
     revals_0 = [t for t in m0_other if t.transaction_type == LiabilityTransactionType.REVALUE]
 
     p += extra_borrows_0
-    
+
     if repays_0 > 0:
         if repays_0 <= i_acc:
             i_acc -= repays_0
         else:
-            p -= (repays_0 - i_acc)
+            p -= repays_0 - i_acc
             i_acc = 0.0
         accum_repaid += repays_0
 
@@ -757,9 +755,7 @@ class LiabilityService:
             raise ValueError(f"Liability with ID {liability_id} not found.")
 
         if not liability.interest_rate:
-            raise ValueError(
-                f"Liability '{liability.name}' is missing interest rate configuration."
-            )
+            raise ValueError(f"Liability '{liability.name}' is missing interest rate configuration.")
 
         transactions = await self.liability_repository.get_transactions_for_liability(liability_id)
         if not transactions:
@@ -822,11 +818,11 @@ class LiabilityService:
             n_str = date_m.strftime("%Y-%m")
             ideal_points[n_str] = round(p_ideal + i_acc_ideal, 2)
             ideal_interest_points[n_str] = round(total_interest_ideal, 2)
-            
+
             # Prevent loop from hanging if loan is not amortizing (interest >= emi)
             if p_ideal + i_acc_ideal >= original_value + 1e-2 and n_ideal >= 12:
                 break
-                
+
             if p_ideal <= 0 and i_acc_ideal <= 0:
                 break
 
@@ -905,11 +901,11 @@ class LiabilityService:
                 k_str = date_m.strftime("%Y-%m")
                 projected_future_points[k_str] = round(p_proj + i_acc_proj, 2)
                 projected_future_interest_points[k_str] = round(cum_int_proj, 2)
-                
+
                 # Prevent loops from hanging on negative amortization
                 if p_proj + i_acc_proj >= p_today + 1e-2 and k_projected >= 12:
                     break
-                    
+
                 if p_proj <= 0 and i_acc_proj <= 0:
                     break
 

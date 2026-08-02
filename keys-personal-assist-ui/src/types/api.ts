@@ -160,3 +160,23 @@ export interface SavingsBucketTransactionsPageResponse {
   limit: number;
   offset: number;
 }
+
+export interface BackupMetadata {
+  filename: string;
+  created_at: string;
+  type?: 'manual' | 'pre_restore' | 'other';
+  size_bytes: number;
+  formatted_size: string;
+  record_counts?: Record<string, number>;
+  total_records?: number;
+}
+
+export interface RestoreResultResponse {
+  status: string;
+  restored_records: number;
+}
+
+export interface BackupConfigResponse {
+  backup_dir: string;
+  absolute_backup_dir: string;
+}

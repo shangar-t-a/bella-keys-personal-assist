@@ -5,6 +5,7 @@ from utilities.scope_guard import require_scope
 
 from app.routers.v1.endpoints.account import account_router
 from app.routers.v1.endpoints.asset import router as asset_router
+from app.routers.v1.endpoints.backup import backup_router
 from app.routers.v1.endpoints.liability import router as liability_router
 from app.routers.v1.endpoints.monthly_planner import router as monthly_planner_router
 from app.routers.v1.endpoints.period import period_router
@@ -28,3 +29,4 @@ router.include_router(savings_bucket_router, dependencies=[_read])
 router.include_router(asset_router, dependencies=[_read])
 router.include_router(liability_router, dependencies=[_read])
 router.include_router(wealth_router, dependencies=[_read])
+router.include_router(backup_router, dependencies=[_read])

@@ -31,18 +31,19 @@ bash scripts/screenshots/run_capture.sh
 
 If you already have your services running locally and want to run individual steps manually:
 
-1. **Seed Demo Data** (idempotent seeder):
+1. **Seed Portfolio Data** (idempotent seeder):
+
    ```bash
    # Make sure EMS database is accessible
-   uv run scripts/screenshots/seed_demo_data.py
+   uv run scripts/screenshots/seed_portfolio_data.py
    ```
 
 2. **Capture Screens**:
+
    ```bash
    # From scripts/screenshots/ directory
    uv run capture_screens.py
    ```
-
 
 ## Versioning behaviour
 
@@ -95,6 +96,7 @@ structured sections. The table below reflects the current manifest.
 | Bella AI Chat | `chat-conversation` | Chat with AI response (backend required) |
 | Settings | `settings-accounts` | Bank accounts panel |
 | Settings | `settings-categories` | Budget categories panel |
+| Settings | `settings-backup` | Local folder database backup & restore manager |
 
 ## Generated outputs
 
