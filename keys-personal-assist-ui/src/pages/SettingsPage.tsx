@@ -27,6 +27,7 @@ import {
   Chip,
   Stack,
   Grid,
+  Paper,
 } from '@mui/material';
 import {
   Add as Plus,
@@ -38,15 +39,25 @@ import {
   AccountBalance,
   Category as CategoryIcon,
   CloudDownload,
+  InfoOutlined,
+  AutoAwesome as Sparkles,
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
 import type { AccountNameResponse, MonthlyCategory } from '@/types/api';
 import { toast } from 'sonner';
 import BackupRestoreTab from '@/components/settings/BackupRestoreTab';
+import {
+  APP_FULL_NAME,
+  APP_VERSION,
+  COPYRIGHT_FULL,
+  AUTHOR_NAME,
+  AUTHOR_EMAIL,
+  LICENSE_NAME,
+} from '@/config/appInfo';
 
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTabParam = searchParams.get('tab') === 'backup' ? 2 : searchParams.get('tab') === 'categories' ? 1 : 0;
+  const activeTabParam = searchParams.get('tab') === 'about' ? 3 : searchParams.get('tab') === 'backup' ? 2 : searchParams.get('tab') === 'categories' ? 1 : 0;
   
   const [activeTab, setActiveTab] = useState(activeTabParam);
   const [loading, setLoading] = useState(false);
@@ -71,7 +82,7 @@ export default function SettingsPage() {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-    const tabName = newValue === 2 ? 'backup' : newValue === 1 ? 'categories' : 'accounts';
+    const tabName = newValue === 3 ? 'about' : newValue === 2 ? 'backup' : newValue === 1 ? 'categories' : 'accounts';
     setSearchParams({ tab: tabName });
   };
 
@@ -235,6 +246,7 @@ export default function SettingsPage() {
             <Tab icon={<AccountBalance />} iconPosition="start" label="Bank Accounts" value={0} />
             <Tab icon={<CategoryIcon />} iconPosition="start" label="Budget Categories" value={1} />
             <Tab icon={<CloudDownload />} iconPosition="start" label="Backup & Restore" value={2} />
+            <Tab icon={<InfoOutlined />} iconPosition="start" label="About & System" value={3} />
           </Tabs>
 
           <CardContent sx={{ p: 4 }}>
@@ -481,6 +493,85 @@ export default function SettingsPage() {
 
             {/* TAB 3: BACKUP & RESTORE */}
             {activeTab === 2 && <BackupRestoreTab />}
+
+            {/* TAB 4: ABOUT & SYSTEM INFO */}
+            {activeTab === 3 && (
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 2.5,
+                      background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 20px rgba(16, 140, 198, 0.3)',
+                    }}
+                  >
+                    <Sparkles sx={{ color: 'white', fontSize: 30 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: '"Space Grotesk", sans-serif' }}>
+                      {APP_FULL_NAME}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                      <Chip label={`v${APP_VERSION}`} color="primary" size="small" sx={{ fontWeight: 700 }} />
+                      <Typography variant="caption" color="text.secondary">
+                        Shipped Release Version
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', mb: 1.5 }}>
+                        Application Information
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Version</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{APP_VERSION}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Author & Lead</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{AUTHOR_NAME} ({AUTHOR_EMAIL})</Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>License</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{LICENSE_NAME}</Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', mb: 1.5 }}>
+                        Copyright & Ownership
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Copyright Notice</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{COPYRIGHT_FULL}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Environment</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {typeof window !== 'undefined' && window.navigator.userAgent.toLowerCase().includes('electron') ? 'Electron Desktop Client' : 'Web Browser Client'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
           </CardContent>
 
         </Card>

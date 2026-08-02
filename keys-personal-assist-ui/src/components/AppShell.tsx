@@ -44,6 +44,7 @@ import {
 import { useThemeMode } from '@/theme/ThemeProvider';
 import { getAvailableServices } from '@/config/features';
 import { useAuth } from '@/context/AuthContext';
+import { APP_VERSION, COPYRIGHT_INFO, APP_FULL_NAME } from '@/config/appInfo';
 
 const DRAWER_WIDTH = 240;
 const MINI_WIDTH = 64;
@@ -158,22 +159,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
     const brandGradient = `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`;
 
-    const BrandLogo = ({ size = 30 }: { size?: number }) => (
-        <Box
-            sx={{
-                width: size,
-                height: size,
-                borderRadius: 1.5,
-                background: brandGradient,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-            }}
-        >
-            <Sparkles sx={{ color: 'white', fontSize: size * 0.5 }} />
-        </Box>
-    );
+const renderBrandLogo = (gradient: string, size = 30) => (
+    <Box
+        sx={{
+            width: size,
+            height: size,
+            borderRadius: 1.5,
+            background: gradient,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+        }}
+    >
+        <Sparkles sx={{ color: 'white', fontSize: size * 0.5 }} />
+    </Box>
+);
 
     const sidebarContent = (mobile: boolean) => {
         const isOpen = open || mobile;
@@ -197,7 +198,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                             style={{ ...LINK_STYLE, display: 'flex', alignItems: 'center', gap: 10 }}
                             onClick={mobile ? closeMobile : undefined}
                         >
-                            <BrandLogo />
+                            {renderBrandLogo(brandGradient)}
                             <Typography
                                 variant="subtitle2"
                                 sx={{
@@ -215,7 +216,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                         </RouterLink>
                     )}
 
-                    {!isOpen && <BrandLogo />}
+                    {!isOpen && renderBrandLogo(brandGradient)}
 
                     <Tooltip
                         title={mobile ? 'Close' : open ? 'Collapse' : 'Expand'}
@@ -521,6 +522,24 @@ export default function AppShell({ children }: { children: ReactNode }) {
                             </Box>
                         </Tooltip>
                     )}
+                    {isOpen ? (
+                        <Box sx={{ pt: 1, textAlign: 'center' }}>
+                            <Typography variant="caption" sx={{ display: 'block', fontSize: '0.7rem', color: 'text.secondary', fontWeight: 600 }}>
+                                v{APP_VERSION}
+                            </Typography>
+                            <Typography variant="caption" sx={{ display: 'block', fontSize: '0.65rem', color: 'text.disabled' }}>
+                                {COPYRIGHT_INFO}
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <Tooltip title={`${APP_FULL_NAME} v${APP_VERSION} • ${COPYRIGHT_INFO}`} placement="right">
+                            <Box sx={{ pt: 0.5, textAlign: 'center' }}>
+                                <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.disabled', fontWeight: 600 }}>
+                                    v{APP_VERSION}
+                                </Typography>
+                            </Box>
+                        </Tooltip>
+                    )}
                 </Box>
             </Box>
         );
@@ -582,7 +601,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                 <Menu />
                             </IconButton>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <BrandLogo size={24} />
+                                {renderBrandLogo(brandGradient, 24)}
                                 <Typography
                                     variant="subtitle2"
                                     sx={{
@@ -661,6 +680,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
                     <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} />
                 </MenuItem>
+
+                <Divider sx={{ my: 0.5 }} />
+
+                <Box sx={{ px: 2, py: 1, textAlign: 'center' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.75rem' }}>
+                        {APP_FULL_NAME} v{APP_VERSION}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled', fontSize: '0.68rem' }}>
+                        {COPYRIGHT_INFO}
+                    </Typography>
+                </Box>
             </MuiMenu>
         </Box>
     );
