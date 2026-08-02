@@ -67,6 +67,9 @@ Confirm the staged changes and commit metadata with the user before pushing the 
 
 All Pull Requests (PRs) must be created and managed using the GitHub CLI (`gh`) and follow the project PR template located at `.github/PULL_REQUEST_TEMPLATE.md`.
 
+> [!IMPORTANT]
+> **Shell Escaping Standard:** In Windows PowerShell, backticks (`` ` ``) act as escape characters inside double-quoted strings (`"..."`). To prevent Markdown code formatting corruption, **ALWAYS use `--body-file <path>`** with `gh pr create` and `gh pr edit`. Never pass inline `--body "..."` strings containing backticks or multiline text.
+
 ### Pull Request Process
 
 **Step 1: Check for an existing pull request for the active branch**
