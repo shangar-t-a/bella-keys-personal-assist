@@ -35,3 +35,11 @@ This document defines mandatory Markdown formatting and syntax standards across 
 
 - Tables are exempt from the 120-character line length limit.
 - If a table becomes excessively wide or hard to read, refactor it into bullet lists or standard JSON payloads.
+
+---
+
+## 5. No Emphasis as Heading (MD036)
+
+- Never use single lines of bold or italic emphasis (e.g., `**Heading Text:**`) as pseudo-headings.
+- Always use standard Markdown heading tags (`###`, `####`) for section titles, or bullet items (`- **Label:** ...`) for inline field lists.
+

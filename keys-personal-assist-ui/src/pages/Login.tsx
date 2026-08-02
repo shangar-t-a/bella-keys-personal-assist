@@ -15,6 +15,7 @@ import {
   AutoAwesome as Sparkles,
   Login as LoginIcon,
 } from '@mui/icons-material';
+import { APP_VERSION, COPYRIGHT_INFO } from '@/config/appInfo';
 
 // Helper functions for PKCE Code Challenge generation (RFC 7636) using standard Web Crypto API.
 // PKCE (Proof Key for Code Exchange) protects public clients (like SPAs) from Authorization Code interception.
@@ -106,7 +107,7 @@ const Login: React.FC = () => {
       } else {
         window.location.href = authorizeUrl;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('SSO Initialization Error:', err);
       toast.error('Failed to initialize SSO authentication flow.');
       setLoading(false);
@@ -219,6 +220,12 @@ const Login: React.FC = () => {
                   'Sign In with SSO'
                 )}
               </Button>
+            </Box>
+            
+            <Box sx={{ pt: 2, textAlign: 'center' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.75rem', fontWeight: 500 }}>
+                v{APP_VERSION} • {COPYRIGHT_INFO}
+              </Typography>
             </Box>
           </CardContent>
         </Card>

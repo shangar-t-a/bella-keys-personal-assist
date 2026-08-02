@@ -11,23 +11,28 @@ For end-user explanations of what each value means, see `docs/user/wealth-manage
 
 Flat-balance accounts where value is a direct INR amount (e.g., Bank Savings, PPF).
 
-**Invested Value ($V_{\text{invested}}$):**
+#### Invested Value ($V_{\text{invested}}$)
+
 $$V_{\text{invested}} = \max\left(0.0,\ \sum \text{Amount}_{\text{BUY}} - \sum \text{Amount}_{\text{SELL}}\right)$$
 
-**Current Value ($V_{\text{current}}$):**
+#### Current Value ($V_{\text{current}}$)
+
 $$V_{\text{current}} = \begin{cases} V_{\text{latest\_revalue}} + \sum_{t > t_{\text{reval}}} \text{Amount}_{\text{BUY}, t} - \sum_{t > t_{\text{reval}}} \text{Amount}_{\text{SELL}, t} & \text{if any REVALUE exists} \\ V_{\text{invested}} & \text{otherwise} \end{cases}$$
 
 ### Unit-Based Assets (`UNIT_BASED`)
 
 Investments tracked by quantity (e.g., Stocks, Mutual Funds, Physical Gold).
 
-**Units Held ($U_{\text{held}}$):**
+#### Units Held ($U_{\text{held}}$)
+
 $$U_{\text{held}} = \max\left(0.0,\ \sum \text{Units}_{\text{BUY}} - \sum \text{Units}_{\text{SELL}}\right)$$
 
-**Invested Value ($V_{\text{invested}}$):**
+#### Invested Value ($V_{\text{invested}}$)
+
 $$V_{\text{invested}} = \max\left(0.0,\ \sum_{t \in \text{BUY}} (\text{Units}_t \times P_t) - \sum_{t \in \text{SELL}} (\text{Units}_t \times P_t)\right)$$
 
-**Current Value ($V_{\text{current}}$):**
+#### Current Value ($V_{\text{current}}$)
+
 $$V_{\text{current}} = U_{\text{held}} \times P_{\text{current}}$$
 
 Where $P_{\text{current}}$ is resolved in priority order:
@@ -123,7 +128,7 @@ $$L_{\text{repaid}} = \text{CumRepaid}_{\text{today}}$$
 $$L_{\text{interest}} = \text{CumInt}_{\text{today}}$$
 $$P_{\text{progress}} = \text{clamp}\left(0,\ \left(1 - \frac{L_{\text{current}}}{L_{\text{original}}}\right) \times 100,\ 100\right)$$
 
-**Interest-Free Liabilities** (no interest rate configured):
+#### Interest-Free Liabilities (No Interest Rate Configured)
 
 $$L_{\text{current}} = \max\left(0,\ L_{\text{original}} - L_{\text{repaid}}\right)$$
 
@@ -190,12 +195,12 @@ All projections start from the actual current balance. Any missed payments or pe
 
 ## 6. Net Worth & Allocation Calculations
 
-### A. Net Worth Calculations
+#### Current Net Worth ($NW$)
 
-**Current Net Worth ($NW$):**
 $$NW = \sum V_{\text{asset}} - \sum L_{\text{liability}}$$
 
-**Historical Net Worth ($NW_m$):**
+#### Historical Net Worth ($NW_m$)
+
 Calculates the historical net worth at the close of month $m$:
 $$NW_m = \sum V_{\text{asset}, m} - \sum L_{\text{liability}, m}$$
 where $V_{\text{asset}, m}$ is the calculated historical value of each asset at the end of month $m$, and $L_{\text{liability}, m}$ is the outstanding balance of each liability.
@@ -204,13 +209,15 @@ where $V_{\text{asset}, m}$ is the calculated historical value of each asset at 
 
 ### B. Portfolio Allocations & Health Metrics
 
-**Category Allocations percentage ($A_{\text{pct}}$):**
+#### Category Allocations percentage ($A_{\text{pct}}$)
+
 For each asset category $c_{\text{asset}}$:
 $$A_{\text{pct}, c} = \left(\frac{\sum_{t \in c_{\text{asset}}} V_{\text{current}, t}}{\sum V_{\text{asset}}}\right) \times 100$$
 For each liability category $c_{\text{liability}}$:
 $$A_{\text{pct}, c} = \left(\frac{\sum_{t \in c_{\text{liability}}} L_{\text{current}, t}}{\sum L_{\text{liability}}}\right) \times 100$$
 
-**Debt-to-Asset Ratio ($R_{\text{debt}}$):**
+#### Debt-to-Asset Ratio ($R_{\text{debt}}$)
+
 Measures total leverage:
 $$R_{\text{debt}} = \left(\frac{\sum L_{\text{liability}}}{\sum V_{\text{asset}}}\right) \times 100$$
 
@@ -219,7 +226,7 @@ $$R_{\text{debt}} = \left(\frac{\sum L_{\text{liability}}}{\sum V_{\text{asset}}
   - $R_{\text{debt}} \le 50\%$: *Moderate Risk (Watch)* - Type: `WARNING`
   - $R_{\text{debt}} > 50\%$: *High Risk (Leveraged)* - Type: `ERROR`
 
-**Portfolio Liquidity Ratio ($R_{\text{liq}}$):**
+#### Portfolio Liquidity Ratio ($R_{\text{liq}}$)
 Proportion of liquid assets in the portfolio:
 $$R_{\text{liq}} = \left(\frac{V_{\text{liquid\_assets}}}{\sum V_{\text{asset}}}\right) \times 100$$
 where $V_{\text{liquid\_assets}}$ is the sum of category current values for `EQUITY` and `CASH_BANK` categories.

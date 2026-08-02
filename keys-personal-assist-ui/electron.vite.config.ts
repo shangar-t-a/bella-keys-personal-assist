@@ -46,6 +46,7 @@ export default defineConfig({
         },
         define: {
             'import.meta.env.VITE_APP_ENV': '"electron"',
+            'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version || '1.10.0'),
         },
         server: {
             port: 3000,
