@@ -87,9 +87,9 @@ cd "$SCRIPT_DIR"
 if [ "$SKIP_SEED" = true ]; then
     _info "Skipping seed (--skip-seed passed)"
 else
-    _info "Running seed_demo_data.py…"
-    uv run seed_demo_data.py
-    _ok "Demo data seeded"
+    _info "Running seed_portfolio_data.py…"
+    uv run seed_portfolio_data.py
+    _ok "Portfolio data seeded"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────

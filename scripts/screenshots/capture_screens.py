@@ -232,6 +232,13 @@ JOURNEY = [
                 "scroll_y": 0,
                 "description": "Settings — budget category configuration.",
             },
+            {
+                "slug": "settings-backup",
+                "route": "/settings?tab=backup",
+                "tab": "Backup & Restore",
+                "scroll_y": 0,
+                "description": "Settings — local folder database backup and restore manager.",
+            },
         ],
     },
 ]
