@@ -163,7 +163,7 @@ check_prerequisites() {
         return
     fi
     
-    read -p "Do you want to continue with the setup? (Y/n) [default: Y]: " response
+    read -p "Do you want to continue with the setup? [Y/n] (default: Y): " response
     if [ -z "$response" ]; then
         echo "Continuing with setup (default)..."
         response="Y"
@@ -197,7 +197,7 @@ setup_env_file() {
         fi
 
         echo -e "${YELLOW}⚠️  Warning: $name environment file already exists at: $dest${NC}"
-        read -p "Do you want to overwrite it with the default template? (y/N) [default: N]: " overwrite_response
+        read -p "Do you want to overwrite it with the default template? [y/N] (default: N): " overwrite_response
         if [ -z "$overwrite_response" ]; then
             echo "Keeping existing $name (default)."
             overwrite_response="N"
@@ -278,7 +278,7 @@ echo -e "${BLUE}[3/3] Database Initialization...${NC}"
 if command -v psql &> /dev/null; then
     # In interactive mode, if RUN_DB is false and no explicit DB choice was passed, prompt the user
     if [ "$AUTO_CONFIRM" = false ] && [ -z "$RUN_DB_OPT" ]; then
-        read -p "Do you want to initialize the PostgreSQL databases now? (y/N) [default: N]: " response
+        read -p "Do you want to initialize the PostgreSQL databases now? [y/N] (default: N): " response
         if [ -z "$response" ]; then
             RUN_DB=false
             echo "Skipping database initialization (default)."

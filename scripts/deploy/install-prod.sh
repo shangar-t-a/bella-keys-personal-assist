@@ -12,7 +12,7 @@ echo "1. Docker (and docker compose)"
 echo "2. PostgreSQL"
 echo "3. Ollama"
 echo ""
-read -p "Are all prerequisites installed and running? (y/N): " PREREQ </dev/tty
+read -p "Are all prerequisites installed and running? [y/N] (default: N): " PREREQ </dev/tty
 if [[ "$PREREQ" != "y" && "$PREREQ" != "Y" ]]; then
     echo "Please install the prerequisites and run this script again."
     exit 1
@@ -20,7 +20,7 @@ fi
 
 echo ""
 DEFAULT_PATH="$HOME/.keys_sandbox/bella-keys"
-read -p "Enter installation path [$DEFAULT_PATH]: " INSTALL_PATH </dev/tty
+read -p "Enter installation path (default: $DEFAULT_PATH): " INSTALL_PATH </dev/tty
 INSTALL_PATH=${INSTALL_PATH:-$DEFAULT_PATH}
 
 # Expand tilde if present
@@ -35,9 +35,9 @@ REPO_BASE="https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-ass
 curl -sSL "$REPO_BASE/docker/docker-compose.prod.yaml" -o docker-compose.prod.yaml
 curl -sSL "$REPO_BASE/docker/.env.prod.example" -o .env.example
 curl -sSL "$REPO_BASE/scripts/database/init-db-prod.sql" -o init-db-prod.sql
-curl -sSL "$REPO_BASE/scripts/deploy/run-prod.ps1" -o run-prod.ps1
+curl -sSL "$REPO_BASE/scripts/deploy/run-prod.sh" -o run-prod.sh
 curl -sSL "$REPO_BASE/scripts/deploy/update-prod.sh" -o update-prod.sh
-chmod +x update-prod.sh
+chmod +x run-prod.sh update-prod.sh
 
 if [ ! -f "docker-compose.prod.yaml" ]; then
     echo "Failed to download configuration files. Please check your internet connection or the repository status."
@@ -49,7 +49,8 @@ echo "CONFIGURATION SETUP"
 echo "How would you like to configure your .env file?"
 echo "1) Interactive Setup (Prompt for values with defaults)"
 echo "2) Offline Setup (Auto-generate and pause for manual editing)"
-read -p "Select an option (1/2): " ENV_OPTION </dev/tty
+read -p "Select an option [1-2] (default: 1): " ENV_OPTION </dev/tty
+ENV_OPTION=${ENV_OPTION:-1}
 
 if [ ! -f ".env" ]; then
     cp .env.example .env
@@ -58,16 +59,16 @@ fi
 if [ "$ENV_OPTION" == "1" ]; then
     echo "Interactive Setup selected..."
 
-    read -p "Enter AUTH_PG_DB_PASSWORD [default_password]: " AUTH_PASS </dev/tty
+    read -p "Enter AUTH_PG_DB_PASSWORD (default: default_password): " AUTH_PASS </dev/tty
     AUTH_PASS=${AUTH_PASS:-default_password}
     
-    read -p "Enter EMS_PG_DB_PASSWORD [default_password]: " EMS_PASS </dev/tty
+    read -p "Enter EMS_PG_DB_PASSWORD (default: default_password): " EMS_PASS </dev/tty
     EMS_PASS=${EMS_PASS:-default_password}
     
-    read -p "Enter ARIZE_PG_DB_PASSWORD [default_password]: " ARIZE_PASS </dev/tty
+    read -p "Enter ARIZE_PG_DB_PASSWORD (default: default_password): " ARIZE_PASS </dev/tty
     ARIZE_PASS=${ARIZE_PASS:-default_password}
     
-    read -p "Enter LANGGRAPH_PG_DB_PASSWORD [default_password]: " LANGGRAPH_PASS </dev/tty
+    read -p "Enter LANGGRAPH_PG_DB_PASSWORD (default: default_password): " LANGGRAPH_PASS </dev/tty
     LANGGRAPH_PASS=${LANGGRAPH_PASS:-default_password}
     
     # Use perl or sed to replace securely. Since bash can be on Mac or Linux/Windows Git Bash, sed -i has different syntax.
@@ -91,12 +92,12 @@ echo "The native PostgreSQL database must be initialized with the correct schema
 echo "An initialization script has been downloaded to: $INSTALL_PATH/init-db-prod.sql"
 echo ""
 echo "If you have 'psql' installed locally, we can attempt to run this automatically."
-read -p "Would you like to run the database initialization via local psql now? (y/N): " RUN_PSQL </dev/tty
+read -p "Would you like to run the database initialization via local psql now? [y/N] (default: N): " RUN_PSQL </dev/tty
 
 if [[ "$RUN_PSQL" == "y" || "$RUN_PSQL" == "Y" ]]; then
-    read -p "Enter PostgreSQL host [localhost]: " PG_HOST </dev/tty
+    read -p "Enter PostgreSQL host (default: localhost): " PG_HOST </dev/tty
     PG_HOST=${PG_HOST:-localhost}
-    read -p "Enter PostgreSQL admin user [postgres]: " PG_USER </dev/tty
+    read -p "Enter PostgreSQL admin user (default: postgres): " PG_USER </dev/tty
     PG_USER=${PG_USER:-postgres}
     
     echo "Running psql... you may be prompted for the $PG_USER password multiple times."
@@ -147,5 +148,5 @@ echo ""
 echo "======================================================"
 echo " Bella Keys production setup is complete!"
 echo " Directory: $INSTALL_PATH"
-echo " Use run-prod.ps1 to start/stop the services in the future."
+echo " Use run-prod.sh to start/stop the services in the future."
 echo "======================================================"

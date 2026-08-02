@@ -16,10 +16,14 @@ scripts/
 ├── database/              # Database configuration SQL & utilities
 │   ├── init-db.sql        # PostgreSQL init schema script (dev)
 │   ├── init-db-prod.sql   # PostgreSQL init schema script (prod)
-│   └── backup-db.ps1      # Database backup utility script
+│   └── backup-db.sh       # Database backup utility script
+├── deploy/                # Production setup & deployment scripts
+│   ├── install-prod.sh    # Production setup script
+│   ├── run-prod.sh        # Production runner and service manager
+│   └── update-prod.sh     # Production update script
 ├── electron/              # Build desktop app installer (developers only)
-│   ├── build.sh           # Build Electron app (Linux/macOS)
-│   ├── build.bat          # Build Electron app (Windows)
+│   ├── build.sh           # Build Electron app (Linux/macOS/Git Bash)
+│   ├── build.bat          # Build Electron app (Windows CMD)
 │   ├── setup-electron.js
 │   └── setup-wincodesign.js
 ├── screenshots/           # uv project — Playwright portfolio screenshot capture

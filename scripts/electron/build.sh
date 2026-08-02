@@ -49,7 +49,8 @@ show_service_menu() {
     echo "3) Enhanced (Expense Manager + Bella Chat + Observability) - Heavy resources"
     echo "4) Custom - Choose individual services"
     echo
-    read -p "Enter your choice (1-4): " choice
+    read -p "Enter your choice [1-4] (default: 2): " choice
+    choice="${choice:-2}"
     
     case $choice in
         1)
@@ -88,7 +89,7 @@ select_custom_services() {
     echo -e "${YELLOW}Custom Service Selection:${NC}"
     
     # Bella Chat
-    read -p "Include Bella Chat service? (y/N): " include_bella
+    read -p "Include Bella Chat service? [y/N] (default: N): " include_bella
     if [[ "${include_bella,,}" =~ ^(yes|y)$ ]]; then
         VITE_BELLA_CHAT_ENABLED=true
     else
@@ -96,7 +97,7 @@ select_custom_services() {
     fi
     
     # Expense Manager
-    read -p "Include Expense Manager service? (Y/n): " include_ems
+    read -p "Include Expense Manager service? [Y/n] (default: Y): " include_ems
     if [[ "${include_ems,,}" =~ ^(no|n)$ ]]; then
         VITE_EXPENSE_MANAGER_ENABLED=false
     else
@@ -105,7 +106,7 @@ select_custom_services() {
     
     # Bella Chat Observability (only if Bella Chat is enabled)
     if [ "$VITE_BELLA_CHAT_ENABLED" = true ]; then
-        read -p "Include Bella Chat Observability (Phoenix, Arize)? (y/N): " include_obs
+        read -p "Include Bella Chat Observability (Phoenix, Arize)? [y/N] (default: N): " include_obs
         if [[ "${include_obs,,}" =~ ^(yes|y)$ ]]; then
             VITE_BELLA_CHAT_OBSERVABILITY_ENABLED=true
         else
