@@ -15,7 +15,7 @@ All new work must be performed in a dedicated feature branch.
 
 - **Branch Naming Convention:** `users/shangar/<description>`
 
-#### Branch Creation Flow
+### Branch Creation Flow
 
 ```bash
 git checkout main

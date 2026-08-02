@@ -31,6 +31,7 @@ import json
 import shutil
 import textwrap
 from datetime import datetime, timezone
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -238,6 +239,13 @@ JOURNEY = [
                 "tab": "Backup & Restore",
                 "scroll_y": 0,
                 "description": "Settings — local folder database backup and restore manager.",
+            },
+            {
+                "slug": "settings-about",
+                "route": "/settings?tab=about",
+                "tab": "About & System",
+                "scroll_y": 0,
+                "description": "Settings — application version, license, author details, and copyright information.",
             },
         ],
     },
@@ -628,10 +636,80 @@ def _refresh_latest() -> None:
     print(f"[latest]   Refreshed -> {LATEST_DIR.relative_to(_REPO_ROOT)}")
 
 
+def parse_changelog(changelog_path: Path) -> list[dict]:
+    """Parse CHANGELOG.md into structured release objects."""
+    if not changelog_path.exists():
+        return []
+    lines = changelog_path.read_text(encoding="utf-8").splitlines()
+    releases = []
+    current_release = None
+    current_category = None
+
+    release_re = re.compile(r"^##\s*\[(.*?)@(.*?)\]\s*-\s*(\d{4}-\d{2}-\d{2})")
+    cat_re = re.compile(r"^###\s*(Added|Changed|Fixed|Security|Deprecated|Removed)")
+
+    for line in lines:
+        rel_match = release_re.match(line)
+        if rel_match:
+            comp, ver, dt = rel_match.groups()
+            current_release = {
+                "version": f"{comp}@{ver}",
+                "component": comp,
+                "semver": ver,
+                "date": dt,
+                "badge": "Latest Release" if len(releases) == 0 else "",
+                "changes": []
+            }
+            releases.append(current_release)
+            current_category = None
+            continue
+
+        if current_release is not None:
+            cat_match = cat_re.match(line)
+            if cat_match:
+                current_category = cat_match.group(1)
+                continue
+
+            if line.strip().startswith("- ") and current_category:
+                item_text = line.strip()[2:].strip()
+                current_release["changes"].append({
+                    "type": current_category,
+                    "text": item_text
+                })
+
+    return releases
+
+
+def _embed_changelog_in_html() -> None:
+    """Parse repo CHANGELOG.md and inject inline into user-journey.html."""
+    changelog_path = _REPO_ROOT / "CHANGELOG.md"
+    releases = parse_changelog(changelog_path)
+    if not releases:
+        return
+
+    html_path = SCREENS_ROOT / "user-journey.html"
+    if not html_path.exists():
+        return
+
+    content = html_path.read_text(encoding="utf-8")
+    changelog_json = json.dumps(releases, ensure_ascii=False)
+    new_line = f"const EMBEDDED_CHANGELOG = {changelog_json};"
+    updated = re.sub(
+        r"const EMBEDDED_CHANGELOG = \[.*?\];",
+        new_line,
+        content,
+        flags=re.DOTALL,
+    )
+    html_path.write_text(updated, encoding="utf-8")
+    print(f"[changelog] Embedded {len(releases)} releases from CHANGELOG.md -> {html_path.relative_to(_REPO_ROOT)}")
+
+    # Also write changelog.json in OUT_DIR
+    (OUT_DIR / "changelog.json").write_text(json.dumps(releases, indent=2), encoding="utf-8")
+
+
 def _embed_manifest_in_html(manifest: dict) -> None:
     """Inject the manifest JSON inline into user-journey.html so the page works
     when opened directly from disk (file://) without any HTTP server."""
-    import re
     html_path = SCREENS_ROOT / "user-journey.html"
     if not html_path.exists():
         print(f"[html]     Skipped — {html_path.name} not found at {html_path.parent}")
@@ -677,6 +755,7 @@ async def main() -> None:
     # Re-read the manifest we just wrote and embed it into user-journey.html
     manifest_data = json.loads((OUT_DIR / "manifest.json").read_text(encoding="utf-8"))
     _embed_manifest_in_html(manifest_data)
+    _embed_changelog_in_html()
 
     total = len(list(OUT_DIR.rglob("*.png")))
     print(f"\nDone — {total} screenshots in {OUT_DIR.relative_to(_REPO_ROOT)}/")

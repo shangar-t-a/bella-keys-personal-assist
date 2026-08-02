@@ -28,6 +28,16 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.11.0] - 2026-08-02
+
+### Added
+
+- Integrated application version (`v1.11.0`) and copyright notice (`© 2025 - 2026 Shangar Arivazhagan`) across sidebar navigation footer, user profile menu, and SSO login page.
+- Added dedicated **About & System** tab under System Settings displaying application metadata, author details, license type, and runtime environment.
+- Added interactive **Changelog & Release Notes** viewer modal and app-matching dark theme styling to GitHub Pages showcase.
+
+---
+
 ## [keys-personal-assist-ui@1.10.0] - 2026-08-02
 
 ### Added
