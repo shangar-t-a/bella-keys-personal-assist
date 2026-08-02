@@ -36,7 +36,7 @@ check_prerequisites_prompt() {
     echo -e "  5. ${BLUE}Ollama${NC} (Optional - required if using local-first AI models)"
     echo
     
-    read -p "Have you installed and started all the required prerequisites? [Y/n] (default: Y): " response
+    read -p "Have you installed and started all required prerequisites? [Y/n] (default: Y): " response
     response="${response:-Y}"
     if [[ ! "$response" =~ ^[Yy]$ ]]; then
         echo -e "${RED}❌ Aborted. Please install and run all prerequisites before launching the app.${NC}"
@@ -85,7 +85,7 @@ show_service_menu() {
     echo "4) Enhanced (Expense Manager + Bella Chat + Observability)"
     echo "5) Custom selection"
     echo
-    read -p "Enter your choice [1-5] (default: 1 - Build configuration): " choice
+    read -p "Enter your choice [1-5] (default: 1): " choice
     choice="${choice:-1}"
 
     
@@ -118,19 +118,22 @@ select_custom_services() {
     local expense_manager=true
     local bella_chat_observability=false
     
-    read -p "Include Bella Chat service? (y/N): " include_bella
+    read -p "Include Bella Chat service? [y/N] (default: N): " include_bella
+    include_bella="${include_bella:-N}"
     if [[ "${include_bella,,}" =~ ^(yes|y)$ ]]; then
         bella_chat=true
     fi
     
-    read -p "Include Expense Manager service? (Y/n): " include_ems
+    read -p "Include Expense Manager service? [Y/n] (default: Y): " include_ems
+    include_ems="${include_ems:-Y}"
     if [[ "${include_ems,,}" =~ ^(no|n)$ ]]; then
         expense_manager=false
     fi
     
     # Bella Chat Observability (only if Bella Chat is enabled)
     if $bella_chat; then
-        read -p "Include Bella Chat Observability (Phoenix, Arize)? (y/N): " include_obs
+        read -p "Include Bella Chat Observability (Phoenix, Arize)? [y/N] (default: N): " include_obs
+        include_obs="${include_obs:-N}"
         if [[ "${include_obs,,}" =~ ^(yes|y)$ ]]; then
             bella_chat_observability=true
         fi

@@ -26,7 +26,8 @@ echo 2) Standard (Expense Manager + Bella Chat) - Recommended
 echo 3) Enhanced (Expense Manager + Bella Chat + Observability) - Heavy resources
 echo 4) Custom - Choose individual services
 echo.
-set /p choice="Enter your choice (1-4): "
+set /p choice="Enter your choice [1-4] (default: 2): "
+if "%choice%"=="" set "choice=2"
 
 if "%choice%"=="1" (
     set "SERVICES=minimal"
@@ -64,10 +65,10 @@ echo.
 echo Custom Service Selection:
 echo.
 
-set /p include_bella="Include Bella Chat service? (y/N): "
+set /p include_bella="Include Bella Chat service? [y/N] (default: N): "
 if /i "%include_bella%"=="y" set "VITE_BELLA_CHAT_ENABLED=true" else set "VITE_BELLA_CHAT_ENABLED=false"
 
-set /p include_ems="Include Expense Manager service? (Y/n): "
+set /p include_ems="Include Expense Manager service? [Y/n] (default: Y): "
 if /i "%include_ems%"=="n" (
     set "VITE_EXPENSE_MANAGER_ENABLED=false"
 ) else (
@@ -76,7 +77,7 @@ if /i "%include_ems%"=="n" (
 
 REM Bella Chat Observability (only if Bella Chat is enabled)
 if /i "%VITE_BELLA_CHAT_ENABLED%"=="true" (
-    set /p include_obs="Include Bella Chat Observability (Phoenix, Arize)? (y/N): "
+    set /p include_obs="Include Bella Chat Observability (Phoenix, Arize)? [y/N] (default: N): "
     if /i "%include_obs%"=="y" set "VITE_BELLA_CHAT_OBSERVABILITY_ENABLED=true" else set "VITE_BELLA_CHAT_OBSERVABILITY_ENABLED=false"
 ) else (
     set "VITE_BELLA_CHAT_OBSERVABILITY_ENABLED=false"

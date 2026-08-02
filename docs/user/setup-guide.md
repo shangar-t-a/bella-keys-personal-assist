@@ -35,7 +35,7 @@ For installing Bella Keys on a target end-user machine without cloning the repos
 curl -sSL "https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main/scripts/deploy/install-prod.sh" | bash
 ```
 
-The script will guide you through setting up your environment variables and initializing your databases securely. Once complete, you can manage the services using the provided `run-prod.ps1` script (on Windows) located in your installation directory.
+The script will guide you through setting up your environment variables and initializing your databases securely. Once complete, you can manage the services using the provided `run-prod.sh` script located in your installation directory.
 
 ## 3. Running the Application (Development)
 

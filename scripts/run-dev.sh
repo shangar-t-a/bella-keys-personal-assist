@@ -29,7 +29,7 @@ show_menu() {
     echo "  2. AI Chat           - Auth + EMS + Bella Chat + Qdrant"
     echo "  3. AI Chat + Monitor - Everything above + Phoenix observability"
     echo
-    read -p "Select services [1-3] (default: 1 - EMS only): " service_choice
+    read -p "Select services [1-3] (default: 1): " service_choice
     service_choice="${service_choice:-1}"
 
     AI_CHAT_ENABLED=false
@@ -45,10 +45,10 @@ show_menu() {
     echo "How do you want to run the UI?"
     echo
     echo "  1. Web UI (Docker/nginx)"
-    echo "  2. Desktop (Electron)  [default]"
+    echo "  2. Desktop (Electron)"
     echo "  3. No UI (backend only)"
     echo
-    read -p "Select launch mode [1-3] (default: 2 - Desktop): " ui_choice
+    read -p "Select launch mode [1-3] (default: 2): " ui_choice
     ui_choice="${ui_choice:-2}"
 
     case "$ui_choice" in
@@ -56,10 +56,10 @@ show_menu() {
             if [ "$AI_CHAT_ENABLED" = true ]; then
                 echo
                 echo "  Which services should the Web UI expose?"
-                echo "  1. EMS only  [default]"
+                echo "  1. EMS only"
                 echo "  2. EMS + AI Chat"
                 echo
-                read -p "Select UI scope [1-2] (default: 1 - EMS only): " ui_scope
+                read -p "Select UI scope [1-2] (default: 1): " ui_scope
                 ui_scope="${ui_scope:-1}"
                 if [ "$ui_scope" = "1" ]; then
                     PROFILES+=("ui-ems")

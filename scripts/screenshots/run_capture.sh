@@ -60,7 +60,7 @@ wait_healthy() {
     done
 }
 
-# ──────────────────────────────────────────────────────────────────────────────
+# Step 1: Start Docker services
 _step "1/5 — Start Docker services (ai-chat profile)"
 cd "$DOCKER_DIR"
 
@@ -68,7 +68,7 @@ docker compose --profile ai-chat up -d
 
 _ok "docker compose up issued"
 
-# ──────────────────────────────────────────────────────────────────────────────
+# Step 2: Wait for services to be healthy
 _step "2/5 — Wait for services to be healthy"
 
 wait_healthy "auth-service"  "http://localhost:8002/health" 90
@@ -79,7 +79,7 @@ wait_healthy "bella-chat"    "http://localhost:5000/health" 120
 _info "Waiting 5s for UI to stabilise…"
 sleep 5
 
-# ──────────────────────────────────────────────────────────────────────────────
+# Step 3: Seed demo data into PostgreSQL
 _step "3/5 — Seed demo data into PostgreSQL"
 
 cd "$SCRIPT_DIR"
@@ -92,14 +92,14 @@ else
     _ok "Portfolio data seeded"
 fi
 
-# ──────────────────────────────────────────────────────────────────────────────
+# Step 4: Run Playwright capture
 _step "4/5 — Run Playwright capture"
 
 _info "Running capture_screens.py…"
 uv run capture_screens.py
 _ok "Screenshots captured — see docs/screens/"
 
-# ──────────────────────────────────────────────────────────────────────────────
+# Step 5: Shutdown
 _step "5/5 — Shutdown"
 
 if [ "$KEEP_UP" = true ]; then
