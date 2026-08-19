@@ -500,14 +500,16 @@ async def seed_assets(session) -> None:
     tx_schedule["Digital Gold"] = gold_txs
 
     # 7. Ancestral Plot (Invested: 800k, Current: 1.2M)
-    plot_txs = [(24, 800_000)]
-    plot_revals = [
+    plot_txs = [
+        (24, 800_000),
+        (22, "ANCILLARY_FEE", 64_000),
         (18, "REVALUE", 900_000),
+        (16, "IMPROVEMENT", 85_000),
         (12, "REVALUE", 1_000_000),
+        (10, "CAPITALIZED_INTEREST", 42_000),
         (6, "REVALUE", 1_100_000),
         (0, "REVALUE", 1_200_000),
     ]
-    plot_txs.extend(plot_revals)
     tx_schedule["Ancestral Plot"] = plot_txs
 
     # 8. HDFC Savings Account
@@ -520,9 +522,9 @@ async def seed_assets(session) -> None:
         for tx in txs:
             months_ago = tx[0]
             tx_date = _dt(months_ago=months_ago)
-            if len(tx) == 3 and tx[1] == "REVALUE":
+            if len(tx) == 3:
+                tx_type = tx[1]
                 amount = float(tx[2])
-                tx_type = "REVALUE"
                 units = None
                 ppu = None
             else:

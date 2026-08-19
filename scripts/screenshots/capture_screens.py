@@ -157,6 +157,13 @@ JOURNEY = [
                 "description": "Assets tab — grouped table of investments with returns and allocation.",
             },
             {
+                "slug": "wealth-asset-cost-breakdown",
+                "route": "/wealth",
+                "tab": "Assets",
+                "scroll_y": 0,
+                "description": "Interactive Cost Breakdown Popover showing out-of-pocket outflow, carrying expenses, and cost composition.",
+            },
+            {
                 "slug": "wealth-liabilities",
                 "route": "/wealth",
                 "tab": "Liabilities",
@@ -257,9 +264,48 @@ async def set_theme(page: Page, theme: str) -> None:
     await page.evaluate(f"localStorage.setItem('theme-mode', '{theme}')")
 
 
+async def wait_for_content_loaded(page: Page, timeout: int = 15000) -> None:
+    """Ensure all network calls, loading spinners, progress bars, and skeletons disappear and UI settles."""
+    try:
+        await page.wait_for_load_state("domcontentloaded")
+        await page.wait_for_load_state("networkidle")
+    except Exception:
+        pass
+
+    # Wait for all MUI CircularProgress, role="progressbar", and Skeleton elements to be detached or hidden
+    try:
+        await page.wait_for_selector(
+            ".MuiCircularProgress-root, [role='progressbar'], .MuiSkeleton-root",
+            state="detached",
+            timeout=timeout,
+        )
+    except Exception:
+        pass
+
+    # Ensure no element contains explicit "Loading…" text in key areas
+    try:
+        await page.wait_for_function(
+            """() => {
+                const els = document.querySelectorAll('p, span, h5, h6, div');
+                for (const el of els) {
+                    if (el.children.length === 0 && el.textContent && el.textContent.trim() === 'Loading…') {
+                        return false;
+                    }
+                }
+                return true;
+            }""",
+            timeout=5000,
+        )
+    except Exception:
+        pass
+
+    # Give transitions and chart renderings time to settle
+    await page.wait_for_timeout(1000)
+
+
 async def shot(page: Page, out_dir: Path, slug: str, scroll_y: int = 0) -> None:
-    """Wait for network idle, optionally scroll, then save a screenshot."""
-    await page.wait_for_load_state("networkidle")
+    """Wait for network idle & progress indicators to disappear, scroll, then save screenshot."""
+    await wait_for_content_loaded(page)
     if scroll_y:
         await page.evaluate(f"window.scrollTo(0, {scroll_y})")
         await page.wait_for_timeout(1000)
@@ -304,7 +350,7 @@ async def click_tab(page: Page, label: str) -> None:
         except Exception:
             await page.get_by_text(label, exact=False).first.click()
 
-    await page.wait_for_timeout(1200)
+    await wait_for_content_loaded(page)
 
 
 async def do_login(page: Page) -> None:
@@ -387,8 +433,8 @@ async def capture_step(
     # Custom: expand Payoff Projections chart for the liabilities-charts step
     if slug == "wealth-liabilities-charts":
         try:
-            await page.get_by_role("button", name="Toggle Payoff Projections").first.click()
-            await page.wait_for_timeout(4000)
+            await page.locator("svg[data-testid='AnalyticsIcon']").first.click()
+            await page.wait_for_timeout(2000)
             await page.evaluate("""
                 const el = [...document.querySelectorAll('p, span, h5, h6, div')].reverse()
                     .find(e => e.textContent.toLowerCase().includes('payoff curves: ideal vs actual'));
@@ -404,10 +450,22 @@ async def capture_step(
     # Custom: open Transactions Ledger modal for the liabilities-ledger step
     elif slug == "wealth-liabilities-ledger":
         try:
-            await page.get_by_role("button", name="Transactions Ledger").first.click()
+            await page.locator("svg[data-testid='HistoryIcon']").first.click()
             await page.wait_for_timeout(2000)
         except Exception as exc:
             print(f"  [WARN] {slug}: failed to open ledger modal — {exc}")
+
+    # Custom: open Cost Breakdown popover for the wealth-asset-cost-breakdown step
+    elif slug == "wealth-asset-cost-breakdown":
+        try:
+            pie_icon = page.locator("tr").filter(has_text="Ancestral Plot").locator("svg[data-testid='PieChartIcon']").first
+            if not await pie_icon.is_visible():
+                pie_icon = page.locator("svg[data-testid='PieChartIcon']").first
+            await pie_icon.click()
+            await page.wait_for_timeout(1500)
+            await wait_for_content_loaded(page)
+        except Exception as exc:
+            print(f"  [WARN] {slug}: failed to open cost breakdown modal — {exc}")
 
     # Custom: send a chat message and wait for the full AI response to stream in
     elif slug == "chat-conversation":
@@ -465,8 +523,8 @@ async def capture_step(
 
     await shot(page, out_dir, slug, step["scroll_y"])
 
-    # Dismiss ledger modal so it does not block subsequent screens
-    if slug == "wealth-liabilities-ledger":
+    # Dismiss modals so they do not block subsequent screens
+    if slug in ("wealth-liabilities-ledger", "wealth-asset-cost-breakdown"):
         try:
             await page.keyboard.press("Escape")
             await page.wait_for_timeout(500)
