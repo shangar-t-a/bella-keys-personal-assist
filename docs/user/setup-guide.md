@@ -27,15 +27,14 @@ If you prefer manual setup:
 1. Copy `docker/.env.example` to `docker/.env` and edit it to configure passwords and keys.
 2. Execute `scripts/database/init-db.sql` on your host PostgreSQL instance.
 
-## 2. Production Deployment (Home PC)
+## 2. Production Deployment (Home PC - Windows Only)
 
-For installing Bella Keys on a target end-user machine without cloning the repository, use the production installer script:
+Production deployments on a home PC are managed using the single Windows batch script `bella-keys-manager.bat`.
 
-```bash
-curl -sSL "https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main/scripts/deploy/install-prod.sh" | bash
-```
+1. Maintain your configuration files in `%USERPROFILE%\.keys_sandbox\bella-keys\` (`docker-compose.prod.yaml`, `.env`, `init-db-prod.sql`).
+2. Run `bella-keys-manager.bat` from Command Prompt or PowerShell within your `%USERPROFILE%\.keys_sandbox\bella-keys\` directory.
 
-The script will guide you through setting up your environment variables and initializing your databases securely. Once complete, you can manage the services using the provided `run-prod.sh` script located in your installation directory.
+The interactive batch interface handles starting, stopping, restarting, log viewing, service status, self-updating, and updating containers and configurations.
 
 ## 3. Running the Application (Development)
 
@@ -49,8 +48,8 @@ During startup, select a service profile:
 
 | Profile | Services Running | RAM Required | Description |
 | :--- | :--- | :--- | :--- |
-| **Minimal** | Expense Manager | ~2GB | Basic financial tracking only |
-| **Standard** | EMS + Bella Chat | ~4GB | Full AI assistant and finance tracking |
+| **EMS Only (Minimal)** | Expense Manager | ~2GB | Primary financial tracking profile [Default] |
+| **AI Chat (Standard)** | EMS + Bella Chat | ~4GB | Full AI assistant and finance tracking [Experimental] |
 
 ## Troubleshooting
 
