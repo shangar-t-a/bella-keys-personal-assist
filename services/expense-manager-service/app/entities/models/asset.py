@@ -31,6 +31,10 @@ class AssetTransactionType(StrEnum):
     BUY = "BUY"
     SELL = "SELL"
     REVALUE = "REVALUE"
+    ANCILLARY_FEE = "ANCILLARY_FEE"
+    CAPITALIZED_INTEREST = "CAPITALIZED_INTEREST"
+    INTEREST_REDUCTION = "INTEREST_REDUCTION"
+    IMPROVEMENT = "IMPROVEMENT"
 
 
 class AssetSubcategory(BaseEntity):

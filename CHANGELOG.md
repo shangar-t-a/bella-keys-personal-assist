@@ -28,6 +28,26 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.12.0] - 2026-08-19
+
+### Added
+
+- Added interactive Cost Breakdown Popover dialog (`AssetCostBreakdownPopover.tsx`) featuring 4 KPI tiles, visual cost composition bar, and grouped category accordions for carrying expenses and out-of-pocket outflow.
+- Added 1-click `📊 Cost Breakdown` pie-chart icon button in Assets Overview table.
+- Added support for transaction types `ANCILLARY_FEE`, `CAPITALIZED_INTEREST`, `INTEREST_REDUCTION`, and `IMPROVEMENT`.
+
+---
+
+## [expense-manager-service@1.8.0] - 2026-08-19
+
+### Added
+
+- Extended `AssetTransactionType` enum with `ANCILLARY_FEE`, `CAPITALIZED_INTEREST`, `INTEREST_REDUCTION`, and `IMPROVEMENT`.
+- Added derived cost basis response fields to `AssetWithCalc` and `AssetResponse`: `base_asset_value`, `additional_spent`, `total_loan_interest`, and `total_cash_outflow`.
+- Updated asset valuation engine to separate physical market valuation from total out-of-pocket cost basis.
+
+---
+
 ## [keys-personal-assist-ui@1.11.0] - 2026-08-02
 
 ### Added

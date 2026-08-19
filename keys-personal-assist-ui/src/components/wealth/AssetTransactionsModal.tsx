@@ -29,7 +29,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { emsClient } from '@/api/clients/ems-client';
-import type { Asset, AssetTransaction, AssetTransactionRequest } from '@/types/asset';
+import type { Asset, AssetTransaction, AssetTransactionRequest, AssetTransactionType } from '@/types/asset';
 import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 
@@ -45,7 +45,7 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
   const [loading, setLoading] = useState(false);
 
   // Form State
-  const [transactionType, setTransactionType] = useState<'BUY' | 'SELL' | 'REVALUE'>('BUY');
+  const [transactionType, setTransactionType] = useState<AssetTransactionType>('BUY');
   const [amount, setAmount] = useState<string>('');
   const [units, setUnits] = useState<string>('');
   const [pricePerUnit, setPricePerUnit] = useState<string>('');
@@ -219,6 +219,10 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
   const getBadgeColor = (type: string) => {
     switch (type) {
       case 'BUY': return 'success';
+      case 'ANCILLARY_FEE': return 'warning';
+      case 'CAPITALIZED_INTEREST': return 'secondary';
+      case 'INTEREST_REDUCTION': return 'success';
+      case 'IMPROVEMENT': return 'primary';
       case 'SELL': return 'error';
       case 'REVALUE': return 'info';
       default: return 'default';
@@ -295,9 +299,13 @@ export default function AssetTransactionsModal({ open, asset, onClose, onSuccess
                   setPricePerUnit('');
                 }}
               >
-                <MenuItem value="BUY">BUY (Add Value/Units)</MenuItem>
+                <MenuItem value="BUY">BUY (Base Purchase Payment / Add Principal)</MenuItem>
+                <MenuItem value="ANCILLARY_FEE">ANCILLARY FEE (Registration, Stamp Duty, Brokerage, DTCP)</MenuItem>
+                <MenuItem value="CAPITALIZED_INTEREST">CAPITALIZED INTEREST (Loan Interest Paid)</MenuItem>
+                <MenuItem value="INTEREST_REDUCTION">INTEREST REDUCTION (Prepayment Interest Refund)</MenuItem>
+                <MenuItem value="IMPROVEMENT">IMPROVEMENT (Construction / Levelling)</MenuItem>
                 <MenuItem value="SELL">SELL (Reduce Value/Units)</MenuItem>
-                <MenuItem value="REVALUE">REVALUE (Update Price/Balance)</MenuItem>
+                <MenuItem value="REVALUE">REVALUE (Appraised Market Value Update)</MenuItem>
               </TextField>
 
               <TextField

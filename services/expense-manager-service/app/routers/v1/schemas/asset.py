@@ -69,7 +69,9 @@ class AssetUpdateRequest(BaseSchema):
 class AssetTransactionRequest(BaseSchema):
     """Schema for logging a new transaction."""
 
-    transaction_type: AssetTransactionType = Field(description="Transaction type: BUY, SELL, or REVALUE")
+    transaction_type: AssetTransactionType = Field(
+        description="Transaction type: BUY, SELL, REVALUE, ANCILLARY_FEE, CAPITALIZED_INTEREST, INTEREST_REDUCTION, or IMPROVEMENT"
+    )
     amount: float = Field(gt=0, description="Total INR amount of the transaction")
     unit_details: AssetUnitDetailsSchema | None = Field(
         default=None, description="Unit-based fields. Required for BUY/SELL on unit-based assets."
@@ -122,6 +124,10 @@ class AssetResponse(BaseSchema):
     name: str
     subcategory_id: str | None
     invested_value: float
+    base_asset_value: float = 0.0
+    additional_spent: float = 0.0
+    total_loan_interest: float = 0.0
+    total_cash_outflow: float = 0.0
     current_value: float
     interest_rate: float | None
     interest_compounding: CompoundingFrequency | None

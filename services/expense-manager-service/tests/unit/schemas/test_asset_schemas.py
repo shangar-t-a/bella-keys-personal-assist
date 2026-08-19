@@ -59,3 +59,16 @@ def test_asset_transaction_request_valid_value_based():
     req = AssetTransactionRequest.model_validate(data)
     assert req.transaction_type == AssetTransactionType.REVALUE
     assert req.unit_details is None
+
+
+def test_asset_transaction_request_ancillary_fee_capitalized_interest_improvement():
+    """Verify that AssetTransactionRequest accepts ANCILLARY_FEE, CAPITALIZED_INTEREST, and IMPROVEMENT."""
+    for tx_type in ["ANCILLARY_FEE", "CAPITALIZED_INTEREST", "IMPROVEMENT"]:
+        data = {
+            "transaction_type": tx_type,
+            "amount": 50000.0,
+            "description": f"Test {tx_type}"
+        }
+        req = AssetTransactionRequest.model_validate(data)
+        assert req.transaction_type == AssetTransactionType(tx_type)
+        assert req.amount == 50000.0
