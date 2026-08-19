@@ -146,11 +146,11 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
 
   // Accordion expanded states
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    EQUITY: false,
-    DEBT: false,
-    REAL_ESTATE: false,
-    COMMODITIES: false,
-    CASH_BANK: false,
+    EQUITY: true,
+    DEBT: true,
+    REAL_ESTATE: true,
+    COMMODITIES: true,
+    CASH_BANK: true,
   });
 
   const fetchData = async () => {
