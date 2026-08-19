@@ -63,7 +63,7 @@ class AssetUpdate(BaseInput):
 class AssetTransactionCreate(BaseInput):
     """Model for logging a new transaction for an asset."""
 
-    transaction_type: AssetTransactionType = Field(description="Transaction type: BUY, SELL, or REVALUE")
+    transaction_type: AssetTransactionType = Field(description="Transaction type: BUY, SELL, REVALUE, ANCILLARY_FEE, CAPITALIZED_INTEREST, INTEREST_REDUCTION, or IMPROVEMENT")
     amount: float = Field(gt=0, description="Total INR amount of the transaction")
     unit_details: AssetUnitDetails | None = Field(
         default=None,
@@ -98,6 +98,10 @@ class AssetWithCalc(BaseEntity):
     name: str = Field(description="Name of the asset")
     subcategory_id: str | None = Field(default=None, description="ID of the subcategory")
     invested_value: float = Field(description="Total invested value in INR")
+    base_asset_value: float = Field(default=0.0, description="Base asset purchase price + improvements")
+    additional_spent: float = Field(default=0.0, description="Sunk ancillary expenses (brokerage, registration, fees)")
+    total_loan_interest: float = Field(default=0.0, description="Net sunk loan interest")
+    total_cash_outflow: float = Field(default=0.0, description="Total out-of-pocket cash spent (Base + Additional + Net Interest)")
     current_value: float = Field(description="Current market value in INR")
     interest_rate: float | None = Field(default=None, description="Annual interest rate (%) of the asset")
     interest_compounding: CompoundingFrequency | None = Field(default=None, description="Compounding frequency")

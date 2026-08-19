@@ -51,6 +51,8 @@ import { formatCurrency, formatCompactRupees } from '@/utils/formatters';
 import { toast } from 'sonner';
 import AddAssetWizard from './AddAssetWizard';
 import AssetTransactionsModal from './AssetTransactionsModal';
+import AssetCostBreakdownPopover from './AssetCostBreakdownPopover';
+import PieChartIcon from '@mui/icons-material/PieChart';
 
 
 
@@ -133,6 +135,8 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
   const closeConfirm = () => {
     setConfirmDialog((prev) => ({ ...prev, open: false }));
   };
+
+  const [selectedBreakdownAsset, setSelectedBreakdownAsset] = useState<Asset | null>(null);
 
   // Filtering state
   const [search, setSearch] = useState('');
@@ -588,10 +592,19 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
                           );
                         })()}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 500 }}>{formatCurrency(asset.investedValue)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {formatCurrency(asset.totalCashOutflow ?? asset.investedValue)}
+                        </Typography>
+                      </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600, color: 'primary.main' }}>{formatCurrency(asset.currentValue)}</TableCell>
                       <TableCell>{renderReturnsText(asset.absoluteReturns, asset.percentageReturns)}</TableCell>
                       <TableCell align="center" sx={{ pr: 3, whiteSpace: 'nowrap' }}>
+                        <Tooltip title="Cost Breakdown">
+                          <IconButton onClick={() => setSelectedBreakdownAsset(asset)} size="small" color="info">
+                            <PieChartIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Transactions Ledger">
                           <IconButton onClick={() => handleOpenLedger(asset)} size="small" color="primary">
                             <HistoryIcon fontSize="small" />
@@ -748,6 +761,14 @@ export default function AssetsTab({ onAssetsLoad }: AssetsTabProps) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Cost & Carrying Expenses Breakdown Popover */}
+      <AssetCostBreakdownPopover
+        open={Boolean(selectedBreakdownAsset)}
+        asset={selectedBreakdownAsset}
+        onClose={() => setSelectedBreakdownAsset(null)}
+        onOpenLedger={(asset) => handleOpenLedger(asset)}
+      />
     </Box>
   );
 }

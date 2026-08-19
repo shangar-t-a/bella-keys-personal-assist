@@ -40,10 +40,33 @@ class AssetService:
         category_name = category.name if category else "Unknown"
         category_code = category.code if category else "UNKNOWN"
 
-        absolute_returns = asset.current_value - asset.invested_value
+        transactions = await self.asset_repository.get_transactions_for_asset(asset.id)
+
+        buys_and_improvements = sum(
+            t.amount for t in transactions
+            if t.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.IMPROVEMENT)
+        )
+        sells = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.SELL)
+        base_asset_value = max(0.0, buys_and_improvements - sells)
+
+        additional_spent = sum(
+            t.amount for t in transactions if t.transaction_type == AssetTransactionType.ANCILLARY_FEE
+        )
+
+        interest_paid = sum(
+            t.amount for t in transactions if t.transaction_type == AssetTransactionType.CAPITALIZED_INTEREST
+        )
+        interest_reduced = sum(
+            t.amount for t in transactions if t.transaction_type == AssetTransactionType.INTEREST_REDUCTION
+        )
+        total_loan_interest = interest_paid - interest_reduced
+
+        total_cash_outflow = base_asset_value + additional_spent + total_loan_interest
+
+        absolute_returns = asset.current_value - total_cash_outflow
         percentage_returns = 0.0
-        if asset.invested_value > 0:
-            percentage_returns = (absolute_returns / asset.invested_value) * 100
+        if total_cash_outflow > 0:
+            percentage_returns = (absolute_returns / total_cash_outflow) * 100
 
         return AssetWithCalc(
             id=asset.id,
@@ -53,6 +76,10 @@ class AssetService:
             name=asset.name,
             subcategory_id=asset.subcategory_id,
             invested_value=asset.invested_value,
+            base_asset_value=round(base_asset_value, 2),
+            additional_spent=round(additional_spent, 2),
+            total_loan_interest=round(total_loan_interest, 2),
+            total_cash_outflow=round(total_cash_outflow, 2),
             current_value=asset.current_value,
             interest_rate=asset.interest_rate,
             interest_compounding=asset.interest_compounding,
@@ -294,26 +321,44 @@ class AssetService:
         invested_value = 0.0
         current_value = 0.0
 
+        additions_types = (
+            AssetTransactionType.BUY,
+            AssetTransactionType.ANCILLARY_FEE,
+            AssetTransactionType.CAPITALIZED_INTEREST,
+            AssetTransactionType.IMPROVEMENT,
+        )
+
         if not is_unit_based:
             # Flat balance tracking
-            buys = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.BUY)
+            buys_and_improvements = sum(
+                t.amount for t in transactions
+                if t.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.IMPROVEMENT)
+            )
             sells = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.SELL)
-            invested_value = max(0.0, buys - sells)
+            base_asset_val = max(0.0, buys_and_improvements - sells)
 
-            # Latest REVALUE sets the reference point; subsequent BUY/SELLs are applied on top of it.
+            ancillary = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.ANCILLARY_FEE)
+            interest_paid = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.CAPITALIZED_INTEREST)
+            interest_reduced = sum(t.amount for t in transactions if t.transaction_type == AssetTransactionType.INTEREST_REDUCTION)
+            net_interest = interest_paid - interest_reduced
+
+            total_cash_outflow = base_asset_val + ancillary + net_interest
+            invested_value = max(0.0, total_cash_outflow)
+
+            # Latest REVALUE sets the physical market reference point; subsequent BUY/IMPROVEMENT/SELL are applied on top.
             revalues = [t for t in transactions if t.transaction_type == AssetTransactionType.REVALUE]
             if revalues:
                 latest_revalue = revalues[0]
                 revalue_index = transactions.index(latest_revalue)
                 current_val = latest_revalue.amount
                 for t in transactions[:revalue_index][::-1]:
-                    if t.transaction_type == AssetTransactionType.BUY:
+                    if t.transaction_type in (AssetTransactionType.BUY, AssetTransactionType.IMPROVEMENT):
                         current_val += t.amount
                     elif t.transaction_type == AssetTransactionType.SELL:
                         current_val = max(0.0, current_val - t.amount)
                 current_value = current_val
             else:
-                current_value = invested_value
+                current_value = base_asset_val
         else:
             # Unit-based tracking
             total_units = 0.0
@@ -326,6 +371,9 @@ class AssetService:
                 if t.transaction_type == AssetTransactionType.BUY:
                     total_units += t_units
                     invested_cash += t_units * t_ppu
+                elif t.transaction_type in additions_types:
+                    # Non-unit additions (fees, capitalized interest, improvements) add to cost basis cash directly
+                    invested_cash += t.amount
                 elif t.transaction_type == AssetTransactionType.SELL:
                     total_units = max(0.0, total_units - t_units)
                     invested_cash = max(0.0, invested_cash - t_units * t_ppu)

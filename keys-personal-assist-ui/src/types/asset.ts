@@ -38,6 +38,10 @@ export interface Asset {
   name: string;
   subcategoryId: string | null;
   investedValue: number;
+  baseAssetValue?: number;
+  additionalSpent?: number;
+  totalLoanInterest?: number;
+  totalCashOutflow?: number;
   currentValue: number;
   interestRate: number | null;
   interestCompounding: CompoundingFrequency | null;
@@ -67,10 +71,19 @@ export interface AssetUpdateRequest {
   notes?: string | null;
 }
 
+export type AssetTransactionType =
+  | 'BUY'
+  | 'SELL'
+  | 'REVALUE'
+  | 'ANCILLARY_FEE'
+  | 'CAPITALIZED_INTEREST'
+  | 'INTEREST_REDUCTION'
+  | 'IMPROVEMENT';
+
 export interface AssetTransaction {
   id: string;
   assetId: string;
-  transactionType: 'BUY' | 'SELL' | 'REVALUE';
+  transactionType: AssetTransactionType;
   amount: number;
   units: number | null;
   pricePerUnit: number | null;
@@ -79,7 +92,7 @@ export interface AssetTransaction {
 }
 
 export interface AssetTransactionRequest {
-  transactionType: 'BUY' | 'SELL' | 'REVALUE';
+  transactionType: AssetTransactionType;
   amount: number;
   unitDetails?: AssetUnitDetails | null;
   transactionDate?: string | null; // ISO datetime
