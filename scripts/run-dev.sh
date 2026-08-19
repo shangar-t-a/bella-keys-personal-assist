@@ -25,9 +25,9 @@ show_menu() {
     echo
     echo "Select a development configuration:"
     echo
-    echo "  1. EMS only          - Auth + Expense Manager  [default]"
-    echo "  2. AI Chat           - Auth + EMS + Bella Chat + Qdrant"
-    echo "  3. AI Chat + Monitor - Everything above + Phoenix observability"
+    echo "  1. EMS only          - Auth + Expense Manager  [Default]"
+    echo "  2. AI Chat           - Auth + EMS + Bella Chat + Qdrant [Experimental]"
+    echo "  3. AI Chat + Monitor - Everything above + Phoenix observability [Experimental]"
     echo
     read -p "Select services [1-3] (default: 1): " service_choice
     service_choice="${service_choice:-1}"

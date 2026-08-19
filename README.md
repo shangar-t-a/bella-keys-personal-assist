@@ -34,21 +34,18 @@ Explore every screen of the application in light and dark themes, including SSO 
 
 ## Production Deployment (End-User / Home PC)
 
-To install Bella Keys on a new PC without downloading the full repository, open a terminal (Git Bash, WSL, or macOS Terminal) and run:
-
-```bash
-curl -sSL "https://raw.githubusercontent.com/shangar-t-a/bella-keys-personal-assist/main/scripts/deploy/install-prod.sh" | bash
-```
-
-### What this does
-
-* Downloads the necessary configuration files.
-* Prompts you to configure your `.env` secrets interactively or offline.
-* Pulls and starts the latest Docker containers.
-
 > [!NOTE]
-> You must have Docker, PostgreSQL, and Ollama installed natively on your host PC before running this script.
+> Production service execution and management is currently supported for **Windows only**.
 
-### Managing Services
+To run or update Bella Keys on a target Windows PC:
 
-Once installed, use the downloaded `run-prod.ps1` script (on Windows) to easily start, stop, or restart the background services.
+1. Place your configuration files (`docker-compose.prod.yaml`, `.env`, and `init-db-prod.sql`) in `%USERPROFILE%\.keys_sandbox\bella-keys\`.
+2. Download or copy `scripts/deploy/bella-keys-manager.bat` into that directory.
+3. Double-click or run `bella-keys-manager.bat` from Command Prompt / PowerShell.
+
+### Service Operations & Updates
+
+The single `bella-keys-manager.bat` batch script handles the entire lifecycle:
+
+* **Service Management:** Start, stop, restart, view logs, and inspect service status.
+* **Updates:** Automatically self-updates the manager script, downloads latest compose configurations, auto-syncs missing environment variables in `.env`, pulls updated Docker images, and recreates containers seamlessly.

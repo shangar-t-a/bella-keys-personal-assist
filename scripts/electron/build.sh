@@ -44,13 +44,13 @@ mkdir -p "$BUILD_DIR"
 # Service selection functions
 show_service_menu() {
     echo -e "${YELLOW}Select services to include in the build:${NC}"
-    echo "1) Minimal (Expense Manager only) - Lightweight"
-    echo "2) Standard (Expense Manager + Bella Chat) - Recommended"
-    echo "3) Enhanced (Expense Manager + Bella Chat + Observability) - Heavy resources"
+    echo "1) Minimal (Expense Manager only) - Default"
+    echo "2) Standard (Expense Manager + Bella Chat) - Experimental"
+    echo "3) Enhanced (Expense Manager + Bella Chat + Observability) - Experimental"
     echo "4) Custom - Choose individual services"
     echo
-    read -p "Enter your choice [1-4] (default: 2): " choice
-    choice="${choice:-2}"
+    read -p "Enter your choice [1-4] (default: 1): " choice
+    choice="${choice:-1}"
     
     case $choice in
         1)

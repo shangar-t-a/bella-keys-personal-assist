@@ -67,22 +67,22 @@ check_build_info() {
     
     if [ ! -f "$service_info" ]; then
         echo -e "${YELLOW}⚠️  No build information found. Using default configuration.${NC}"
-        SERVICES_TO_RUN="standard"
+        SERVICES_TO_RUN="minimal"
         return
     fi
     
     echo -e "${BLUE}📋 Reading build configuration...${NC}"
-    SERVICES_TO_RUN=$(grep -o '"services": *"[^"]*"' "$service_info" 2>/dev/null | awk -F'"' '{print $4}' || echo "standard")
-    if [ -z "$SERVICES_TO_RUN" ]; then SERVICES_TO_RUN="standard"; fi
+    SERVICES_TO_RUN=$(grep -o '"services": *"[^"]*"' "$service_info" 2>/dev/null | awk -F'"' '{print $4}' || echo "minimal")
+    if [ -z "$SERVICES_TO_RUN" ]; then SERVICES_TO_RUN="minimal"; fi
     echo "Build configuration: $SERVICES_TO_RUN"
 }
 
 show_service_menu() {
     echo -e "${YELLOW}Select services to run:${NC}"
     echo "1) Use build configuration ($SERVICES_TO_RUN)"
-    echo "2) Minimal (Expense Manager only)"
-    echo "3) Standard (Expense Manager + Bella Chat)"
-    echo "4) Enhanced (Expense Manager + Bella Chat + Observability)"
+    echo "2) Minimal (Expense Manager only) [Default]"
+    echo "3) Standard (Expense Manager + Bella Chat) [Experimental]"
+    echo "4) Enhanced (Expense Manager + Bella Chat + Observability) [Experimental]"
     echo "5) Custom selection"
     echo
     read -p "Enter your choice [1-5] (default: 1): " choice

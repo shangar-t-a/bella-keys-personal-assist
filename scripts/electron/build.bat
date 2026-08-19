@@ -21,13 +21,13 @@ if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 REM Service selection functions
 :show_service_menu
 echo Select services to include in the build:
-echo 1) Minimal (Expense Manager only) - Lightweight
-echo 2) Standard (Expense Manager + Bella Chat) - Recommended
-echo 3) Enhanced (Expense Manager + Bella Chat + Observability) - Heavy resources
+echo 1) Minimal (Expense Manager only) - Default
+echo 2) Standard (Expense Manager + Bella Chat) - Experimental
+echo 3) Enhanced (Expense Manager + Bella Chat + Observability) - Experimental
 echo 4) Custom - Choose individual services
 echo.
-set /p choice="Enter your choice [1-4] (default: 2): "
-if "%choice%"=="" set "choice=2"
+set /p choice="Enter your choice [1-4] (default: 1): "
+if "%choice%"=="" set "choice=1"
 
 if "%choice%"=="1" (
     set "SERVICES=minimal"

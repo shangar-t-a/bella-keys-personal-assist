@@ -17,10 +17,8 @@ scripts/
 │   ├── init-db.sql        # PostgreSQL init schema script (dev)
 │   ├── init-db-prod.sql   # PostgreSQL init schema script (prod)
 │   └── backup-db.sh       # Database backup utility script
-├── deploy/                # Production setup & deployment scripts
-│   ├── install-prod.sh    # Production setup script
-│   ├── run-prod.sh        # Production runner and service manager
-│   └── update-prod.sh     # Production update script
+├── deploy/                # Production setup & deployment scripts (Windows Only)
+│   └── bella-keys-manager.bat # Unified production runner, service manager, self-updater, and update script
 ├── electron/              # Build desktop app installer (developers only)
 │   ├── build.sh           # Build Electron app (Linux/macOS/Git Bash)
 │   ├── build.bat          # Build Electron app (Windows CMD)
@@ -45,25 +43,33 @@ scripts/
 ## Quick Reference
 
 ### 1. Environment & Dependency Setup
+
 Sets up environment configurations, syncs Python packages using `uv`, installs UI packages using `npm`, and initializes databases.
+
 ```bash
 bash scripts/setup.sh
 ```
 
 ### 2. Run Local Development Services
+
 Launches development databases/services in Docker and starts React/Electron components locally. Supports profiles: `ems-web`, `bella-web`, `ems-desktop`, `bella-desktop`.
+
 ```bash
 bash scripts/run-dev.sh [profile]
 ```
 
 ### 3. Run Packaged Desktop App (Production)
+
 Pulls pre-built containers from the GitHub Container Registry (GHCR) and starts the compiled desktop app.
+
 ```bash
 bash scripts/run-desktop-app.sh
 ```
 
 ### 4. Running Migrations & Tests
+
 Convenient wrappers for database schema migrations and testing.
+
 ```bash
 # Apply database migrations
 bash scripts/db-migrate.sh
@@ -73,8 +79,10 @@ bash scripts/run-tests.sh
 ```
 
 ### 5. Capture Portfolio Screenshots
+
 Captures all UI screens in light and dark themes into `docs/screens/v6.0/`.
 Requires the UI dev server to be running on `http://localhost:3000`.
+
 ```bash
 # One-time setup
 cd scripts/screenshots
