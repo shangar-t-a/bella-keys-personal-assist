@@ -7,15 +7,17 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from typing import AsyncIterator
+from urllib.parse import urlparse
 
 from fastmcp import FastMCP
-from fastmcp.server.auth import RemoteAuthProvider, TokenVerifier, AccessToken
+from fastmcp.server.auth import AccessToken, RemoteAuthProvider, TokenVerifier
 import jwt
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
 from app.client import close_ems_client
+from app.constants import ALG_HS256
 from app.settings import get_settings
 import app.tools as tools
 
@@ -39,7 +41,7 @@ class EMSTokenVerifier(TokenVerifier):
 
         try:
             payload = jwt.decode(
-                token, secret_str, algorithms=["HS256"], options={"verify_aud": False}
+                token, secret_str, algorithms=[ALG_HS256], options={"verify_aud": False}
             )
         except jwt.PyJWTError as e:
             logger.warning(f"JWT signature validation failed: {e}")
@@ -48,17 +50,32 @@ class EMSTokenVerifier(TokenVerifier):
         # Validate target resource audience if present (RFC 8707 / RFC 9728)
         aud = payload.get("aud")
         if aud:
-            settings = get_settings()
             norm_aud = str(aud).rstrip("/")
-            norm_expected = settings.BASE_URL.rstrip("/")
+            base_url = settings.BASE_URL.rstrip("/")
+            parsed_base = urlparse(base_url)
 
-            if (
-                norm_aud != norm_expected
-                and norm_aud != f"{norm_expected}/mcp"
-                and norm_aud != f"{norm_expected}/sse"
-            ):
+            # Build valid audience candidates dynamically (base_url, container service names, path suffixes)
+            valid_audiences = {
+                base_url,
+                f"{base_url}/mcp",
+                f"{base_url}/sse",
+            }
+            if parsed_base.netloc:
+                port = parsed_base.port or 8001
+                valid_audiences.update(
+                    {
+                        f"http://ems-mcp:{port}",
+                        f"http://ems-mcp:{port}/mcp",
+                        f"http://ems-mcp:{port}/sse",
+                        f"http://localhost:{port}",
+                        f"http://localhost:{port}/mcp",
+                        f"http://localhost:{port}/sse",
+                    }
+                )
+
+            if norm_aud not in valid_audiences:
                 logger.warning(
-                    f"Token verification failed: Token audience '{aud}' does not match expected '{settings.BASE_URL}'"
+                    f"Token verification failed: Token audience '{aud}' does not match expected '{base_url}'"
                 )
                 return None
 

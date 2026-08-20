@@ -1,16 +1,21 @@
 """HTTP client for communicating with the Expense Manager Service."""
 
 import logging
-import os
 from typing import Any
 
 import httpx
 from mcp.server.auth.middleware.auth_context import get_access_token
 
+from app.constants import BEARER_PREFIX
 from app.settings import get_settings
 
 logger = logging.getLogger("ems-mcp-server")
 _client: httpx.AsyncClient | None = None
+
+
+def clean_params(**kwargs: Any) -> dict[str, Any]:
+    """Filter out None values from query parameters dictionary."""
+    return {k: v for k, v in kwargs.items() if v is not None}
 
 
 def get_ems_client() -> httpx.AsyncClient:
@@ -34,14 +39,13 @@ async def close_ems_client() -> None:
 
 
 def get_auth_headers() -> dict[str, str]:
-    """Extract Authorization header from the current request context to propagate to EMS backend."""
+    """Extract Authorization header from standard FastMCP auth context."""
     access_token = get_access_token()
-    if access_token:
+    if access_token and access_token.token:
         token = access_token.token
-        if not token.startswith("Bearer "):
-            token = f"Bearer {token}"
+        if not token.startswith(BEARER_PREFIX):
+            token = f"{BEARER_PREFIX}{token}"
         return {"Authorization": token}
-
     return {}
 
 
@@ -58,10 +62,9 @@ async def request_ems(method: str, path: str, **kwargs: Any) -> Any:
             except Exception:
                 detail = response.text
             raise ValueError(f"EMS Error ({response.status_code}): {detail}")
-        if response.status_code == 204:
+        if response.status_code == 204 or not response.content:
             return {"status": "success"}
         return response.json()
-    except httpx.HTTPStatusError as e:
-        raise ValueError(f"EMS returned HTTP error: {e}") from e
-    except httpx.RequestError as e:
-        raise ValueError(f"EMS backend unreachable: {e}") from e
+    except httpx.RequestError as exc:
+        logger.exception(f"HTTP request to EMS failed: {exc}")
+        raise ValueError(f"Failed to communicate with EMS backend: {exc}") from exc

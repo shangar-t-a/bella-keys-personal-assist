@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from app.client import request_ems
+from app.client import clean_params, request_ems
 
 
 async def list_asset_categories() -> list[dict[str, Any]]:
@@ -15,12 +15,7 @@ async def list_assets(
     search: Annotated[str | None, "Optional search term for asset name"] = None,
 ) -> list[dict[str, Any]]:
     """Retrieve list of assets, optionally filtered by category or search term."""
-    params: dict[str, Any] = {}
-    if category_id is not None:
-        params["categoryId"] = category_id
-    if search is not None:
-        params["search"] = search
-
+    params = clean_params(categoryId=category_id, search=search)
     return await request_ems("GET", "/v1/assets", params=params)
 
 
@@ -97,15 +92,12 @@ async def update_asset(
     notes: Annotated[str | None, "Additional notes/remarks"] = None,
 ) -> dict[str, Any]:
     """Update metadata fields of an existing asset."""
-    json_data: dict[str, Any] = {}
-    if category_id is not None:
-        json_data["categoryId"] = category_id
-    if name is not None:
-        json_data["name"] = name
-    if subcategory_id is not None:
-        json_data["subcategoryId"] = subcategory_id
-    if notes is not None:
-        json_data["notes"] = notes
+    json_data = clean_params(
+        categoryId=category_id,
+        name=name,
+        subcategoryId=subcategory_id,
+        notes=notes,
+    )
 
     if (
         interest_rate is not None
