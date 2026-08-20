@@ -1,8 +1,6 @@
-"""Agents for Bella Chat."""
+"""Agents package with separate v1 and v2 tracks."""
 
-from app.agents.orchestrator_agent.agent import OrchestratorAgent
-from app.agents.rag_agent.agent import RAGAgent
-from app.agents.simple_chat_agent.agent import SimpleChatAgent
+from app.agents.v1 import OrchestratorAgent, RAGAgent, SimpleChatAgent
 
 __all__ = [
     "OrchestratorAgent",

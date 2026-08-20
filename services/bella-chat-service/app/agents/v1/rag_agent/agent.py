@@ -17,9 +17,9 @@ from langgraph.graph import (
     StateGraph,
 )
 
-from app.agents.base_agent import BaseAgent
-from app.agents.rag_agent.models import State
-from app.agents.rag_agent.prompts import (
+from app.agents.v1.base_agent import BaseAgent
+from app.agents.v1.rag_agent.models import State
+from app.agents.v1.rag_agent.prompts import (
     GENERATE_RESPONSE_PROMPT_TEMPLATE,
     RAG_AGENT_SYSTEM_PROMPT,
 )

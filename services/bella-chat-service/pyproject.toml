@@ -23,6 +23,7 @@ dependencies = [
     "langgraph>=1.2.2",
     "langchain-mcp-adapters>=0.2.2",
     "fastapi>=0.136.3",
+    "deepagents>=0.7.7",
 ]
 
 [project.optional-dependencies]

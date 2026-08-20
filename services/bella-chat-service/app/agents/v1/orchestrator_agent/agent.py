@@ -31,7 +31,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
 
-from app.agents.orchestrator_agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
+from app.agents.v1.orchestrator_agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
 from app.core.context import current_auth_header
 from utilities.logger import GetAppLogger
 
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from langgraph.checkpoint.base import BaseCheckpointSaver
     from langgraph.graph.state import CompiledStateGraph
 
-    from app.agents.rag_agent.agent import RAGAgent
+    from app.agents.v1.rag_agent.agent import RAGAgent
 
 _logger = GetAppLogger().get_logger()
 
