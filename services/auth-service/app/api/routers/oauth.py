@@ -212,9 +212,7 @@ def _handle_token_exchange(
 
     secret = get_settings().JWT_SECRET.get_secret_value()
     try:
-        payload = jwt.decode(
-            subject_token, secret, algorithms=[ALGORITHM_HS256], options={"verify_aud": False}
-        )
+        payload = jwt.decode(subject_token, secret, algorithms=[ALGORITHM_HS256], options={"verify_aud": False})
     except Exception as e:
         raise HTTPException(
             status_code=401,

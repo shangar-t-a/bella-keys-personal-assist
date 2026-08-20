@@ -11,7 +11,6 @@ from langchain_core.messages import AIMessage, AIMessageChunk
 from langgraph.types import Command
 
 from app.agents.v2.tools.retrieval import get_personal_wiki_retriever_tool
-from app.core.context import current_auth_header
 from utilities.logger import GetAppLogger
 
 if TYPE_CHECKING:
@@ -165,30 +164,38 @@ async def stream_deep_agent(
     agent,
     user_input: str,
     conversation_id: UUID,
-    auth_header: str | None = None,
 ) -> AsyncGenerator[str]:
     """Stream events from the deep agent formatted as SSE."""
-    token_t = current_auth_header.set(auth_header)
     thread_id = str(conversation_id) if conversation_id else str(uuid4())
     config = {"configurable": {"thread_id": thread_id}}
     inputs = {"messages": [{"role": "user", "content": user_input}]}
 
     try:
+        has_response = False
         async for item in agent.astream(
             inputs, config, stream_mode=["messages", "updates"], version="v2"
         ):
-            frames, _ = _process_stream_item(item)
+            frames, text_found = _process_stream_item(item)
+            if text_found:
+                has_response = True
             for frame in frames:
                 yield frame
 
         state = await agent.aget_state(config)
         for intr_sse in _extract_interrupt_events(state):
             yield intr_sse
+
+        if not has_response and hasattr(state, "values") and isinstance(state.values, dict):
+            msgs = state.values.get("messages", [])
+            if isinstance(msgs, list) and msgs:
+                last_msg = msgs[-1]
+                if isinstance(last_msg, (AIMessage, AIMessageChunk)) and last_msg.content:
+                    text = _extract_text(last_msg.content)
+                    if text:
+                        yield _sse("response", content=text)
     except Exception as exc:
         _logger.exception(f"Deep agent stream error for thread {thread_id}")
         yield _sse("error", content=str(exc))
-    finally:
-        current_auth_header.reset(token_t)
 
     yield _sse("done")
 
@@ -198,10 +205,8 @@ async def resume_deep_agent(
     conversation_id: UUID,
     decision: str = "approve",
     edited_args: dict[str, object] | None = None,
-    auth_header: str | None = None,
 ) -> AsyncGenerator[str]:
     """Resume execution of a deep agent thread paused by an interrupt."""
-    token_t = current_auth_header.set(auth_header)
     thread_id = str(conversation_id) if conversation_id else str(uuid4())
     config = {"configurable": {"thread_id": thread_id}}
 
@@ -235,7 +240,5 @@ async def resume_deep_agent(
     except Exception as exc:
         _logger.exception(f"Deep agent resume error for thread {thread_id}")
         yield _sse("error", content=str(exc))
-    finally:
-        current_auth_header.reset(token_t)
 
     yield _sse("done")

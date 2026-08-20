@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 from app.agents.v2.deep_orchestrator import stream_deep_agent
+from app.dependencies.agents import build_agent, get_mcp_tools
 from app.routers.v1.models import ChatRequest
 from utilities.logger import GetAppLogger
 
@@ -21,12 +22,12 @@ async def stream_response(
     conversation_id = chat_request.conversation_id
     auth_header = request.headers.get("Authorization")
 
-    agent = request.app.state.orchestrator_agent
     _logger.info(f"Deep agent (v1 compat) query: {query}")
 
+    mcp_tools = await get_mcp_tools(auth_header)
+    agent = build_agent(mcp_tools=mcp_tools, checkpointer=request.app.state.checkpointer)
+
     response_gen = stream_deep_agent(
-        agent=agent, user_input=query, conversation_id=conversation_id, auth_header=auth_header
+        agent=agent, user_input=query, conversation_id=conversation_id
     )
     return StreamingResponse(response_gen, media_type="text/event-stream")
-
-

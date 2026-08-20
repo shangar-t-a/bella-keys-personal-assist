@@ -17,7 +17,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from app.dependencies.agents import create_orchestrator_agent
+from app.dependencies.agents import create_checkpointer
 from app.dependencies.ai_dependencies import (
     get_app_embedding_client,
     get_app_synthesis_llm_client,
@@ -97,13 +97,12 @@ def setup_arize_tracing() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan context manager."""
-    # Set application start time
     app.state.start_time = datetime.now()
 
-    # Initialize orchestrator agent with async resources (Postgres checkpointer, MCP client)
-    # These must remain in lifespan as they are async context managers requiring proper cleanup
-    async with create_orchestrator_agent() as orchestrator_agent:
-        app.state.orchestrator_agent = orchestrator_agent
+    # The Postgres checkpointer is long-lived and shared across all requests.
+    # MCP tool loading and agent construction happen per-request in the router.
+    async with create_checkpointer() as checkpointer:
+        app.state.checkpointer = checkpointer
         yield
 
 

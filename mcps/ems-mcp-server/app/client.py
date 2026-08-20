@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 import httpx
-from mcp.server.auth.middleware.auth_context import get_access_token
+from fastmcp.server.dependencies import get_access_token, get_http_request
 
 from app.constants import BEARER_PREFIX
 from app.settings import get_settings
@@ -39,13 +39,23 @@ async def close_ems_client() -> None:
 
 
 def get_auth_headers() -> dict[str, str]:
-    """Extract Authorization header from standard FastMCP auth context."""
+    """Extract Authorization header from FastMCP auth context or incoming HTTP request."""
     access_token = get_access_token()
     if access_token and access_token.token:
         token = access_token.token
         if not token.startswith(BEARER_PREFIX):
             token = f"{BEARER_PREFIX}{token}"
         return {"Authorization": token}
+
+    try:
+        req = get_http_request()
+        auth = req.headers.get("authorization")
+        if auth:
+            return {"Authorization": auth}
+    except Exception as exc:
+        logger.debug(f"Could not retrieve HTTP request auth header: {exc}")
+
+    logger.warning("No access token in FastMCP context — forwarding no Authorization header to EMS")
     return {}
 
 

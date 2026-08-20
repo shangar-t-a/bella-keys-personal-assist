@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from app.agents.v2.deep_orchestrator import resume_deep_agent, stream_deep_agent
 from app.core.artifacts import artifact_manager
+from app.dependencies.agents import build_agent, get_mcp_tools
 from app.routers.v2.models import ChatRequestV2, ResumeRequest
 from utilities.logger import GetAppLogger
 
@@ -24,14 +25,15 @@ async def stream_response_v2(
     conversation_id = chat_request.conversation_id
     auth_header = request.headers.get("Authorization")
 
-    agent = request.app.state.orchestrator_agent
     _logger.info(f"Deep Agent v2 processing query: {query}")
+
+    mcp_tools = await get_mcp_tools(auth_header)
+    agent = build_agent(mcp_tools=mcp_tools, checkpointer=request.app.state.checkpointer)
 
     response_gen = stream_deep_agent(
         agent=agent,
         user_input=query,
         conversation_id=conversation_id,
-        auth_header=auth_header,
     )
     return StreamingResponse(response_gen, media_type="text/event-stream")
 
@@ -47,15 +49,16 @@ async def resume_response_v2(
     edited_args = resume_request.decision.edited_args
     auth_header = request.headers.get("Authorization")
 
-    agent = request.app.state.orchestrator_agent
     _logger.info(f"Resuming deep agent thread {conversation_id} with decision: {decision_type}")
+
+    mcp_tools = await get_mcp_tools(auth_header)
+    agent = build_agent(mcp_tools=mcp_tools, checkpointer=request.app.state.checkpointer)
 
     response_gen = resume_deep_agent(
         agent=agent,
         conversation_id=conversation_id,
         decision=decision_type,
         edited_args=edited_args,
-        auth_header=auth_header,
     )
     return StreamingResponse(response_gen, media_type="text/event-stream")
 
