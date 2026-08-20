@@ -1,6 +1,6 @@
 """API Router for Authentication endpoints."""
 
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 import uuid
 
 from fastapi import (
@@ -24,8 +24,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.config import get_settings
+from app.core.constants import (
+    ALGORITHM_HS256,
+    COOKIE_REFRESH_TOKEN,
+    SECONDS_PER_MINUTE,
+    TOKEN_TYPE_BEARER,
+    TOKEN_TYPE_BEARER_LOWER,
+)
+from app.core.cookies import (
+    delete_refresh_token_cookie,
+    set_refresh_token_cookie,
+)
 from app.core.security import (
-    ALGORITHM,
     create_access_token,
     create_refresh_token,
     get_password_hash,
@@ -45,20 +55,18 @@ from app.schemas.auth import (
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-SECONDS_PER_MINUTE = 60
-
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     """Dependency to get the current authenticated user via JWT access token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={"WWW-Authenticate": TOKEN_TYPE_BEARER},
     )
     try:
         secret = get_settings().JWT_SECRET.get_secret_value()
-        payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        payload = jwt.decode(token, secret, algorithms=[ALGORITHM_HS256])
+        username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception
     except JWTError:
@@ -105,34 +113,30 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": TOKEN_TYPE_BEARER},
         )
 
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(UTC).replace(tzinfo=None)
     await db.commit()
 
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
     refresh_token = create_refresh_token(data={"sub": user.username, "role": user.role})
 
-    # Store refresh token in DB
     new_rt = RefreshToken(
         token=refresh_token,
         user_id=user.id,
-        expires_at=datetime.utcnow() + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS),
+        expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS),
     )
     db.add(new_rt)
     await db.commit()
 
-    # Set refresh token in HttpOnly cookie
     secure_flag = request.url.scheme == "https"
-    response.set_cookie(
-        key="refresh_token", value=refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
-    )
+    set_refresh_token_cookie(response, refresh_token, secure_flag)
 
     return {
         "access_token": access_token,
-        "token_type": "bearer",
-        "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "token_type": TOKEN_TYPE_BEARER_LOWER,
+        "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * SECONDS_PER_MINUTE,
     }
 
 
@@ -140,14 +144,14 @@ async def login(
 async def refresh(
     response: Response,
     request: Request,
-    refresh_token: str | None = Cookie(default=None),
+    refresh_token: str | None = Cookie(default=None, alias=COOKIE_REFRESH_TOKEN),
     db: AsyncSession = Depends(get_db),
 ):
     """Issue a new access token using a valid refresh token cookie."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={"WWW-Authenticate": TOKEN_TYPE_BEARER},
     )
 
     if not refresh_token:
@@ -155,18 +159,18 @@ async def refresh(
 
     try:
         secret = get_settings().JWT_SECRET.get_secret_value()
-        payload = jwt.decode(refresh_token, secret, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        payload = jwt.decode(refresh_token, secret, algorithms=[ALGORITHM_HS256])
+        username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception from None
 
-    # Check if refresh token is in DB
     result = await db.execute(select(RefreshToken).where(RefreshToken.token == refresh_token))
     rt_record = result.scalars().first()
 
-    if not rt_record or rt_record.expires_at < datetime.utcnow():
+    now_naive = datetime.now(UTC).replace(tzinfo=None)
+    if not rt_record or rt_record.expires_at < now_naive:
         raise credentials_exception
 
     result_user = await db.execute(select(User).where(User.id == rt_record.user_id))
@@ -174,7 +178,6 @@ async def refresh(
     if not user:
         raise credentials_exception
 
-    # Extract client session context from the refresh token payload
     rt_client_id = payload.get("client_id")
     rt_scope = payload.get("scope")
     rt_aud = payload.get("aud") or get_settings().DEFAULT_RESOURCE_AUDIENCE
@@ -201,20 +204,16 @@ async def refresh(
     }
     new_refresh_token = create_refresh_token(data=new_rt_data)
 
-    # Rotate refresh token
-    rt_record.token = new_refresh_token
-    rt_record.expires_at = datetime.utcnow() + timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_days = get_settings().REFRESH_TOKEN_EXPIRE_DAYS
+    rt_record.expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=expires_days)
     await db.commit()
 
-    # Set rotated refresh token in HttpOnly cookie
     secure_flag = request.url.scheme == "https"
-    response.set_cookie(
-        key="refresh_token", value=new_refresh_token, httponly=True, secure=secure_flag, samesite="lax", path="/"
-    )
+    set_refresh_token_cookie(response, new_refresh_token, secure_flag)
 
     return {
         "access_token": access_token,
-        "token_type": "bearer",
+        "token_type": TOKEN_TYPE_BEARER_LOWER,
         "expires_in": get_settings().ACCESS_TOKEN_EXPIRE_MINUTES * SECONDS_PER_MINUTE,
     }
 
@@ -222,7 +221,7 @@ async def refresh(
 @router.post("/logout")
 async def logout(response: Response):
     """Clear the refresh token cookie to log out the user."""
-    response.delete_cookie(key="refresh_token", path="/")
+    delete_refresh_token_cookie(response)
     return {"message": "Logged out successfully"}
 
 

@@ -179,3 +179,27 @@ async def test_oauth_userinfo() -> None:
         data = response.json()
         assert data["sub"] == "shangar"
         assert data["role"] == "user"
+
+
+@pytest.mark.asyncio
+async def test_rfc8693_token_exchange() -> None:
+    """Verify that RFC 8693 token exchange exchanges a subject token for a target-bounded access token."""
+    user_token = create_access_token(data={"sub": "shangar", "role": "user", "scope": "bella-ems:read"})
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        form_data = {
+            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+            "subject_token": user_token,
+            "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
+            "client_id": "bella-chat-service",
+            "resource": "http://localhost:8001/mcp",
+        }
+        response = await client.post("/oauth/token", data=form_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "Bearer"
+        assert data["issued_token_type"] == "urn:ietf:params:oauth:token-type:access_token"
+
