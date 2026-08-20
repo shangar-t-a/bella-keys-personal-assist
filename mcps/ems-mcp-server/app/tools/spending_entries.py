@@ -2,12 +2,13 @@
 
 from typing import Annotated, Any
 
-from app.client import request_ems
+from app.client import clean_params, request_ems
+from app.constants import DEFAULT_PAGE_SIZE, DEFAULT_SORT_BY, DEFAULT_SORT_ORDER
 
 
 async def list_spending_entries(
     page: Annotated[int, "Page number (0-based). Defaults to 0."] = 0,
-    size: Annotated[int, "Number of entries per page (1-100). Defaults to 12."] = 12,
+    size: Annotated[int, f"Number of entries per page (1-100). Defaults to {DEFAULT_PAGE_SIZE}."] = DEFAULT_PAGE_SIZE,
     month: Annotated[
         int | None, "Filter by month (1-12). Omit to include all months."
     ] = None,
@@ -20,8 +21,8 @@ async def list_spending_entries(
     sort_by: Annotated[
         str,
         "Single field to sort by. Must be exactly one of: 'year', 'month', 'account_name', 'starting_balance', 'current_balance', 'current_credit', 'balance_after_credit', 'total_spent'. Do NOT combine multiple fields.",
-    ] = "year",
-    sort_order: Annotated[str, "Sort direction: 'asc' or 'desc'."] = "asc",
+    ] = DEFAULT_SORT_BY,
+    sort_order: Annotated[str, "Sort direction: 'asc' or 'desc'."] = DEFAULT_SORT_ORDER,
 ) -> dict[str, Any]:
     """Retrieve paginated spending entries across all accounts.
 
@@ -32,26 +33,22 @@ async def list_spending_entries(
     Use filters (month, year, accountName) to narrow results.
     Use sort_by / sort_order to control ordering.
     """
-    params: dict[str, Any] = {
-        "page": page,
-        "size": size,
-        "sortBy": sort_by,
-        "sortOrder": sort_order,
-    }
-    if month is not None:
-        params["month"] = month
-    if year is not None:
-        params["year"] = year
-    if account_name is not None:
-        params["accountName"] = account_name
-
+    params = clean_params(
+        page=page,
+        size=size,
+        sortBy=sort_by,
+        sortOrder=sort_order,
+        month=month,
+        year=year,
+        accountName=account_name,
+    )
     return await request_ems("GET", "/v1/spending_account/list", params=params)
 
 
 async def list_spending_entries_for_account(
     account_id: Annotated[str, "The unique ID of the account to query."],
     page: Annotated[int, "Page number (0-based). Defaults to 0."] = 0,
-    size: Annotated[int, "Number of entries per page (1-100). Defaults to 12."] = 12,
+    size: Annotated[int, f"Number of entries per page (1-100). Defaults to {DEFAULT_PAGE_SIZE}."] = DEFAULT_PAGE_SIZE,
     month: Annotated[
         int | None, "Filter by month (1-12). Omit to include all months."
     ] = None,
@@ -61,8 +58,8 @@ async def list_spending_entries_for_account(
     sort_by: Annotated[
         str,
         "Single field to sort by. Must be exactly one of: 'year', 'month', 'account_name', 'starting_balance', 'current_balance', 'current_credit', 'balance_after_credit', 'total_spent'. Do NOT combine multiple fields.",
-    ] = "year",
-    sort_order: Annotated[str, "Sort direction: 'asc' or 'desc'."] = "asc",
+    ] = DEFAULT_SORT_BY,
+    sort_order: Annotated[str, "Sort direction: 'asc' or 'desc'."] = DEFAULT_SORT_ORDER,
 ) -> dict[str, Any]:
     """Retrieve paginated spending entries for a specific account.
 
@@ -72,17 +69,14 @@ async def list_spending_entries_for_account(
 
     Raises an error if the account_id is not found.
     """
-    params: dict[str, Any] = {
-        "page": page,
-        "size": size,
-        "sortBy": sort_by,
-        "sortOrder": sort_order,
-    }
-    if month is not None:
-        params["month"] = month
-    if year is not None:
-        params["year"] = year
-
+    params = clean_params(
+        page=page,
+        size=size,
+        sortBy=sort_by,
+        sortOrder=sort_order,
+        month=month,
+        year=year,
+    )
     return await request_ems(
         "GET", f"/v1/spending_account/{account_id}/list", params=params
     )

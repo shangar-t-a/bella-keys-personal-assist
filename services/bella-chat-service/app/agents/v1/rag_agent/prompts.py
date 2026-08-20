@@ -2,7 +2,7 @@
 
 from langchain_core.prompts import PromptTemplate
 
-from app.agents.prompts import ABOUT_BELLA_SYSTEM_PROMPT
+from app.agents.v1.prompts import ABOUT_BELLA_SYSTEM_PROMPT
 
 RAG_AGENT_SYSTEM_PROMPT = f"""{ABOUT_BELLA_SYSTEM_PROMPT}
 

@@ -10,10 +10,10 @@ from langgraph.graph import (
     StateGraph,
 )
 
-from app.agents.base_agent import BaseAgent
-from app.agents.prompts import ABOUT_BELLA_SYSTEM_PROMPT
-from app.agents.simple_chat_agent.models import State
-from app.agents.simple_chat_agent.prompts import SYNTHESIS_PROMPT_TEMPLATE
+from app.agents.v1.base_agent import BaseAgent
+from app.agents.v1.prompts import ABOUT_BELLA_SYSTEM_PROMPT
+from app.agents.v1.simple_chat_agent.models import State
+from app.agents.v1.simple_chat_agent.prompts import SYNTHESIS_PROMPT_TEMPLATE
 
 if TYPE_CHECKING:
     from langchain_core.language_models.chat_models import BaseChatModel

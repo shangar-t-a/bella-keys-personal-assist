@@ -92,6 +92,7 @@ services:
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME}
       # EMS MCP Server Settings
       - EMS_MCP_SERVER_URL=http://ems-mcp:8001/mcp
+      - AUTH_SERVICE_URL=http://auth-service:8002
       # Arize Settings
       - ARIZE_ENABLED=${ARIZE_ENABLED}
       - ARIZE_TRACES_URL=${ARIZE_TRACES_URL}

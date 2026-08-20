@@ -2,8 +2,10 @@
 
 import logging
 import os
+import socket
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -15,7 +17,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from app.dependencies.agents import create_orchestrator_agent
+from app.dependencies.agents import create_checkpointer
 from app.dependencies.ai_dependencies import (
     get_app_embedding_client,
     get_app_synthesis_llm_client,
@@ -25,6 +27,9 @@ from app.dependencies.ai_dependencies import (
 from app.routers import app_router
 from app.settings import get_settings
 from utilities.auth_middleware import JWTAuthMiddleware
+from utilities.logger import GetAppLogger
+
+_logger = GetAppLogger().get_logger()
 
 # Suppress noisy schema-conversion warnings from the Gemini tool adapter.
 # LangChain logs a WARNING for every tool schema field it drops (e.g.
@@ -50,10 +55,28 @@ def setup_middlewares(app: FastAPI, settings) -> None:
     )
 
 
+def _is_exporter_reachable(endpoint_url: str) -> bool:
+    """Check if the telemetry exporter host and port are reachable."""
+    try:
+        parsed = urlparse(endpoint_url)
+        host = parsed.hostname
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        if not host:
+            return False
+        with socket.create_connection((host, port), timeout=1.0):
+            return True
+    except Exception:
+        return False
+
+
 def setup_arize_tracing() -> None:
-    """Setup Arize tracing if enabled."""
+    """Setup Arize tracing if enabled and exporter endpoint is reachable."""
     settings = get_settings()
     if settings.ARIZE_ENABLED:
+        if not _is_exporter_reachable(settings.ARIZE_TRACES_URL):
+            _logger.info("Arize Phoenix endpoint is not reachable. Disabling trace exporter.")
+            return
+
         resource = Resource(
             attributes={
                 "service.name": settings.ARIZE_PROJECT_NAME,
@@ -74,13 +97,12 @@ def setup_arize_tracing() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan context manager."""
-    # Set application start time
     app.state.start_time = datetime.now()
 
-    # Initialize orchestrator agent with async resources (Postgres checkpointer, MCP client)
-    # These must remain in lifespan as they are async context managers requiring proper cleanup
-    async with create_orchestrator_agent() as orchestrator_agent:
-        app.state.orchestrator_agent = orchestrator_agent
+    # The Postgres checkpointer is long-lived and shared across all requests.
+    # MCP tool loading and agent construction happen per-request in the router.
+    async with create_checkpointer() as checkpointer:
+        app.state.checkpointer = checkpointer
         yield
 
 

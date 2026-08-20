@@ -31,8 +31,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
 
-from app.agents.orchestrator_agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
-from app.core.context import current_auth_header
+from app.agents.v1.orchestrator_agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
 from utilities.logger import GetAppLogger
 
 if TYPE_CHECKING:
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
     from langgraph.checkpoint.base import BaseCheckpointSaver
     from langgraph.graph.state import CompiledStateGraph
 
-    from app.agents.rag_agent.agent import RAGAgent
+    from app.agents.v1.rag_agent.agent import RAGAgent
 
 _logger = GetAppLogger().get_logger()
 
@@ -146,18 +145,14 @@ class OrchestratorAgent:
 
     async def get_response(self, user_input: str, conversation_id: UUID, auth_header: str | None = None) -> str:
         """Non-streaming invoke — call the agent directly and return the final message."""
-        token_t = current_auth_header.set(auth_header)
-        try:
-            conv_id = str(conversation_id) if conversation_id else str(uuid4())
-            config = {
-                "configurable": {"thread_id": conv_id},
-                "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
-            }
-            inputs = {"messages": [{"role": "user", "content": user_input}]}
-            result = await self._agent.ainvoke(inputs, config)
-            return _extract_text(result["messages"][-1].content)
-        finally:
-            current_auth_header.reset(token_t)
+        conv_id = str(conversation_id) if conversation_id else str(uuid4())
+        config = {
+            "configurable": {"thread_id": conv_id},
+            "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
+        }
+        inputs = {"messages": [{"role": "user", "content": user_input}]}
+        result = await self._agent.ainvoke(inputs, config)
+        return _extract_text(result["messages"][-1].content)
 
     async def stream_response(
         self, user_input: str, conversation_id: UUID, auth_header: str | None = None
@@ -167,11 +162,9 @@ class OrchestratorAgent:
         Uses LangGraph v2 streaming with stream_mode=["messages", "updates"] and maps each StreamPart to the
         appropriate SSE event type.
         """
-        token_t = current_auth_header.set(auth_header)
+        conv_id = str(conversation_id) if conversation_id else str(uuid4())
+        _logger.info(f"Orchestrator: conversation={conv_id}, query={user_input!r}")
         try:
-            conv_id = str(conversation_id) if conversation_id else str(uuid4())
-            _logger.info(f"Orchestrator: conversation={conv_id}, query={user_input!r}")
-
             config = {
                 "configurable": {"thread_id": conv_id},
                 "recursion_limit": self._max_iter * _RECURSION_LIMIT_MULTIPLIER,
@@ -198,8 +191,6 @@ class OrchestratorAgent:
         except Exception as exc:
             _logger.exception(f"Orchestrator error for conversation {conv_id}")
             yield _sse("error", content=str(exc))
-        finally:
-            current_auth_header.reset(token_t)
 
         yield _sse("done")
 

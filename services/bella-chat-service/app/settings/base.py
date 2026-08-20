@@ -27,6 +27,7 @@ class BellaChatBaseSettings(BaseSettings):
 
     # Authentication
     JWT_SECRET: SecretStr | None = None
+    AUTH_SERVICE_URL: str = "http://localhost:8002"
 
     # Logging settings
     FASTAPI_LOG_LEVEL: LOG_LEVELS = "INFO"
