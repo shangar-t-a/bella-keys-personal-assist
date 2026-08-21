@@ -4,7 +4,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import questionary
 from questionary import Style
