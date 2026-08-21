@@ -28,6 +28,19 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [bella-deploy-manager@1.0.0] - 2026-08-21
+
+### Added
+
+- **Evolution of `bella-keys-manager`**: Supersedes and evolves the legacy Windows batch script (`bella-keys-manager.bat`) into a standalone, cross-platform Python CLI/TUI package (`tools/deploy-manager/`).
+- Introduced global CLI binary `bella-deploy`, installable anywhere via `uv tool install` without requiring local script maintenance in deployment directories.
+- Added interactive Terminal User Interface (TUI) powered by `rich` and `questionary` with arrow-key navigation, branded panels, and structured status tables with color-coded container health badges.
+- Added scriptable non-interactive CLI subcommands: `start`, `stop`, `restart`, `status`, `logs`, and `update`.
+- Integrated automated remote production configuration downloading (`docker-compose.prod.yaml`, `.env.example`, `init-db-prod.sql`) and non-destructive `.env` key reconciliation.
+- Added safe remote tool version comparison with `uv tool upgrade` user notifications (eliminating self-mutating file replacement bugs).
+
+---
+
 ## [bella-keys-manager@1.0.1] - 2026-08-21
 
 ### Fixed
@@ -35,6 +48,10 @@ Changes under each header must be grouped into the following categories:
 - Resolved `. was unexpected at this time` CMD batch parser error during manager script self-update checks caused by nested parenthesis delimiters and trailing periods.
 - Guarded self-update file overwrite logic to only apply when the remote version is strictly newer than the currently executing script version.
 - Prompt user to close and restart the manager script upon applying an update to ensure a clean execution lifecycle.
+
+### Deprecated
+
+- Deprecated Windows-only batch script (`scripts/deploy/bella-keys-manager.bat`) in favor of `bella-deploy-manager@1.0.0` (`tools/deploy-manager/`). Existing users are encouraged to install `bella-deploy` globally via `uv tool install`.
 
 ---
 

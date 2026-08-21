@@ -32,20 +32,28 @@ Explore every screen of the application in light and dark themes, including SSO 
 2. **Run Development Services:**
    Run `bash scripts/run-dev.sh [profile]` (works on Linux, macOS, and Windows Git Bash)
 
-## Production Deployment (End-User / Home PC)
+## Production Deployment & Service Management (`bella-deploy`)
+
+Production deployment and container lifecycles on Windows, macOS, and Linux are managed using the cross-platform CLI tool **`bella-deploy`** ([tools/deploy-manager](tools/deploy-manager/README.md)).
+
+### 1. Install Globally via `uv tool`
+
+```bash
+uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
+```
+
+### 2. Run in Any Deployment Directory
+
+```bash
+# Launch interactive Production Manager TUI
+bella-deploy
+
+# Or run direct subcommands
+bella-deploy start --profile ems
+bella-deploy status
+bella-deploy logs -f
+bella-deploy update
+```
 
 > [!NOTE]
-> Production service execution and management is currently supported for **Windows only**.
-
-To run or update Bella Keys on a target Windows PC:
-
-1. Place your configuration files (`docker-compose.prod.yaml`, `.env`, and `init-db-prod.sql`) in `%USERPROFILE%\.keys_sandbox\bella-keys\`.
-2. Download or copy `scripts/deploy/bella-keys-manager.bat` into that directory.
-3. Double-click or run `bella-keys-manager.bat` from Command Prompt / PowerShell.
-
-### Service Operations & Updates
-
-The single `bella-keys-manager.bat` batch script handles the entire lifecycle:
-
-* **Service Management:** Start, stop, restart, view logs, and inspect service status.
-* **Updates:** Automatically self-updates the manager script, downloads latest compose configurations, auto-syncs missing environment variables in `.env`, pulls updated Docker images, and recreates containers seamlessly.
+> **Legacy Windows Batch Runner:** The legacy Windows batch runner `scripts/deploy/bella-keys-manager.bat` remains available as a deprecated fallback.
