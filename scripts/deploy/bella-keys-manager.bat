@@ -251,14 +251,7 @@ if %errorlevel% neq 0 (
     exit /b 0
 )
 
-powershell -NoProfile -Command ^
-    "$tmp = Get-Content 'bella-keys-manager.bat.tmp' -ErrorAction SilentlyContinue; ^
-     if (-not $tmp) { exit 1 }; ^
-     $match = $tmp | Select-String -Pattern 'set \"SCRIPT_VERSION=(.*?)\"'; ^
-     if ($match) { ^
-         $remoteVer = $match.Matches[0].Groups[1].Value; ^
-         Write-Host ('[INFO] Remote manager script version: v' + $remoteVer + ' (Current: v%SCRIPT_VERSION%)'); ^
-     } else { exit 1 }"
+powershell -NoProfile -Command "$match = Select-String -Path 'bella-keys-manager.bat.tmp' -Pattern 'SCRIPT_VERSION=([0-9.]+)' -ErrorAction SilentlyContinue; if ($match) { Write-Host ('[INFO] Remote manager script version: v' + $match.Matches[0].Groups[1].Value + ' (Current: v%SCRIPT_VERSION%)'); exit 0 } else { exit 1 }"
 
 if %errorlevel% equ 0 (
     move /y "bella-keys-manager.bat.tmp" "%~nx0" >nul
@@ -272,7 +265,7 @@ exit /b 0
 if not exist ".env" exit /b 0
 echo.
 echo [LOG %TIME%] Step 3/4: Syncing .env with new configuration keys...
-powershell -NoProfile -Command "$envLines = Get-Content .env; $exampleLines = Get-Content .env.example; $added = 0; foreach ($line in $exampleLines) { if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) { continue }; $varName = $line.Split('=')[0]; if (-not ($envLines | Select-String -Pattern ('^' + [regex]::Escape($varName) + '='))) { Add-Content -Path .env -Value $line; Write-Host '[INFO] Appended new environment variable:' $varName; $added++ } }; if ($added -gt 0) { Write-Host '[SUCCESS] Updated .env with' $added 'new variables.' } else { Write-Host '[INFO] .env is fully up to date.' }"
+powershell -NoProfile -Command "$envLines = Get-Content .env; $exampleLines = Get-Content .env.example; $added = 0; foreach ($line in $exampleLines) { if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) { continue }; $varName = $line.Split('=')[0]; if (-not ($envLines -match ('^' + [regex]::Escape($varName) + '='))) { Add-Content -Path .env -Value $line; Write-Host ('[INFO] Appended new environment variable: ' + $varName); $added++ } }; if ($added -gt 0) { Write-Host ('[SUCCESS] Updated .env with ' + $added + ' new variables.') } else { Write-Host '[INFO] .env is fully up to date.' }"
 exit /b 0
 
 :DOWNLOAD_CONFIGS
