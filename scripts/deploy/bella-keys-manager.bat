@@ -17,7 +17,7 @@ echo   Bella Keys - Production Manager v%SCRIPT_VERSION% (Windows Only) [DEPRECA
 echo =======================================================================
 echo   [NOTICE] This batch script is deprecated in favor of bella-deploy.
 echo   To install the cross-platform CLI, run:
-echo     uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
+echo     uv tool install "git+https://github.com/shangar-t-a/bella-keys-personal-assist#subdirectory=tools/deploy-manager"
 echo =======================================================================
 echo.
 

@@ -9,7 +9,7 @@ A lightweight, zero-dependency, cross-platform CLI tool for managing production 
 Install globally on Windows, macOS, or Linux:
 
 ```bash
-uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
+uv tool install "git+https://github.com/shangar-t-a/bella-keys-personal-assist#subdirectory=tools/deploy-manager"
 ```
 
 ### Upgrading the Tool
@@ -65,5 +65,5 @@ bella-deploy update
 Run the manager without installing:
 
 ```bash
-uvx --from git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager bella-deploy
+uvx --from "git+https://github.com/shangar-t-a/bella-keys-personal-assist#subdirectory=tools/deploy-manager" bella-deploy
 ```

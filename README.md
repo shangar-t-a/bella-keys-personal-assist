@@ -39,7 +39,7 @@ Production deployment and container lifecycles on Windows, macOS, and Linux are 
 ### 1. Install Globally via `uv tool`
 
 ```bash
-uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
+uv tool install "git+https://github.com/shangar-t-a/bella-keys-personal-assist#subdirectory=tools/deploy-manager"
 ```
 
 ### 2. Run in Any Deployment Directory
