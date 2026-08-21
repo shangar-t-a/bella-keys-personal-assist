@@ -673,7 +673,7 @@ async def seed_liabilities(session) -> None:
 async def seed_backups(session) -> None:
     print("[seed] Backup snapshots...")
     import json
-    backup_dir = os.path.expanduser(os.path.join("~", ".bella-keys", "backups"))
+    backup_dir = os.path.expanduser(os.path.join("~", ".bella", "backups"))
     os.makedirs(backup_dir, exist_ok=True)
 
     existing_files = [f for f in os.listdir(backup_dir) if f.endswith(".json")]

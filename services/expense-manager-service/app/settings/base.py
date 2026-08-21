@@ -17,7 +17,11 @@ STORAGE_TYPES = Literal["inmemory", "sqlite", "postgresql"]
 
 def get_default_user_backup_dir() -> str:
     """Get default user home directory for desktop backups."""
-    return os.path.join(os.path.expanduser("~"), ".bella-keys", "backups")
+    bella_dir = os.path.join(os.path.expanduser("~"), ".bella", "backups")
+    legacy_dir = os.path.join(os.path.expanduser("~"), ".bella-keys", "backups")
+    if not os.path.exists(bella_dir) and os.path.exists(legacy_dir):
+        return legacy_dir
+    return bella_dir
 
 
 class ExpenseManagerBaseSettings(BaseSettings):

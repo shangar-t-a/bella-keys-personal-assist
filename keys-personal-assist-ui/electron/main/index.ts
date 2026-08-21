@@ -21,9 +21,15 @@ ipcMain.handle('dialog:selectDirectory', async () => {
     return null
 })
 
+function getDefaultBackupDir(): string {
+    const bellaDir = path.join(app.getPath('home'), '.bella', 'backups')
+    const legacyDir = path.join(app.getPath('home'), '.bella-keys', 'backups')
+    return (!fs.existsSync(bellaDir) && fs.existsSync(legacyDir)) ? legacyDir : bellaDir
+}
+
 // Get default user host backup directory on PC
 ipcMain.handle('dialog:getDefaultBackupDir', async () => {
-    const defaultDir = path.join(app.getPath('home'), '.bella-keys', 'backups')
+    const defaultDir = getDefaultBackupDir()
     if (!fs.existsSync(defaultDir)) {
         fs.mkdirSync(defaultDir, { recursive: true })
     }
@@ -32,7 +38,7 @@ ipcMain.handle('dialog:getDefaultBackupDir', async () => {
 
 // List all host backup snapshot files directly from PC folder
 ipcMain.handle('dialog:listHostBackups', async (_event, targetDir?: string) => {
-    const dirPath = targetDir || path.join(app.getPath('home'), '.bella-keys', 'backups')
+    const dirPath = targetDir || getDefaultBackupDir()
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true })
         return []
@@ -66,7 +72,7 @@ ipcMain.handle('dialog:listHostBackups', async (_event, targetDir?: string) => {
 
 // Write backup file directly into PC folder
 ipcMain.handle('dialog:writeHostBackup', async (_event, dirPath: string, filename: string, content: string) => {
-    const targetDir = dirPath || path.join(app.getPath('home'), '.bella-keys', 'backups')
+    const targetDir = dirPath || getDefaultBackupDir()
     if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true })
     }
@@ -84,7 +90,7 @@ ipcMain.handle('dialog:writeHostBackup', async (_event, dirPath: string, filenam
 
 // Read backup file content directly from PC folder
 ipcMain.handle('dialog:readHostBackup', async (_event, dirPath: string, filename: string) => {
-    const targetDir = dirPath || path.join(app.getPath('home'), '.bella-keys', 'backups')
+    const targetDir = dirPath || getDefaultBackupDir()
     const fullPath = path.join(targetDir, filename)
     if (!fs.existsSync(fullPath)) {
         throw new Error(`Backup file not found on host PC: ${fullPath}`)
@@ -94,7 +100,7 @@ ipcMain.handle('dialog:readHostBackup', async (_event, dirPath: string, filename
 
 // Delete backup file directly from PC folder
 ipcMain.handle('dialog:deleteHostBackup', async (_event, dirPath: string, filename: string) => {
-    const targetDir = dirPath || path.join(app.getPath('home'), '.bella-keys', 'backups')
+    const targetDir = dirPath || getDefaultBackupDir()
     const fullPath = path.join(targetDir, filename)
     if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath)
