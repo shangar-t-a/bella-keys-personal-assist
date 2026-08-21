@@ -34,7 +34,7 @@ Changes under each header must be grouped into the following categories:
 
 - Resolved `. was unexpected at this time` CMD batch parser error during manager script self-update checks caused by nested parenthesis delimiters and trailing periods.
 - Guarded self-update file overwrite logic to only apply when the remote version is strictly newer than the currently executing script version.
-- Added clean child process spawning for manager restarts upon applying updates to prevent file handle locking and execution offset corruption.
+- Prompt user to close and restart the manager script upon applying an update to ensure a clean execution lifecycle.
 
 ---
 
