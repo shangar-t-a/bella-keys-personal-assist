@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "SCRIPT_VERSION=1.0.0"
+set "SCRIPT_VERSION=1.0.1"
 title Bella Keys - Production Manager v%SCRIPT_VERSION% (Windows Only)
 
 rem Repository URLs for downloading latest production files
@@ -246,16 +246,21 @@ goto MAIN_MENU
 echo [PROGRESS %TIME%] Checking for updated manager script...
 curl.exe --fail --location --retry 3 --retry-delay 2 --connect-timeout 10 -s "%REPO_SCRIPT_URL%" -o "bella-keys-manager.bat.tmp"
 if %errorlevel% neq 0 (
-    echo [WARNING %TIME%] Could not check for script self-update (network timeout).
+    echo [WARNING %TIME%] Could not check for script self-update - network timeout.
     if exist "bella-keys-manager.bat.tmp" del /f /q "bella-keys-manager.bat.tmp"
     exit /b 0
 )
 
-powershell -NoProfile -Command "$match = Select-String -Path 'bella-keys-manager.bat.tmp' -Pattern 'SCRIPT_VERSION=([0-9.]+)' -ErrorAction SilentlyContinue; if ($match) { Write-Host ('[INFO] Remote manager script version: v' + $match.Matches[0].Groups[1].Value + ' (Current: v%SCRIPT_VERSION%)'); exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "$currVer = '%SCRIPT_VERSION%'; $match = Select-String -Path 'bella-keys-manager.bat.tmp' -Pattern 'SCRIPT_VERSION=([0-9.]+)'; if ($match) { $remoteVer = $match.Matches[0].Groups[1].Value; if ([System.Version]$remoteVer -gt [System.Version]$currVer) { Write-Host ('[INFO] New manager version available: v' + $remoteVer + ' [Current: v' + $currVer + ']'); exit 10 } else { Write-Host ('[INFO] Manager script is up to date [v' + $currVer + ']'); exit 0 } } else { exit 1 }"
 
-if %errorlevel% equ 0 (
+set "UPDATE_STATUS=!errorlevel!"
+if !UPDATE_STATUS! equ 10 (
+    echo [INFO %TIME%] Applying manager script update...
     move /y "bella-keys-manager.bat.tmp" "%~nx0" >nul
-    echo [SUCCESS %TIME%] Manager script self-updated successfully.
+    echo [SUCCESS %TIME%] Manager script updated. Restarting manager...
+    timeout /t 2 >nul
+    start "" cmd /c "call \"%~nx0\" & exit"
+    exit
 ) else (
     if exist "bella-keys-manager.bat.tmp" del /f /q "bella-keys-manager.bat.tmp"
 )
