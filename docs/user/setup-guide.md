@@ -34,7 +34,7 @@ Production service deployment and lifecycle management across Windows, macOS, an
 ### Install Globally via `uv tool`
 
 ```bash
-uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
+uv tool install "git+https://github.com/shangar-t-a/bella-keys-personal-assist#subdirectory=tools/deploy-manager"
 ```
 
 ### Running the Manager
