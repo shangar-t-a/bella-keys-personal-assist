@@ -13,7 +13,22 @@ from app.infrastructures.postgres_db.backup import (
     format_file_size,
     prune_manual_backups,
 )
+from app.settings.base import get_default_user_backup_dir
 from app.use_cases.backup import BackupService
+
+
+def test_get_default_user_backup_dir():
+    """Test default user backup directory resolution."""
+    with patch("os.path.exists", return_value=False):
+        d = get_default_user_backup_dir()
+        assert d == os.path.join(os.path.expanduser("~"), ".bella", "backups")
+
+    def mock_exists(p):
+        return ".bella-keys" in p
+
+    with patch("os.path.exists", side_effect=mock_exists):
+        d = get_default_user_backup_dir()
+        assert d == os.path.join(os.path.expanduser("~"), ".bella-keys", "backups")
 
 
 def test_ensure_backup_dir(tmp_path):
