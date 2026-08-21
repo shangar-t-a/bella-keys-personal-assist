@@ -28,6 +28,23 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.13.1] - 2026-08-21
+
+### Changed
+
+- Updated default host database backup and restore storage path to `~/.bella/backups` across desktop Electron handlers with backward-compatible fallback to `~/.bella-keys/backups`.
+
+---
+
+## [expense-manager-service@1.8.1] - 2026-08-21
+
+### Changed
+
+- Updated default application backup directory (`BACKUP_DIR`) to `~/.bella/backups` to unify with the `~/.bella` runtime environment directory standard.
+- Integrated automatic legacy directory detection falling back to `~/.bella-keys/backups` if present on existing installations.
+
+---
+
 ## [bella-deploy-manager@1.0.0] - 2026-08-21
 
 ### Added
