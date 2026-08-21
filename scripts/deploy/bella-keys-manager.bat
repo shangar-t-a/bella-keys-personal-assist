@@ -255,11 +255,16 @@ powershell -NoProfile -Command "$currVer = '%SCRIPT_VERSION%'; $match = Select-S
 
 set "UPDATE_STATUS=!errorlevel!"
 if !UPDATE_STATUS! equ 10 (
+    echo.
     echo [INFO %TIME%] Applying manager script update...
     move /y "bella-keys-manager.bat.tmp" "%~nx0" >nul
-    echo [SUCCESS %TIME%] Manager script updated. Restarting manager...
-    timeout /t 2 >nul
-    start "" cmd /c "call \"%~nx0\" & exit"
+    echo.
+    echo =======================================================================
+    echo   [SUCCESS] Manager script has been updated successfully.
+    echo   Please close this window and restart bella-keys-manager.bat.
+    echo =======================================================================
+    echo.
+    pause
     exit
 ) else (
     if exist "bella-keys-manager.bat.tmp" del /f /q "bella-keys-manager.bat.tmp"
