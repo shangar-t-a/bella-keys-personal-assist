@@ -28,6 +28,50 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [keys-personal-assist-ui@1.13.0] - 2026-08-20
+
+### Added
+
+- Added interactive Human-in-the-Loop review and approval cards, enabling users to inspect proposed actions, edit parameters in place, approve, or reject actions before execution.
+- Added live Deep Agent Task Execution Tree, visualizing hierarchical sub-agent delegation, reasoning steps, and tool executions in real time.
+- Added Virtual Filesystem Artifact Drawer, allowing users to view generated code, documents, reports, and data files with full download support.
+- Upgraded the AI Chat workspace to support Next-Gen Deep Agent real-time event streaming and interactive multi-turn threads.
+
+---
+
+## [bella-chat-service@1.2.0] - 2026-08-20
+
+### Added
+
+- Introduced Bella v2 Deep Agent orchestration architecture featuring specialized sub-agents for financial analysis and personal knowledge base retrieval.
+- Added full real-time streaming for conversational responses, sub-agent transitions, tool invocations, and interactive human review interrupts.
+- Added virtual filesystem artifact management for generating, storing, and serving persistent multi-format session artifacts.
+- Integrated automated on-behalf-of token delegation for secure, seamless tool execution against backend services.
+
+### Fixed
+
+- Resolved authentication context loss during long-running tool execution sessions.
+
+---
+
+## [auth-service@2.2.0] - 2026-08-20
+
+### Added
+
+- Added OAuth 2.0 Token Exchange capability to support secure on-behalf-of service delegation and multi-service identity chaining.
+- Enhanced session refresh workflows with secure HTTP-only cookies for improved web client security.
+
+---
+
+## [ems-mcp-server@1.2.0] - 2026-08-20
+
+### Added
+
+- Enhanced MCP tool execution with robust request-scoped Bearer token extraction for seamless backend communication.
+- Added dynamic multi-target audience validation across container networks, local endpoints, and transport streams.
+
+---
+
 ## [keys-personal-assist-ui@1.12.0] - 2026-08-19
 
 ### Added
