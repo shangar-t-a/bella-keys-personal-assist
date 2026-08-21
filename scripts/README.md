@@ -17,8 +17,8 @@ scripts/
 │   ├── init-db.sql        # PostgreSQL init schema script (dev)
 │   ├── init-db-prod.sql   # PostgreSQL init schema script (prod)
 │   └── backup-db.sh       # Database backup utility script
-├── deploy/                # Production setup & deployment scripts (Windows Only)
-│   └── bella-keys-manager.bat # Unified production runner, service manager, self-updater, and update script
+├── deploy/                # Production setup & deployment scripts
+│   └── bella-keys-manager.bat # Windows launcher (see tools/deploy-manager for global cross-platform CLI)
 ├── electron/              # Build desktop app installer (developers only)
 │   ├── build.sh           # Build Electron app (Linux/macOS/Git Bash)
 │   ├── build.bat          # Build Electron app (Windows CMD)

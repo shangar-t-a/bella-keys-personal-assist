@@ -13,7 +13,11 @@ set "REPO_SQL_URL=https://raw.githubusercontent.com/shangar-t-a/bella-keys-perso
 :INIT_CHECK
 cls
 echo =======================================================================
-echo   Bella Keys - Production Manager v%SCRIPT_VERSION% (Windows Only)
+echo   Bella Keys - Production Manager v%SCRIPT_VERSION% (Windows Only) [DEPRECATED]
+echo =======================================================================
+echo   [NOTICE] This batch script is deprecated in favor of bella-deploy.
+echo   To install the cross-platform CLI, run:
+echo     uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
 echo =======================================================================
 echo.
 

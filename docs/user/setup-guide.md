@@ -27,14 +27,35 @@ If you prefer manual setup:
 1. Copy `docker/.env.example` to `docker/.env` and edit it to configure passwords and keys.
 2. Execute `scripts/database/init-db.sql` on your host PostgreSQL instance.
 
-## 2. Production Deployment (Home PC - Windows Only)
+## 2. Production Deployment & Service Management (`bella-deploy`)
 
-Production deployments on a home PC are managed using the single Windows batch script `bella-keys-manager.bat`.
+Production service deployment and lifecycle management across Windows, macOS, and Linux are orchestrated using **`bella-deploy`** ([tools/deploy-manager](../../tools/deploy-manager/README.md)).
 
-1. Maintain your configuration files in `%USERPROFILE%\.keys_sandbox\bella-keys\` (`docker-compose.prod.yaml`, `.env`, `init-db-prod.sql`).
-2. Run `bella-keys-manager.bat` from Command Prompt or PowerShell within your `%USERPROFILE%\.keys_sandbox\bella-keys\` directory.
+### Install Globally via `uv tool`
 
-The interactive batch interface handles starting, stopping, restarting, log viewing, service status, self-updating, and updating containers and configurations.
+```bash
+uv tool install git+https://github.com/shangar-t-a/bella-keys-personal-assist --directory tools/deploy-manager
+```
+
+### Running the Manager
+
+Navigate to your production deployment directory (e.g., `~/.keys_sandbox/bella-keys/` or `%USERPROFILE%\.keys_sandbox\bella-keys\`) and run:
+
+```bash
+# Launch interactive TUI
+bella-deploy
+
+# Or direct commands
+bella-deploy start --profile ems
+bella-deploy status
+bella-deploy logs -f
+bella-deploy update
+```
+
+If configuration files (`docker-compose.prod.yaml`, `.env.example`, `init-db-prod.sql`) are not present in your directory, `bella-deploy` will automatically download and initialize them on first launch.
+
+> [!NOTE]
+> **Legacy Windows Batch Runner:** The legacy Windows batch runner `scripts/deploy/bella-keys-manager.bat` is deprecated in favor of `bella-deploy`.
 
 ## 3. Running the Application (Development)
 
