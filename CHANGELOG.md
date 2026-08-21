@@ -28,6 +28,26 @@ Changes under each header must be grouped into the following categories:
 - **Fixed**: For any bug fixes.
 - **Security**: In case of vulnerabilities or security updates.
 
+## [bella-keys-manager@1.0.1] - 2026-08-21
+
+### Fixed
+
+- Resolved `. was unexpected at this time` CMD batch parser error during manager script self-update checks caused by nested parenthesis delimiters and trailing periods.
+- Guarded self-update file overwrite logic to only apply when the remote version is strictly newer than the currently executing script version.
+- Added clean child process spawning for manager restarts upon applying updates to prevent file handle locking and execution offset corruption.
+
+---
+
+## [bella-keys-manager@1.0.0] - 2026-08-21
+
+### Added
+
+- Added unified Windows production runner and deployment manager script (`scripts/deploy/bella-keys-manager.bat`).
+- Added interactive profile selection supporting EMS-only, AI Chat, and AI Chat + Monitor setups.
+- Added self-updating configuration sync, automated Docker pull/restart, live log streaming, and environment key reconciliation.
+
+---
+
 ## [keys-personal-assist-ui@1.13.0] - 2026-08-20
 
 ### Added
